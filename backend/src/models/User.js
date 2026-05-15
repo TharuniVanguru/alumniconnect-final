@@ -31,7 +31,12 @@ const userSchema = new mongoose.Schema(
 
     role: {
       type: String,
-      enum: ["student", "alumni", "faculty", "admin"],
+      enum: [
+        "student",
+        "alumni",
+        "faculty",
+        "admin",
+      ],
       default: "student",
     },
 
@@ -80,6 +85,12 @@ const userSchema = new mongoose.Schema(
       default: 40,
     },
 
+    // ONLINE STATUS
+    isOnline: {
+      type: Boolean,
+      default: false,
+    },
+
     isVerified: {
       type: Boolean,
       default: true,
@@ -95,9 +106,14 @@ const userSchema = new mongoose.Schema(
       default: Date.now,
     },
   },
+
   {
     timestamps: true,
   }
 );
 
-module.exports = mongoose.model("User", userSchema);
+module.exports =
+  mongoose.model(
+    "User",
+    userSchema
+  );

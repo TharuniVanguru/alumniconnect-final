@@ -7,9 +7,14 @@ import {
   Crown
 } from 'lucide-react';
 
+import axios from "axios";
+
 import { Button } from '@/components/ui/button';
 
-import { Link, useNavigate } from 'react-router-dom';
+import {
+  Link,
+  useNavigate
+} from 'react-router-dom';
 
 import {
   DropdownMenu,
@@ -23,11 +28,14 @@ import {
 
 export const Header = () => {
 
-  const navigate = useNavigate();
+  const navigate =
+    useNavigate();
 
   // GET USER FROM LOCAL STORAGE
   const userInfo =
-    localStorage.getItem("userInfo");
+    localStorage.getItem(
+      "userInfo"
+    );
 
   const user =
     userInfo
@@ -36,17 +44,50 @@ export const Header = () => {
 
 
   // LOGOUT FUNCTION
-  const logout = () => {
+  const logout = async () => {
 
-    localStorage.removeItem("userInfo");
+    try {
 
-    navigate("/login");
+      await axios.post(
+
+        "http://localhost:5000/auth/logout",
+
+        {},
+
+        {
+          headers: {
+            Authorization:
+              `Bearer ${user.token}`,
+          },
+        }
+
+      );
+
+    }
+
+    catch (error) {
+
+      console.log(error);
+
+    }
+
+    finally {
+
+      localStorage.removeItem(
+        "userInfo"
+      );
+
+      navigate("/login");
+
+    }
 
   };
 
 
   // ROLE COLOR
-  const getRoleColor = (role: string) => {
+  const getRoleColor = (
+    role: string
+  ) => {
 
     switch (role) {
 
@@ -61,27 +102,41 @@ export const Header = () => {
 
       default:
         return 'text-foreground';
+
     }
+
   };
 
 
   // ROLE ICON
-  const getRoleBadgeIcon = (role: string) => {
+  const getRoleBadgeIcon = (
+    role: string
+  ) => {
 
     switch (role) {
 
       case 'admin':
-        return <Trophy className="h-3 w-3" />;
+        return (
+          <Trophy className="h-3 w-3" />
+        );
 
       case 'alumni':
-        return <Award className="h-3 w-3" />;
+        return (
+          <Award className="h-3 w-3" />
+        );
 
       case 'student':
-        return <User className="h-3 w-3" />;
+        return (
+          <User className="h-3 w-3" />
+        );
 
       default:
-        return <User className="h-3 w-3" />;
+        return (
+          <User className="h-3 w-3" />
+        );
+
     }
+
   };
 
 
@@ -297,5 +352,7 @@ export const Header = () => {
       </div>
 
     </header>
+
   );
+
 };

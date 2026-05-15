@@ -22,7 +22,10 @@ import {
 
 import { UserRole } from '@/types/user';
 
-import { useNavigate } from 'react-router-dom';
+import {
+  useNavigate,
+  Link
+} from 'react-router-dom';
 
 import {
   User,
@@ -413,14 +416,14 @@ export const LoginForm = () => {
 
             Don&apos;t have an account?
 
-            <a
-              href="#"
+            <Link
+              to="/register"
               className="text-primary hover:underline ml-1"
             >
 
               Sign up
 
-            </a>
+            </Link>
 
           </p>
 
