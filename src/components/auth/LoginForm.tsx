@@ -125,8 +125,12 @@ export const LoginForm = () => {
 
       setPassword('');
 
-      // REDIRECT
-      navigate(`/${data.role}/dashboard`);
+      // REDIRECT — if first login, force password change
+      if (data.isFirstLogin) {
+        navigate('/change-password');
+      } else {
+        navigate(`/${data.role}/dashboard`);
+      }
 
     }
 
@@ -331,6 +335,11 @@ export const LoginForm = () => {
 
               </form>
 
+              <div className="text-right">
+                <Link to="/forgot-password" className="text-sm text-primary hover:underline">
+                  Forgot password?
+                </Link>
+              </div>
 
               {/* QUICK LOGIN */}
               <div className="mt-4 p-3 bg-muted rounded-lg">

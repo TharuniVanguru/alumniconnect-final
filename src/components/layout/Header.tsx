@@ -9,6 +9,11 @@ import {
 
 import axios from "axios";
 
+import {
+  useEffect,
+  useState
+} from "react";
+
 import { Button } from '@/components/ui/button';
 
 import {
@@ -43,7 +48,74 @@ export const Header = () => {
       : null;
 
 
+  // =========================
+  // NOTIFICATIONS
+  // =========================
+  const [
+    unreadCount,
+    setUnreadCount,
+  ] = useState(0);
+
+
+  // =========================
+  // FETCH NOTIFICATIONS
+  // =========================
+  const fetchNotifications =
+    async () => {
+
+      try {
+
+        if (!user?.token)
+          return;
+
+        const response =
+          await axios.get(
+
+            "http://localhost:5000/notifications",
+
+            {
+              headers: {
+                Authorization:
+                  `Bearer ${user.token}`,
+              },
+            }
+
+          );
+
+        const unread =
+          response.data.filter(
+            (
+              notification: any
+            ) =>
+              !notification.isRead
+          );
+
+        setUnreadCount(
+          unread.length
+        );
+
+      }
+
+      catch (error) {
+
+        console.log(error);
+
+      }
+
+    };
+
+
+  // =========================
+  // INITIAL LOAD
+  // =========================
+  useEffect(() => {
+    fetchNotifications();
+  }, [user?.token]);
+
+
+  // =========================
   // LOGOUT FUNCTION
+  // =========================
   const logout = async () => {
 
     try {
@@ -84,7 +156,9 @@ export const Header = () => {
   };
 
 
+  // =========================
   // ROLE COLOR
+  // =========================
   const getRoleColor = (
     role: string
   ) => {
@@ -108,7 +182,9 @@ export const Header = () => {
   };
 
 
+  // =========================
   // ROLE ICON
+  // =========================
   const getRoleBadgeIcon = (
     role: string
   ) => {
@@ -196,15 +272,24 @@ export const Header = () => {
               variant="ghost"
               size="icon"
               className="relative"
+              asChild
             >
 
-              <Bell className="h-4 w-4" />
+              <Link to="/notifications">
 
-              <span className="absolute -top-1 -right-1 h-3 w-3 bg-accent rounded-full text-xs flex items-center justify-center text-white">
+                <Bell className="h-4 w-4" />
 
-                3
+                {unreadCount > 0 && (
 
-              </span>
+                  <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-red-500 rounded-full text-[10px] flex items-center justify-center text-white font-bold">
+
+                    {unreadCount}
+
+                  </span>
+
+                )}
+
+              </Link>
 
             </Button>
 
@@ -279,6 +364,23 @@ export const Header = () => {
                     <User className="mr-2 h-4 w-4" />
 
                     Profile
+
+                  </Link>
+
+                </DropdownMenuItem>
+
+
+                {/* NOTIFICATIONS */}
+                <DropdownMenuItem asChild>
+
+                  <Link
+                    to="/notifications"
+                    className="flex items-center"
+                  >
+
+                    <Bell className="mr-2 h-4 w-4" />
+
+                    Notifications
 
                   </Link>
 

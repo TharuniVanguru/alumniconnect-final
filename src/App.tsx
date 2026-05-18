@@ -38,6 +38,10 @@ import Register
 import { LoginForm }
   from "@/components/auth/LoginForm";
 
+import ForgotPassword from "@/pages/ForgotPassword";
+import VerifyOtp from "@/pages/VerifyOtp";
+import ResetPassword from "@/pages/ResetPassword";
+
 
 // STUDENT
 import { StudentDashboard }
@@ -48,12 +52,26 @@ import JobsPage
 
 import MentorshipPage
   from "@/pages/student/MentorshipPage";
-
+import AIChatPage
+  from "./pages/student/AIChatPage";
 import ChatPage
   from "@/pages/student/ChatPage";
 
+import EventsPage
+  from "@/pages/student/EventsPage";
+
 import { AlumniDirectory }
   from "@/pages/student/AlumniDirectory";
+
+import SearchUsersPage
+  from "@/pages/student/SearchUsersPage";
+
+import GuidanceRequestPage
+  from "@/pages/student/GuidanceRequestPage";
+
+// NEW
+import RecommendationsPage
+  from "@/pages/student/RecommendationsPage";
 
 
 // ALUMNI
@@ -69,6 +87,13 @@ import { FundraisingHub }
 import { StudentsDirectory }
   from "@/pages/alumni/StudentsDirectory";
 
+import GuidanceRequestsPage
+  from "@/pages/alumni/GuidanceRequestsPage";
+import PostJobPage from "@/pages/alumni/PostJobPage";
+import CreateEventPage from "@/pages/alumni/CreateEventPage";
+import AlumniMentorshipPage from "@/pages/alumni/AlumniMentorshipPage";
+import ApplicationsPage from "@/pages/alumni/ApplicationsPage";
+
 
 // ADMIN
 import { AdminDashboard }
@@ -79,6 +104,10 @@ import { StudentsDirectory as AdminStudentsDirectory }
 
 import { AnalyticsPage }
   from "@/pages/admin/AnalyticsPage";
+import AdminApprovals from "@/pages/admin/AdminApprovals";
+import LeaderboardPage from "@/pages/admin/LeaderboardPage";
+
+import ChangePassword from "@/pages/ChangePassword";
 
 
 // COMMON
@@ -87,9 +116,13 @@ import { PremiumUpgrade }
 
 import { ComingSoon }
   from "@/pages/ComingSoon";
+import About from "@/pages/About";
 
 import { ProfileEdit }
   from "@/pages/ProfileEdit";
+
+import NotificationsPage
+  from "@/pages/NotificationsPage";
 
 
 // QUERY CLIENT
@@ -132,7 +165,25 @@ const App = () => (
               path="/register"
               element={<Register />}
             />
+            <Route
+              path="/forgot-password"
+              element={<ForgotPassword />}
+            />
 
+            <Route
+              path="/verify-otp"
+              element={<VerifyOtp />}
+            />
+
+            <Route
+              path="/reset-password"
+              element={<ResetPassword />}
+            />
+
+            <Route
+              path="/change-password"
+              element={<ChangePassword />}
+            />
 
             {/* ========================= */}
             {/* STUDENT ROUTES */}
@@ -160,6 +211,61 @@ const App = () => (
                   ]}
                 >
                   <AlumniDirectory />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* SEARCH USERS */}
+            <Route
+              path="/student/search"
+              element={
+                <ProtectedRoute
+                  allowedRoles={[
+                    "student"
+                  ]}
+                >
+                  <SearchUsersPage />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* GUIDANCE REQUEST */}
+            <Route
+              path="/student/guidance/:alumniId"
+              element={
+                <ProtectedRoute
+                  allowedRoles={[
+                    "student"
+                  ]}
+                >
+                  <GuidanceRequestPage />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* AI RECOMMENDATIONS */}
+            <Route
+              path="/student/recommendations"
+              element={
+                <ProtectedRoute
+                  allowedRoles={[
+                    "student"
+                  ]}
+                >
+                  <RecommendationsPage />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/student/ai-chat"
+              element={
+                <ProtectedRoute
+                  allowedRoles={[
+                    "student"
+                  ]}
+                >
+                  <AIChatPage />
                 </ProtectedRoute>
               }
             />
@@ -204,6 +310,20 @@ const App = () => (
               }
             />
 
+            {/* CHAT HOME */}
+            <Route
+              path="/student/chat"
+              element={
+                <ProtectedRoute
+                  allowedRoles={[
+                    "student"
+                  ]}
+                >
+                  <ChatPage />
+                </ProtectedRoute>
+              }
+            />
+
             <Route
               path="/student/events"
               element={
@@ -212,9 +332,7 @@ const App = () => (
                     "student"
                   ]}
                 >
-                  <ComingSoon
-                    pageName="Events"
-                  />
+                  <EventsPage />
                 </ProtectedRoute>
               }
             />
@@ -271,9 +389,7 @@ const App = () => (
                     "alumni"
                   ]}
                 >
-                  <ComingSoon
-                    pageName="Post Job"
-                  />
+                  <PostJobPage />
                 </ProtectedRoute>
               }
             />
@@ -286,9 +402,7 @@ const App = () => (
                     "alumni"
                   ]}
                 >
-                  <ComingSoon
-                    pageName="Create Event"
-                  />
+                  <CreateEventPage />
                 </ProtectedRoute>
               }
             />
@@ -301,9 +415,21 @@ const App = () => (
                     "alumni"
                   ]}
                 >
-                  <ComingSoon
-                    pageName="Mentorship"
-                  />
+                  <AlumniMentorshipPage />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* GUIDANCE REQUESTS */}
+            <Route
+              path="/alumni/guidance-requests"
+              element={
+                <ProtectedRoute
+                  allowedRoles={[
+                    "alumni"
+                  ]}
+                >
+                  <GuidanceRequestsPage />
                 </ProtectedRoute>
               }
             />
@@ -316,9 +442,7 @@ const App = () => (
                     "alumni"
                   ]}
                 >
-                  <ComingSoon
-                    pageName="Applications"
-                  />
+                  <ApplicationsPage />
                 </ProtectedRoute>
               }
             />
@@ -326,6 +450,20 @@ const App = () => (
             {/* DYNAMIC CHAT ROUTE */}
             <Route
               path="/alumni/chat/:userId"
+              element={
+                <ProtectedRoute
+                  allowedRoles={[
+                    "alumni"
+                  ]}
+                >
+                  <AlumniChatPage />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* CHAT HOME */}
+            <Route
+              path="/alumni/chat"
               element={
                 <ProtectedRoute
                   allowedRoles={[
@@ -376,9 +514,7 @@ const App = () => (
                     "admin"
                   ]}
                 >
-                  <ComingSoon
-                    pageName="Approvals"
-                  />
+                  <AdminApprovals />
                 </ProtectedRoute>
               }
             />
@@ -404,9 +540,7 @@ const App = () => (
                     "admin"
                   ]}
                 >
-                  <ComingSoon
-                    pageName="Notifications"
-                  />
+                  <NotificationsPage />
                 </ProtectedRoute>
               }
             />
@@ -419,9 +553,27 @@ const App = () => (
                     "admin"
                   ]}
                 >
-                  <ComingSoon
-                    pageName="Leaderboard"
-                  />
+                  <LeaderboardPage />
+                </ProtectedRoute>
+              }
+            />
+
+
+            {/* ========================= */}
+            {/* NOTIFICATIONS */}
+            {/* ========================= */}
+
+            <Route
+              path="/notifications"
+              element={
+                <ProtectedRoute
+                  allowedRoles={[
+                    "student",
+                    "alumni",
+                    "admin",
+                  ]}
+                >
+                  <NotificationsPage />
                 </ProtectedRoute>
               }
             />
@@ -461,9 +613,7 @@ const App = () => (
             <Route
               path="/about"
               element={
-                <ComingSoon
-                  pageName="About Us"
-                />
+                <About />
               }
             />
 

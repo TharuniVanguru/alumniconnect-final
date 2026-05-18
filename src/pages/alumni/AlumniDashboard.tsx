@@ -1,6 +1,7 @@
 import { Header } from '@/components/layout/Header';
 import { StatsCard } from '@/components/common/StatsCard';
 import { ContributionBadge } from '@/components/common/ContributionBadge';
+
 import { Button } from '@/components/ui/button';
 
 import {
@@ -21,7 +22,8 @@ import {
   MessageSquare,
   Star,
   Plus,
-  GraduationCap
+  GraduationCap,
+  Bell
 } from 'lucide-react';
 
 import { Link } from 'react-router-dom';
@@ -30,11 +32,13 @@ import { Link } from 'react-router-dom';
 export const AlumniDashboard = () => {
 
   // GET LOGGED IN USER
-  const userInfo = localStorage.getItem("userInfo");
+  const userInfo =
+    localStorage.getItem("userInfo");
 
-  const user = userInfo
-    ? JSON.parse(userInfo)
-    : null;
+  const user =
+    userInfo
+      ? JSON.parse(userInfo)
+      : null;
 
 
   // MOCK DATA
@@ -44,6 +48,26 @@ export const AlumniDashboard = () => {
     eventsOrganized: 3,
     contributionScore: 850,
   };
+
+
+  // MOCK GUIDANCE REQUESTS
+  const recentGuidanceRequests = [
+    {
+      id: '1',
+      studentName: 'Alex Kumar',
+      topic: 'Frontend Career Guidance',
+      domain: 'Web Development',
+      urgency: 'High',
+    },
+
+    {
+      id: '2',
+      studentName: 'Maria Santos',
+      topic: 'Resume Review',
+      domain: 'Career Support',
+      urgency: 'Medium',
+    },
+  ];
 
 
   const mockStudents = [
@@ -91,7 +115,9 @@ export const AlumniDashboard = () => {
 
               <h1 className="text-3xl font-bold text-foreground mb-2">
 
-                Welcome back, {user?.name || "Alumni"}!
+                Welcome back,
+                {" "}
+                {user?.name || "Alumni"}!
 
               </h1>
 
@@ -166,7 +192,7 @@ export const AlumniDashboard = () => {
 
         {/* QUICK LINKS */}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6 mb-8">
 
 
           {/* STUDENTS DIRECTORY */}
@@ -192,6 +218,39 @@ export const AlumniDashboard = () => {
                 <p className="text-sm text-muted-foreground">
 
                   Browse talented students
+
+                </p>
+
+              </CardContent>
+
+            </Card>
+
+          </Link>
+
+
+          {/* GUIDANCE REQUESTS */}
+
+          <Link to="/alumni/guidance-requests">
+
+            <Card className="shadow-soft hover:shadow-medium transition-all cursor-pointer h-full bg-gradient-card border-primary/20">
+
+              <CardContent className="pt-6 text-center">
+
+                <div className="h-12 w-12 rounded-full bg-purple-100 flex items-center justify-center mx-auto mb-4">
+
+                  <Bell className="h-6 w-6 text-purple-600" />
+
+                </div>
+
+                <h3 className="font-semibold mb-2">
+
+                  Guidance Requests
+
+                </h3>
+
+                <p className="text-sm text-muted-foreground">
+
+                  Manage student requests
 
                 </p>
 
@@ -343,7 +402,101 @@ export const AlumniDashboard = () => {
 
           {/* STUDENTS */}
 
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-2 space-y-6">
+
+
+            {/* GUIDANCE REQUESTS */}
+
+            <Card className="shadow-soft border-primary/20">
+
+              <CardHeader>
+
+                <CardTitle className="flex items-center space-x-2">
+
+                  <Bell className="h-5 w-5 text-primary" />
+
+                  <span>
+
+                    Recent Guidance Requests
+
+                  </span>
+
+                </CardTitle>
+
+                <CardDescription>
+
+                  Students requesting mentorship and guidance
+
+                </CardDescription>
+
+              </CardHeader>
+
+
+              <CardContent className="space-y-4">
+
+                {recentGuidanceRequests.map((request) => (
+
+                  <div
+                    key={request.id}
+                    className="flex items-center justify-between p-4 rounded-lg border bg-gradient-card"
+                  >
+
+                    <div>
+
+                      <h3 className="font-semibold">
+
+                        {request.studentName}
+
+                      </h3>
+
+                      <p className="text-sm text-muted-foreground">
+
+                        {request.topic}
+
+                      </p>
+
+                      <div className="flex items-center gap-2 mt-2">
+
+                        <Badge variant="outline">
+
+                          {request.domain}
+
+                        </Badge>
+
+                        <Badge>
+
+                          {request.urgency}
+
+                        </Badge>
+
+                      </div>
+
+                    </div>
+
+
+                    <Button
+                      size="sm"
+                      asChild
+                    >
+
+                      <Link to="/alumni/guidance-requests">
+
+                        View
+
+                      </Link>
+
+                    </Button>
+
+                  </div>
+
+                ))}
+
+              </CardContent>
+
+            </Card>
+
+
+            {/* TALENTED STUDENTS */}
 
             <Card className="shadow-soft">
 
@@ -513,6 +666,23 @@ export const AlumniDashboard = () => {
                   asChild
                 >
 
+                  <Link to="/alumni/guidance-requests">
+
+                    <Bell className="mr-2 h-4 w-4" />
+
+                    View Guidance Requests
+
+                  </Link>
+
+                </Button>
+
+
+                <Button
+                  className="w-full justify-start"
+                  variant="outline"
+                  asChild
+                >
+
                   <Link to="/alumni/chat">
 
                     <MessageSquare className="mr-2 h-4 w-4" />
@@ -536,4 +706,5 @@ export const AlumniDashboard = () => {
     </div>
 
   );
+
 };

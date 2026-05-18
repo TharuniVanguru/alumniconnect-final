@@ -1,4 +1,5 @@
 import { Header } from '@/components/layout/Header';
+import { useEffect, useState } from 'react';
 import { StatsCard } from '@/components/common/StatsCard';
 import { ContributionBadge } from '@/components/common/ContributionBadge';
 
@@ -23,7 +24,10 @@ import {
   User,
   MapPin,
   TrendingUp,
-  Zap
+  Zap,
+  Bell,
+  Search,
+  ClipboardList
 } from 'lucide-react';
 
 import { Link } from 'react-router-dom';
@@ -32,22 +36,75 @@ import { Link } from 'react-router-dom';
 export const StudentDashboard = () => {
 
   // GET LOGGED IN USER
-  const userInfo =
-    localStorage.getItem("userInfo");
+  const userInfo = localStorage.getItem("userInfo");
+  const user = userInfo ? JSON.parse(userInfo) : null;
 
-  const user =
-    userInfo
-      ? JSON.parse(userInfo)
-      : null;
+  // REAL DATA (fetched)
+  const [applicationsSent, setApplicationsSent] = useState<number>(0);
+  const [eventAttendances, setEventAttendances] = useState<number>(0);
+  const [mentorshipSessions, setMentorshipSessions] = useState<number>(0);
+  const [achievementPoints, setAchievementPoints] = useState<number>(0);
 
+  // fetch counts from backend
+  const fetchStats = async () => {
+    try {
+      const token = user?.token;
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-  // MOCK DATA
-  const studentStats = {
-    applicationsSent: 12,
-    eventAttendances: 8,
-    mentorshipSessions: 3,
-    achievementPoints: 150,
+      // Jobs -> count applications by this student
+      const jobsRes = await fetch("http://localhost:5000/jobs", { headers });
+      const jobs = await jobsRes.json();
+      let appsCount = 0;
+      if (Array.isArray(jobs)) {
+        for (const job of jobs) {
+          if (Array.isArray(job.applications)) {
+            appsCount += job.applications.filter((a: any) => {
+              const sid = typeof a.student === 'string' ? a.student : a.student?._id;
+              return sid === user?._id;
+            }).length;
+          }
+        }
+      }
+      setApplicationsSent(appsCount);
+
+      // Events -> count attendee entries
+      const eventsRes = await fetch("http://localhost:5000/events", { headers });
+      const events = await eventsRes.json();
+      let attended = 0;
+      if (Array.isArray(events)) {
+        for (const ev of events) {
+          if (Array.isArray(ev.attendees)) {
+            attended += ev.attendees.filter((at: any) => {
+              const sid = typeof at.student === 'string' ? at.student : at.student?._id;
+              return sid === user?._id;
+            }).length;
+          }
+        }
+      }
+      setEventAttendances(attended);
+
+      // Mentorships -> fetch mentorships for student
+      const mentorshipRes = await fetch("http://localhost:5000/mentorship", { headers });
+      const mentorships = await mentorshipRes.json();
+      const mentorCount = Array.isArray(mentorships)
+        ? mentorships.filter((m: any) => {
+            const sid = typeof m.student === 'string' ? m.student : m.student?._id;
+            return sid === user?._id && m.status === 'Accepted';
+          }).length
+        : 0;
+      setMentorshipSessions(mentorCount);
+
+      // Compute achievement points (simple formula)
+      const points = appsCount * 5 + attended * 3 + mentorCount * 10 + (user?.trustScore || 0);
+      setAchievementPoints(points);
+    } catch (err) {
+      console.error("Failed to fetch dashboard stats", err);
+    }
   };
+
+  useEffect(() => {
+    fetchStats();
+  }, []);
 
 
   const mockAlumni = [
@@ -168,7 +225,7 @@ export const StudentDashboard = () => {
             <div className="flex items-center space-x-2">
 
               <ContributionBadge
-                points={studentStats.achievementPoints}
+                points={achievementPoints}
                 size="lg"
               />
 
@@ -185,11 +242,11 @@ export const StudentDashboard = () => {
 
           <StatsCard
             title="Applications Sent"
-            value={studentStats.applicationsSent}
+            value={applicationsSent}
             description="Job & internship applications"
             icon={Briefcase}
             trend={{
-              value: 25,
+              value: applicationsSent > 0 ? Math.round((applicationsSent / Math.max(1, applicationsSent)) * 25) : 0,
               label: 'this month',
               isPositive: true
             }}
@@ -197,11 +254,11 @@ export const StudentDashboard = () => {
 
           <StatsCard
             title="Events Attended"
-            value={studentStats.eventAttendances}
+            value={eventAttendances}
             description="Workshops & networking events"
             icon={Calendar}
             trend={{
-              value: 12,
+              value: eventAttendances > 0 ? 12 : 0,
               label: 'this month',
               isPositive: true
             }}
@@ -209,11 +266,11 @@ export const StudentDashboard = () => {
 
           <StatsCard
             title="Mentorship Sessions"
-            value={studentStats.mentorshipSessions}
+            value={mentorshipSessions}
             description="One-on-one guidance sessions"
             icon={MessageSquare}
             trend={{
-              value: 50,
+              value: mentorshipSessions > 0 ? 50 : 0,
               label: 'this month',
               isPositive: true
             }}
@@ -221,7 +278,7 @@ export const StudentDashboard = () => {
 
           <StatsCard
             title="Achievement Points"
-            value={studentStats.achievementPoints}
+            value={achievementPoints}
             description="Bronze level contributor"
             icon={Trophy}
             gradient
@@ -232,7 +289,7 @@ export const StudentDashboard = () => {
 
         {/* QUICK LINKS */}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8 gap-6 mb-8">
 
           {/* Alumni Directory */}
 
@@ -366,6 +423,105 @@ export const StudentDashboard = () => {
           </Link>
 
 
+          {/* SEARCH USERS */}
+
+          <Link to="/student/search">
+
+            <Card className="shadow-soft hover:shadow-medium transition-all cursor-pointer h-full bg-gradient-card">
+
+              <CardContent className="pt-6 text-center">
+
+                <div className="h-12 w-12 rounded-full bg-orange-100 flex items-center justify-center mx-auto mb-4">
+
+                  <Search className="h-6 w-6 text-orange-600" />
+
+                </div>
+
+                <h3 className="font-semibold mb-2">
+
+                  Search
+
+                </h3>
+
+                <p className="text-sm text-muted-foreground">
+
+                  Find alumni and students
+
+                </p>
+
+              </CardContent>
+
+            </Card>
+
+          </Link>
+
+
+          {/* NOTIFICATIONS */}
+
+          <Link to="/notifications">
+
+            <Card className="shadow-soft hover:shadow-medium transition-all cursor-pointer h-full bg-gradient-card">
+
+              <CardContent className="pt-6 text-center">
+
+                <div className="h-12 w-12 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
+
+                  <Bell className="h-6 w-6 text-red-600" />
+
+                </div>
+
+                <h3 className="font-semibold mb-2">
+
+                  Notifications
+
+                </h3>
+
+                <p className="text-sm text-muted-foreground">
+
+                  View updates instantly
+
+                </p>
+
+              </CardContent>
+
+            </Card>
+
+          </Link>
+
+
+          {/* GUIDANCE */}
+
+          <Link to="/student/mentorship">
+
+            <Card className="shadow-soft hover:shadow-medium transition-all cursor-pointer h-full bg-gradient-card">
+
+              <CardContent className="pt-6 text-center">
+
+                <div className="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
+
+                  <ClipboardList className="h-6 w-6 text-green-600" />
+
+                </div>
+
+                <h3 className="font-semibold mb-2">
+
+                  Guidance
+
+                </h3>
+
+                <p className="text-sm text-muted-foreground">
+
+                  Request mentorship help
+
+                </p>
+
+              </CardContent>
+
+            </Card>
+
+          </Link>
+
+
           {/* Chat */}
 
           <Link to="/student/chat">
@@ -398,294 +554,37 @@ export const StudentDashboard = () => {
 
           </Link>
 
-        </div>
+          {/* AI Chatbot */}
 
+          <Link to="/student/ai-chat">
 
-        {/* MAIN SECTION */}
+            <Card className="shadow-soft hover:shadow-medium transition-all cursor-pointer h-full bg-gradient-card">
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <CardContent className="pt-6 text-center">
 
-          {/* TOP ALUMNI */}
+                <div className="h-12 w-12 rounded-full bg-violet-100 flex items-center justify-center mx-auto mb-4">
 
-          <div className="lg:col-span-2">
-
-            <Card className="shadow-soft">
-
-              <CardHeader className="flex flex-row items-center justify-between">
-
-                <div>
-
-                  <CardTitle className="flex items-center space-x-2">
-
-                    <Users className="h-5 w-5" />
-
-                    <span>
-
-                      Top Contributing Alumni
-
-                    </span>
-
-                  </CardTitle>
-
-                  <CardDescription>
-
-                    Connect with alumni helping students
-
-                  </CardDescription>
+                  <Zap className="h-6 w-6 text-violet-600" />
 
                 </div>
 
-              </CardHeader>
+                <h3 className="font-semibold mb-2">
 
-              <CardContent className="space-y-4">
+                  AI Chatbot
 
-                {mockAlumni.map((alumni) => (
+                </h3>
 
-                  <div
-                    key={alumni.id}
-                    className="flex items-center justify-between p-4 rounded-lg border bg-gradient-card"
-                  >
+                <p className="text-sm text-muted-foreground">
 
-                    <div className="flex items-center space-x-4">
+                  Ask the AI assistant for guidance
 
-                      <div className="h-12 w-12 rounded-full bg-gradient-primary flex items-center justify-center">
-
-                        <User className="h-6 w-6 text-white" />
-
-                      </div>
-
-                      <div>
-
-                        <div className="flex items-center space-x-2">
-
-                          <h3 className="font-semibold">
-
-                            {alumni.name}
-
-                          </h3>
-
-                          <ContributionBadge
-                            points={alumni.contributionScore}
-                            size="sm"
-                          />
-
-                          {alumni.isStartupFounder && (
-
-                            <Badge variant="secondary">
-
-                              <Zap className="h-3 w-3 mr-1" />
-
-                              Founder
-
-                            </Badge>
-
-                          )}
-
-                        </div>
-
-                        <p className="text-sm text-muted-foreground">
-
-                          {alumni.position}
-                          {" "}at{" "}
-                          {alumni.company}
-
-                        </p>
-
-                        <div className="flex items-center space-x-4 mt-1">
-
-                          <div className="flex items-center space-x-1 text-xs text-muted-foreground">
-
-                            <MapPin className="h-3 w-3" />
-
-                            <span>
-
-                              {alumni.location}
-
-                            </span>
-
-                          </div>
-
-                          <div className="flex items-center space-x-1 text-xs text-success">
-
-                            <TrendingUp className="h-3 w-3" />
-
-                            <span>
-
-                              Helped {alumni.helpedStudents} students
-
-                            </span>
-
-                          </div>
-
-                        </div>
-
-                      </div>
-
-                    </div>
-
-                    <div className="flex flex-col space-y-2">
-
-                      <Button size="sm" variant="outline">
-
-                        View Profile
-
-                      </Button>
-
-                      <Button size="sm" variant="accent">
-
-                        Connect
-
-                      </Button>
-
-                    </div>
-
-                  </div>
-
-                ))}
+                </p>
 
               </CardContent>
 
             </Card>
 
-          </div>
-
-
-          {/* SIDE SECTION */}
-
-          <div className="space-y-6">
-
-            {/* JOBS */}
-
-            <Card className="shadow-soft">
-
-              <CardHeader>
-
-                <CardTitle className="flex items-center space-x-2">
-
-                  <Briefcase className="h-5 w-5" />
-
-                  <span>
-
-                    Latest Opportunities
-
-                  </span>
-
-                </CardTitle>
-
-              </CardHeader>
-
-              <CardContent className="space-y-3">
-
-                {recentJobs.map((job) => (
-
-                  <div
-                    key={job.id}
-                    className="p-3 rounded-lg border bg-muted/30"
-                  >
-
-                    <h4 className="font-medium text-sm">
-
-                      {job.title}
-
-                    </h4>
-
-                    <p className="text-xs text-muted-foreground">
-
-                      {job.company}
-
-                    </p>
-
-                    <div className="flex items-center justify-between mt-2">
-
-                      <Badge variant="outline">
-
-                        {job.type}
-
-                      </Badge>
-
-                      <Button size="sm" variant="ghost">
-
-                        Apply
-
-                      </Button>
-
-                    </div>
-
-                  </div>
-
-                ))}
-
-              </CardContent>
-
-            </Card>
-
-
-            {/* EVENTS */}
-
-            <Card className="shadow-soft">
-
-              <CardHeader>
-
-                <CardTitle className="flex items-center space-x-2">
-
-                  <Calendar className="h-5 w-5" />
-
-                  <span>
-
-                    Upcoming Events
-
-                  </span>
-
-                </CardTitle>
-
-              </CardHeader>
-
-              <CardContent className="space-y-3">
-
-                {upcomingEvents.map((event) => (
-
-                  <div
-                    key={event.id}
-                    className="p-3 rounded-lg border bg-muted/30"
-                  >
-
-                    <h4 className="font-medium text-sm">
-
-                      {event.title}
-
-                    </h4>
-
-                    <p className="text-xs text-muted-foreground">
-
-                      by {event.organizer}
-
-                    </p>
-
-                    <div className="flex items-center justify-between mt-2">
-
-                      <span className="text-xs text-muted-foreground">
-
-                        {event.attendees} attending
-
-                      </span>
-
-                      <Button size="sm" variant="ghost">
-
-                        Join
-
-                      </Button>
-
-                    </div>
-
-                  </div>
-
-                ))}
-
-              </CardContent>
-
-            </Card>
-
-          </div>
+          </Link>
 
         </div>
 

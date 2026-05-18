@@ -40,6 +40,11 @@ const userSchema = new mongoose.Schema(
       default: "student",
     },
 
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
+
     branch: {
       type: String,
       default: "",

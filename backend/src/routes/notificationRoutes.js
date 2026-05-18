@@ -1,8 +1,12 @@
-const express = require("express");
+const express =
+  require("express");
 
 const {
+
   getNotifications,
+
   markNotificationRead,
+
 } = require(
   "../controllers/notificationController"
 );
@@ -13,10 +17,13 @@ const {
   "../middleware/authMiddleware"
 );
 
-const router = express.Router();
+const router =
+  express.Router();
 
 
+// =========================
 // GET NOTIFICATIONS
+// =========================
 router.get(
   "/",
   protect,
@@ -24,7 +31,9 @@ router.get(
 );
 
 
+// =========================
 // MARK AS READ
+// =========================
 router.put(
   "/:id/read",
   protect,
@@ -32,4 +41,5 @@ router.put(
 );
 
 
-module.exports = router;
+module.exports =
+  router;
