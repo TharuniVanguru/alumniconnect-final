@@ -54,7 +54,9 @@ export const LoginForm = () => {
   const { toast } = useToast();
 
 
-  // CLEAR INPUTS WHEN PAGE LOADS
+  // =========================
+  // CLEAR INPUTS
+  // =========================
   useEffect(() => {
 
     setIdentifier('');
@@ -64,7 +66,9 @@ export const LoginForm = () => {
   }, []);
 
 
+  // =========================
   // LOGIN FUNCTION
+  // =========================
   const handleSubmit = async (
     e: React.FormEvent
   ) => {
@@ -75,72 +79,151 @@ export const LoginForm = () => {
 
       setIsLoading(true);
 
-      const response = await fetch(
-        'http://localhost:5000/auth/login',
-        {
-          method: 'POST',
-
-          headers: {
-            'Content-Type': 'application/json',
-          },
-
-          body: JSON.stringify({
-            identifier,
-            password,
-          }),
-        }
+      console.log(
+        "Sending login request..."
       );
 
-      const data = await response.json();
+      const response =
+        await fetch(
 
+          'http://localhost:5000/auth/login',
+
+          {
+
+            method: 'POST',
+
+            headers: {
+
+              'Content-Type':
+                'application/json',
+
+            },
+
+            body: JSON.stringify({
+
+              identifier,
+
+              password,
+
+              role: activeRole,
+
+            }),
+
+          }
+
+        );
+
+      console.log(
+        "Response Status:",
+        response.status
+      );
+
+      const data =
+        await response.json();
+
+      console.log(
+        "Response Data:",
+        data
+      );
+
+
+      // =========================
       // LOGIN FAILED
+      // =========================
       if (!response.ok) {
 
         toast({
-          title: 'Login failed',
+
+          title:
+            'Login failed',
+
           description:
             data.message ||
             'Invalid credentials',
-          variant: 'destructive',
+
+          variant:
+            'destructive',
+
         });
 
         return;
+
       }
 
-      // SAVE USER
+
+      // =========================
+      // SAVE USER INFO
+      // =========================
       localStorage.setItem(
+
         'userInfo',
+
         JSON.stringify(data)
+
       );
 
-      // SUCCESS
+
+      // =========================
+      // SUCCESS TOAST
+      // =========================
       toast({
-        title: 'Welcome back!',
+
+        title:
+          'Welcome back!',
+
         description:
           `Successfully logged in as ${data.role}`,
+
       });
 
+
+      // =========================
       // CLEAR INPUTS
+      // =========================
       setIdentifier('');
 
       setPassword('');
 
-      // REDIRECT — if first login, force password change
+
+      // =========================
+      // REDIRECT
+      // =========================
       if (data.isFirstLogin) {
-        navigate('/change-password');
-      } else {
-        navigate(`/${data.role}/dashboard`);
+
+        navigate(
+          '/change-password'
+        );
+
+      }
+
+      else {
+
+        navigate(
+          `/${data.role}/dashboard`
+        );
+
       }
 
     }
 
     catch (error) {
 
+      console.log(
+        "LOGIN ERROR:",
+        error
+      );
+
       toast({
-        title: 'Server Error',
+
+        title:
+          'Server Error',
+
         description:
           'Backend connection failed',
-        variant: 'destructive',
+
+        variant:
+          'destructive',
+
       });
 
     }
@@ -150,28 +233,50 @@ export const LoginForm = () => {
       setIsLoading(false);
 
     }
+
   };
 
 
+  // =========================
   // ROLE ICONS
+  // =========================
   const roleIcons = {
-    student: <User className="h-4 w-4" />,
-    alumni: <GraduationCap className="h-4 w-4" />,
-    admin: <Shield className="h-4 w-4" />,
+
+    student:
+      <User className="h-4 w-4" />,
+
+    alumni:
+      <GraduationCap className="h-4 w-4" />,
+
+    admin:
+      <Shield className="h-4 w-4" />,
+
   };
 
 
+  // =========================
   // QUICK LOGIN
+  // =========================
   const quickLogin = (
+
     role: UserRole,
+
     demoIdentifier: string
+
   ) => {
 
-    setIdentifier(demoIdentifier);
+    setIdentifier(
+      demoIdentifier
+    );
 
-    setPassword('123456');
+    setPassword(
+      '123456'
+    );
 
-    setActiveRole(role);
+    setActiveRole(
+      role
+    );
+
   };
 
 
@@ -201,11 +306,17 @@ export const LoginForm = () => {
         <CardContent>
 
           <Tabs
+
             value={activeRole}
+
             onValueChange={(value) =>
-              setActiveRole(value as UserRole)
+              setActiveRole(
+                value as UserRole
+              )
             }
+
             className="w-full"
+
           >
 
             <TabsList className="grid w-full grid-cols-3">
@@ -281,15 +392,25 @@ export const LoginForm = () => {
                   </Label>
 
                   <Input
+
                     id="identifier"
+
                     type="text"
+
                     autoComplete="off"
+
                     placeholder="Enter your identifier"
+
                     value={identifier}
+
                     onChange={(e) =>
-                      setIdentifier(e.target.value)
+                      setIdentifier(
+                        e.target.value
+                      )
                     }
+
                     required
+
                   />
 
                 </div>
@@ -305,15 +426,25 @@ export const LoginForm = () => {
                   </Label>
 
                   <Input
+
                     id="password"
+
                     type="password"
+
                     autoComplete="new-password"
+
                     placeholder="Enter your password"
+
                     value={password}
+
                     onChange={(e) =>
-                      setPassword(e.target.value)
+                      setPassword(
+                        e.target.value
+                      )
                     }
+
                     required
+
                   />
 
                 </div>
@@ -321,25 +452,49 @@ export const LoginForm = () => {
 
                 {/* LOGIN BUTTON */}
                 <Button
+
                   type="submit"
+
                   className="w-full"
+
                   disabled={isLoading}
+
                   variant="hero"
+
                 >
 
-                  {isLoading
-                    ? 'Signing in...'
-                    : 'Sign In'}
+                  {
+
+                    isLoading
+
+                      ? 'Signing in...'
+
+                      : 'Sign In'
+
+                  }
 
                 </Button>
 
               </form>
 
-              <div className="text-right">
-                <Link to="/forgot-password" className="text-sm text-primary hover:underline">
+
+              {/* FORGOT PASSWORD */}
+              <div className="text-right mt-2">
+
+                <Link
+
+                  to="/forgot-password"
+
+                  className="text-sm text-primary hover:underline"
+
+                >
+
                   Forgot password?
+
                 </Link>
+
               </div>
+
 
               {/* QUICK LOGIN */}
               <div className="mt-4 p-3 bg-muted rounded-lg">
@@ -353,15 +508,20 @@ export const LoginForm = () => {
                 <div className="flex flex-col space-y-1">
 
                   <Button
+
                     variant="ghost"
+
                     size="sm"
+
                     onClick={() =>
                       quickLogin(
                         'student',
                         '22A91A05A1'
                       )
                     }
+
                     className="justify-start"
+
                   >
 
                     {roleIcons.student}
@@ -372,15 +532,20 @@ export const LoginForm = () => {
 
 
                   <Button
+
                     variant="ghost"
+
                     size="sm"
+
                     onClick={() =>
                       quickLogin(
                         'alumni',
                         'ALU001'
                       )
                     }
+
                     className="justify-start"
+
                   >
 
                     {roleIcons.alumni}
@@ -391,15 +556,20 @@ export const LoginForm = () => {
 
 
                   <Button
+
                     variant="ghost"
+
                     size="sm"
+
                     onClick={() =>
                       quickLogin(
                         'admin',
                         'ADMIN001'
                       )
                     }
+
                     className="justify-start"
+
                   >
 
                     {roleIcons.admin}
@@ -426,8 +596,11 @@ export const LoginForm = () => {
             Don&apos;t have an account?
 
             <Link
+
               to="/register"
+
               className="text-primary hover:underline ml-1"
+
             >
 
               Sign up
@@ -441,5 +614,7 @@ export const LoginForm = () => {
       </Card>
 
     </div>
+
   );
+
 };

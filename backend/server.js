@@ -4,17 +4,34 @@ const dotenv = require("dotenv");
 const http = require("http");
 const { Server } = require("socket.io");
 
-const connectDB = require("./src/config/db");
+const connectDB =
+  require("./src/config/db");
 
-const authRoutes = require("./src/routes/authRoutes");
-const profileRoutes = require("./src/routes/profileRoutes");
-const jobRoutes = require("./src/routes/jobRoutes");
-const eventRoutes = require("./src/routes/eventRoutes");
-const mentorshipRoutes = require("./src/routes/mentorshipRoutes");
-const notificationRoutes = require("./src/routes/notificationRoutes");
-const messageRoutes = require("./src/routes/messageRoutes");
 
-// NEW ROUTES
+// =========================
+// ROUTES
+// =========================
+const authRoutes =
+  require("./src/routes/authRoutes");
+
+const profileRoutes =
+  require("./src/routes/profileRoutes");
+
+const jobRoutes =
+  require("./src/routes/jobRoutes");
+
+const eventRoutes =
+  require("./src/routes/eventRoutes");
+
+const mentorshipRoutes =
+  require("./src/routes/mentorshipRoutes");
+
+const notificationRoutes =
+  require("./src/routes/notificationRoutes");
+
+const messageRoutes =
+  require("./src/routes/messageRoutes");
+
 const userRoutes =
   require("./src/routes/userRoutes");
 
@@ -24,7 +41,6 @@ const guidanceRoutes =
 const recommendationRoutes =
   require("./src/routes/recommendationRoutes");
 
-// AI CHATBOT ROUTE
 const chatbotRoutes =
   require("./src/routes/chatbotRoutes");
 
@@ -43,18 +59,33 @@ const app = express();
 
 
 // =========================
-// MIDDLEWARE
+// CORS
 // =========================
-app.use(cors({
+app.use(
 
-  origin:
-    "http://localhost:8080",
+  cors({
 
-  credentials: true,
+    origin: [
 
-}));
+      "http://localhost:8080",
 
-app.use(express.json());
+      "http://localhost:8081",
+
+    ],
+
+    credentials: true,
+
+  })
+
+);
+
+
+// =========================
+// BODY PARSER
+// =========================
+app.use(
+  express.json()
+);
 
 
 // =========================
@@ -72,13 +103,23 @@ const io =
 
     cors: {
 
-      origin:
+      origin: [
+
         "http://localhost:8080",
 
-      methods: [
-        "GET",
-        "POST",
+        "http://localhost:8081",
+
       ],
+
+      methods: [
+
+        "GET",
+
+        "POST",
+
+      ],
+
+      credentials: true,
 
     },
 
@@ -86,7 +127,7 @@ const io =
 
 
 // =========================
-// ONLINE USERS MAP
+// ONLINE USERS
 // =========================
 const onlineUsers =
   new Map();
@@ -112,20 +153,29 @@ io.on(
       "joinRoom",
       (userId) => {
 
-        if (!userId) return;
+        if (!userId)
+          return;
 
-        socket.join(userId);
+        socket.join(
+          userId
+        );
 
         onlineUsers.set(
+
           userId.toString(),
+
           socket.id
+
         );
 
         io.emit(
+
           "onlineUsers",
+
           Array.from(
             onlineUsers.keys()
           )
+
         );
 
         console.log(
@@ -171,14 +221,16 @@ io.on(
         socket.to(
           data.receiverId
         ).emit(
+
           "userTyping",
+
           {
 
             senderId:
-              data.senderId ||
-              data.receiverId,
+              data.senderId,
 
           }
+
         );
 
       }
@@ -218,13 +270,16 @@ io.on(
         io.to(
           data.senderId
         ).emit(
+
           "messageDelivered",
+
           {
 
             status:
               "delivered",
 
           }
+
         );
 
       }
@@ -244,13 +299,16 @@ io.on(
         io.to(
           data.senderId
         ).emit(
+
           "messageSeen",
+
           {
 
             status:
               "seen",
 
           }
+
         );
 
       }
@@ -294,16 +352,22 @@ io.on(
         }
 
         io.emit(
+
           "onlineUsers",
+
           Array.from(
             onlineUsers.keys()
           )
+
         );
 
         console.log(
+
           "🔴 User Disconnected:",
+
           disconnectedUser ||
             socket.id
+
         );
 
       }
@@ -351,7 +415,6 @@ app.use(
   messageRoutes
 );
 
-// NEW
 app.use(
   "/users",
   userRoutes
@@ -372,7 +435,6 @@ app.use(
   adminRoutes
 );
 
-// AI CHATBOT
 app.use(
   "/ai",
   chatbotRoutes
