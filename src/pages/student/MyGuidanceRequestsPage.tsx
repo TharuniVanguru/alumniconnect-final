@@ -25,14 +25,22 @@ import { Button }
   from "@/components/ui/button";
 
 import {
+  Textarea,
+} from "@/components/ui/textarea";
+
+import {
   Loader2,
   MessageCircle,
   Clock3,
   CheckCircle2,
   XCircle,
+  Star,
 } from "lucide-react";
 
 
+// =====================================
+// INTERFACE
+// =====================================
 interface GuidanceRequest {
 
   _id: string;
@@ -51,11 +59,22 @@ interface GuidanceRequest {
 
   status: string;
 
+  meetingLink?: string;
+
+  scheduledDate?: string;
+
+  feedback?: string;
+
+  rating?: number;
+
   createdAt: string;
 
 }
 
 
+// =====================================
+// COMPONENT
+// =====================================
 const MyGuidanceRequestsPage =
   () => {
 
@@ -80,6 +99,17 @@ const MyGuidanceRequestsPage =
     ] = useState("");
 
 
+    const [
+      feedback,
+      setFeedback,
+    ] = useState("");
+
+    const [
+      rating,
+      setRating,
+    ] = useState(5);
+
+
     const userInfo =
       JSON.parse(
         localStorage.getItem(
@@ -88,9 +118,9 @@ const MyGuidanceRequestsPage =
       );
 
 
-    // =========================
+    // =====================================
     // FETCH REQUESTS
-    // =========================
+    // =====================================
     const fetchRequests =
       async () => {
 
@@ -101,7 +131,7 @@ const MyGuidanceRequestsPage =
           const response =
             await axios.get(
 
-              "http://localhost:5000/guidance/student-requests",
+              "http://localhost:5000/guidance/student",
 
               {
 
@@ -141,9 +171,104 @@ const MyGuidanceRequestsPage =
       };
 
 
-    // =========================
+    // =====================================
+    // SUBMIT FEEDBACK
+    // =====================================
+    const submitFeedback =
+      async (
+        requestId: string
+      ) => {
+
+        try {
+
+          await axios.put(
+
+            `http://localhost:5000/guidance/${requestId}`,
+
+            {
+
+              status:
+                "Completed",
+
+              feedback,
+
+              rating,
+
+            },
+
+            {
+
+              headers: {
+
+                Authorization:
+                  `Bearer ${userInfo.token}`,
+
+              },
+
+            }
+
+          );
+
+
+          setRequests(
+
+            (
+              prev
+            ) =>
+
+              prev.map(
+                (
+                  req
+                ) =>
+
+                  req._id ===
+                  requestId
+
+                    ? {
+
+                        ...req,
+
+                        feedback,
+
+                        rating,
+
+                        status:
+                          "Completed",
+
+                      }
+
+                    : req
+              )
+
+          );
+
+
+          setFeedback("");
+
+          setRating(5);
+
+          alert(
+            "Feedback submitted successfully"
+          );
+
+        }
+
+        catch (error) {
+
+          console.log(error);
+
+          alert(
+            "Failed to submit feedback"
+          );
+
+        }
+
+      };
+
+
+    // =====================================
     // INITIAL LOAD
-    // =========================
+    // =====================================
     useEffect(() => {
 
       fetchRequests();
@@ -151,9 +276,9 @@ const MyGuidanceRequestsPage =
     }, []);
 
 
-    // =========================
+    // =====================================
     // STATUS BADGE
-    // =========================
+    // =====================================
     const renderStatusBadge =
       (status: string) => {
 
@@ -187,6 +312,18 @@ const MyGuidanceRequestsPage =
 
             );
 
+          case "Completed":
+
+            return (
+
+              <Badge className="bg-blue-600 hover:bg-blue-600">
+
+                Completed
+
+              </Badge>
+
+            );
+
           default:
 
             return (
@@ -209,6 +346,9 @@ const MyGuidanceRequestsPage =
       };
 
 
+    // =====================================
+    // UI
+    // =====================================
     return (
 
       <div className="min-h-screen bg-background">
@@ -229,7 +369,7 @@ const MyGuidanceRequestsPage =
 
             <p className="text-muted-foreground mt-2">
 
-              Track all mentorship and guidance requests sent to alumni
+              Track mentorship and guidance requests
 
             </p>
 
@@ -271,12 +411,6 @@ const MyGuidanceRequestsPage =
 
                 </h2>
 
-                <p className="text-muted-foreground">
-
-                  Your mentorship requests will appear here
-
-                </p>
-
               </CardContent>
 
             </Card>
@@ -312,6 +446,7 @@ const MyGuidanceRequestsPage =
                             Alumni:
                             {" "}
                             {request.alumniName}
+
                           </p>
 
                         </div>
@@ -332,6 +467,7 @@ const MyGuidanceRequestsPage =
                           <span className="font-semibold">
 
                             Domain:
+
                           </span>
 
                           <p className="text-muted-foreground mt-1">
@@ -347,26 +483,11 @@ const MyGuidanceRequestsPage =
 
                           <span className="font-semibold">
 
-                            Urgency:
+                            Description:
+
                           </span>
 
                           <p className="text-muted-foreground mt-1">
-
-                            {request.urgency}
-
-                          </p>
-
-                        </div>
-
-
-                        <div>
-
-                          <span className="font-semibold">
-
-                            Description:
-                          </span>
-
-                          <p className="text-muted-foreground mt-1 leading-7">
 
                             {request.description}
 
@@ -375,41 +496,226 @@ const MyGuidanceRequestsPage =
                         </div>
 
 
-                        <div className="text-xs text-muted-foreground pt-2">
+                        {/* MEETING LINK */}
 
-                          {new Date(
-                            request.createdAt
-                          ).toLocaleString()}
+                        {request.meetingLink && (
 
-                        </div>
+                          <div>
+
+                            <span className="font-semibold">
+
+                              Meeting Link:
+
+                            </span>
+
+                            <a
+                              href={request.meetingLink}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="block text-blue-600 underline mt-1"
+                            >
+
+                              Join Meeting
+
+                            </a>
+
+                          </div>
+
+                        )}
+
+
+                        {/* DATE */}
+
+                        {request.scheduledDate && (
+
+                          <div>
+
+                            <span className="font-semibold">
+
+                              Scheduled Date:
+
+                            </span>
+
+                            <p className="text-muted-foreground mt-1">
+
+                              {
+
+                                new Date(
+                                  request.scheduledDate
+                                ).toLocaleString()
+
+                              }
+
+                            </p>
+
+                          </div>
+
+                        )}
+
+
+                        {/* FEEDBACK DISPLAY */}
+
+                        {request.feedback && (
+
+                          <div>
+
+                            <span className="font-semibold">
+
+                              Feedback:
+
+                            </span>
+
+                            <p className="text-muted-foreground mt-1">
+
+                              {request.feedback}
+
+                            </p>
+
+                          </div>
+
+                        )}
+
+
+                        {/* RATING DISPLAY */}
+
+                        {request.rating && (
+
+                          <div className="flex items-center gap-2">
+
+                            <span className="font-semibold">
+
+                              Rating:
+
+                            </span>
+
+                            <div className="flex">
+
+                              {
+
+                                [...Array(request.rating)].map(
+                                  (_, i) => (
+
+                                    <Star
+                                      key={i}
+                                      className="h-4 w-4 fill-yellow-400 text-yellow-400"
+                                    />
+
+                                  )
+                                )
+
+                              }
+
+                            </div>
+
+                          </div>
+
+                        )}
 
                       </div>
 
 
-                      {/* BUTTON */}
+                      {/* BUTTONS */}
 
-                      <div className="mt-6">
+                      <div className="mt-6 flex flex-wrap gap-3">
 
                         {request.status ===
                           "Accepted" && (
 
-                          <Button
-                            variant="outline"
+                          <>
 
-                            onClick={() => {
+                            <Button
+                              variant="outline"
 
-                              navigate(
-                                `/student/chat/${request.alumniId}`
-                              );
+                              onClick={() => {
 
-                            }}
-                          >
+                                navigate(
+                                  `/student/chat/${request.alumniId}`
+                                );
 
-                            <MessageCircle className="h-4 w-4 mr-2" />
+                              }}
+                            >
 
-                            Open Chat
+                              <MessageCircle className="h-4 w-4 mr-2" />
 
-                          </Button>
+                              Open Chat
+
+                            </Button>
+
+
+                            {/* FEEDBACK SECTION */}
+
+                            <div className="w-full mt-4 space-y-3">
+
+                              <Textarea
+
+                                placeholder="Write your feedback"
+
+                                value={feedback}
+
+                                onChange={(e) =>
+                                  setFeedback(
+                                    e.target.value
+                                  )
+                                }
+
+                              />
+
+
+                              <select
+
+                                value={rating}
+
+                                onChange={(e) =>
+                                  setRating(
+                                    Number(
+                                      e.target.value
+                                    )
+                                  )
+                                }
+
+                                className="border rounded-lg p-2 w-full"
+                              >
+
+                                <option value={5}>
+                                  5 Stars
+                                </option>
+
+                                <option value={4}>
+                                  4 Stars
+                                </option>
+
+                                <option value={3}>
+                                  3 Stars
+                                </option>
+
+                                <option value={2}>
+                                  2 Stars
+                                </option>
+
+                                <option value={1}>
+                                  1 Star
+                                </option>
+
+                              </select>
+
+
+                              <Button
+
+                                onClick={() =>
+                                  submitFeedback(
+                                    request._id
+                                  )
+                                }
+
+                              >
+
+                                Submit Feedback
+
+                              </Button>
+
+                            </div>
+
+                          </>
 
                         )}
 

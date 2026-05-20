@@ -8,6 +8,11 @@ const Notification =
     "../models/Notification"
   );
 
+const User =
+  require(
+    "../models/User"
+  );
+
 
 // =========================
 // CREATE REQUEST
@@ -39,6 +44,33 @@ const createRequest =
 
           message:
             "Please fill all required fields",
+
+        });
+
+      }
+
+
+      // CHECK DUPLICATE PENDING REQUEST
+      const existingRequest =
+        await GuidanceRequest.findOne({
+
+          studentId:
+            req.user._id,
+
+          alumniId,
+
+          topic,
+
+          status: "Pending",
+
+        });
+
+      if (existingRequest) {
+
+        return res.status(400).json({
+
+          message:
+            "You already sent a similar request",
 
         });
 
@@ -231,15 +263,30 @@ const updateStatus =
       }
 
 
-      // ONLY ACCEPTED / REJECTED
+      // =========================
+      // VALID STATUSES
+      // =========================
+      const validStatuses = [
+
+        "Pending",
+
+        "Accepted",
+
+        "Rejected",
+
+        "Completed",
+
+      ];
+
+
       if (
-        ![
-          "Accepted",
-          "Rejected",
-          "Pending",
-        ].includes(
+
+        req.body.status &&
+
+        !validStatuses.includes(
           req.body.status
         )
+
       ) {
 
         return res.status(400).json({
@@ -252,15 +299,92 @@ const updateStatus =
       }
 
 
-      request.status =
-        req.body.status;
+      // =========================
+      // UPDATE STATUS
+      // =========================
+      if (req.body.status) {
+
+        request.status =
+          req.body.status;
+
+      }
 
 
-      const updated =
+      // =========================
+      // UPDATE MEETING LINK
+      // =========================
+      if (req.body.meetingLink) {
+
+        request.meetingLink =
+          req.body.meetingLink;
+
+      }
+
+
+      // =========================
+      // UPDATE SCHEDULE DATE
+      // =========================
+      if (req.body.scheduledDate) {
+
+        request.scheduledDate =
+          req.body.scheduledDate;
+
+      }
+
+
+      // =========================
+      // UPDATE FEEDBACK
+      // =========================
+      if (req.body.feedback) {
+
+        request.feedback =
+          req.body.feedback;
+
+      }
+
+
+      // =========================
+      // UPDATE RATING
+      // =========================
+      if (req.body.rating) {
+
+        request.rating =
+          req.body.rating;
+
+
+        // UPDATE ALUMNI TRUST SCORE
+        const alumni =
+          await User.findById(
+            request.alumniId
+          );
+
+        if (alumni) {
+
+          alumni.trustScore =
+            Math.min(
+
+              100,
+
+              (alumni.trustScore || 40) +
+              req.body.rating
+
+            );
+
+          await alumni.save();
+
+        }
+
+      }
+
+
+      // SAVE REQUEST
+      const updatedRequest =
         await request.save();
 
 
-      // CREATE NOTIFICATION FOR STUDENT
+      // =========================
+      // CREATE NOTIFICATION
+      // =========================
       await Notification.create({
 
         recipient:
@@ -270,7 +394,7 @@ const updateStatus =
           "Guidance Request Updated",
 
         message:
-          `Your guidance request has been ${req.body.status}`,
+          `Your guidance request status changed to ${request.status}`,
 
         type:
           "guidance",
@@ -279,7 +403,7 @@ const updateStatus =
 
 
       res.status(200).json(
-        updated
+        updatedRequest
       );
 
     }

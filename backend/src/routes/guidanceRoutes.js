@@ -27,43 +27,66 @@ const router =
 
 // =========================
 // CREATE REQUEST
+// POST /guidance/request
 // =========================
 router.post(
-  "/",
+
+  "/request",
+
   protect,
+
   createRequest
+
 );
 
 
 // =========================
 // GET ALUMNI REQUESTS
+// GET /guidance/alumni
 // =========================
 router.get(
+
   "/alumni",
+
   protect,
+
   getMyRequests
+
 );
 
 
 // =========================
 // GET STUDENT REQUESTS
+// GET /guidance/student
 // =========================
 router.get(
+
   "/student",
+
   protect,
+
   getStudentRequests
+
 );
 
 
 // =========================
 // UPDATE STATUS
+// PUT /guidance/:id/status
 // =========================
 router.put(
-  "/:id",
+
+  "/:id/status",
+
   protect,
+
   updateStatus
+
 );
 
 
+// =========================
+// EXPORT
+// =========================
 module.exports =
   router;

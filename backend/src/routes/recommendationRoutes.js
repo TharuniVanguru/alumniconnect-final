@@ -2,7 +2,7 @@ const express =
   require("express");
 
 const {
-  getRecommendedAlumni,
+  getRecommendations,
 } = require(
   "../controllers/recommendationController"
 );
@@ -18,12 +18,12 @@ const router =
 
 
 // ==============================
-// GET RECOMMENDATIONS
+// GET AI RECOMMENDATIONS
 // ==============================
 router.get(
   "/",
   protect,
-  getRecommendedAlumni
+  getRecommendations
 );
 
 

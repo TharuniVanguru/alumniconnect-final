@@ -1,11 +1,18 @@
 const mongoose =
   require("mongoose");
 
+
+// ======================================
+// GUIDANCE REQUEST SCHEMA
+// ======================================
 const guidanceRequestSchema =
-  mongoose.Schema(
+  new mongoose.Schema(
 
     {
 
+      // =========================
+      // STUDENT
+      // =========================
       studentId: {
 
         type:
@@ -23,8 +30,14 @@ const guidanceRequestSchema =
 
         required: true,
 
+        trim: true,
+
       },
 
+
+      // =========================
+      // ALUMNI
+      // =========================
       alumniId: {
 
         type:
@@ -36,18 +49,27 @@ const guidanceRequestSchema =
 
       },
 
-      // NEW
       alumniName: {
 
         type: String,
 
+        required: true,
+
+        trim: true,
+
       },
 
+
+      // =========================
+      // GUIDANCE DETAILS
+      // =========================
       domain: {
 
         type: String,
 
         required: true,
+
+        trim: true,
 
       },
 
@@ -57,6 +79,8 @@ const guidanceRequestSchema =
 
         required: true,
 
+        trim: true,
+
       },
 
       description: {
@@ -65,8 +89,14 @@ const guidanceRequestSchema =
 
         required: true,
 
+        trim: true,
+
       },
 
+
+      // =========================
+      // URGENCY
+      // =========================
       urgency: {
 
         type: String,
@@ -81,6 +111,10 @@ const guidanceRequestSchema =
 
       },
 
+
+      // =========================
+      // STATUS
+      // =========================
       status: {
 
         type: String,
@@ -89,9 +123,54 @@ const guidanceRequestSchema =
           "Pending",
           "Accepted",
           "Rejected",
+          "Completed",
         ],
 
         default: "Pending",
+
+      },
+
+
+      // =========================
+      // MEETING DETAILS
+      // =========================
+      meetingLink: {
+
+        type: String,
+
+        default: "",
+
+      },
+
+      scheduledDate: {
+
+        type: Date,
+
+      },
+
+
+      // =========================
+      // FEEDBACK
+      // =========================
+      feedback: {
+
+        type: String,
+
+        default: "",
+
+      },
+
+
+      // =========================
+      // RATING
+      // =========================
+      rating: {
+
+        type: Number,
+
+        min: 1,
+
+        max: 5,
 
       },
 
@@ -105,11 +184,22 @@ const guidanceRequestSchema =
 
   );
 
+
+// ======================================
+// MODEL
+// ======================================
 const GuidanceRequest =
   mongoose.model(
+
     "GuidanceRequest",
+
     guidanceRequestSchema
+
   );
 
+
+// ======================================
+// EXPORT
+// ======================================
 module.exports =
   GuidanceRequest;

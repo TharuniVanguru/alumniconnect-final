@@ -24,15 +24,23 @@ import {
   Badge,
 } from "@/components/ui/badge";
 
+import { Input }
+  from "@/components/ui/input";
+
 import {
   Loader2,
   MessageCircle,
   CheckCircle2,
   XCircle,
   Clock3,
+  Calendar,
+  Video,
 } from "lucide-react";
 
 
+// ======================================
+// INTERFACE
+// ======================================
 interface GuidanceRequest {
 
   _id: string;
@@ -53,9 +61,16 @@ interface GuidanceRequest {
 
   createdAt: string;
 
+  meetingLink?: string;
+
+  scheduledDate?: string;
+
 }
 
 
+// ======================================
+// COMPONENT
+// ======================================
 const GuidanceRequestsPage =
   () => {
 
@@ -80,6 +95,18 @@ const GuidanceRequestsPage =
     ] = useState("");
 
 
+    const [
+      meetingLink,
+      setMeetingLink,
+    ] = useState("");
+
+
+    const [
+      scheduledDate,
+      setScheduledDate,
+    ] = useState("");
+
+
     const userInfo =
       JSON.parse(
         localStorage.getItem(
@@ -88,9 +115,9 @@ const GuidanceRequestsPage =
       );
 
 
-    // =========================
+    // ======================================
     // FETCH REQUESTS
-    // =========================
+    // ======================================
     const fetchRequests =
       async () => {
 
@@ -101,7 +128,7 @@ const GuidanceRequestsPage =
           const response =
             await axios.get(
 
-              "http://localhost:5000/guidance/my-requests",
+              "http://localhost:5000/guidance/alumni",
 
               {
 
@@ -141,9 +168,9 @@ const GuidanceRequestsPage =
       };
 
 
-    // =========================
+    // ======================================
     // UPDATE STATUS
-    // =========================
+    // ======================================
     const updateStatus =
       async (
         requestId: string,
@@ -157,7 +184,13 @@ const GuidanceRequestsPage =
             `http://localhost:5000/guidance/${requestId}/status`,
 
             {
+
               status,
+
+              meetingLink,
+
+              scheduledDate,
+
             },
 
             {
@@ -173,12 +206,14 @@ const GuidanceRequestsPage =
 
           );
 
+
           // UPDATE UI
           setRequests(
             (
-              prevRequests
+              prev
             ) =>
-              prevRequests.map(
+
+              prev.map(
                 (
                   request
                 ) =>
@@ -187,12 +222,21 @@ const GuidanceRequestsPage =
                   requestId
 
                     ? {
+
                         ...request,
+
                         status,
+
+                        meetingLink,
+
+                        scheduledDate,
+
                       }
 
                     : request
+
               )
+
           );
 
         }
@@ -210,9 +254,9 @@ const GuidanceRequestsPage =
       };
 
 
-    // =========================
+    // ======================================
     // INITIAL LOAD
-    // =========================
+    // ======================================
     useEffect(() => {
 
       fetchRequests();
@@ -220,9 +264,9 @@ const GuidanceRequestsPage =
     }, []);
 
 
-    // =========================
+    // ======================================
     // STATUS BADGE
-    // =========================
+    // ======================================
     const renderStatusBadge =
       (status: string) => {
 
@@ -232,7 +276,7 @@ const GuidanceRequestsPage =
 
             return (
 
-              <Badge className="bg-green-600 hover:bg-green-600">
+              <Badge className="bg-green-600">
 
                 <CheckCircle2 className="h-3 w-3 mr-1" />
 
@@ -256,13 +300,25 @@ const GuidanceRequestsPage =
 
             );
 
+          case "Completed":
+
+            return (
+
+              <Badge className="bg-blue-600">
+
+                Completed
+
+              </Badge>
+
+            );
+
           default:
 
             return (
 
               <Badge
                 variant="secondary"
-                className="bg-yellow-100 text-yellow-700 hover:bg-yellow-100"
+                className="bg-yellow-100 text-yellow-700"
               >
 
                 <Clock3 className="h-3 w-3 mr-1" />
@@ -286,8 +342,7 @@ const GuidanceRequestsPage =
 
         <div className="max-w-7xl mx-auto p-6">
 
-          {/* TITLE */}
-
+          {/* HEADER */}
           <div className="mb-8">
 
             <h1 className="text-4xl font-bold">
@@ -298,7 +353,7 @@ const GuidanceRequestsPage =
 
             <p className="text-muted-foreground mt-2">
 
-              Manage mentorship and career guidance requests from students
+              Manage student mentorship requests
 
             </p>
 
@@ -306,7 +361,6 @@ const GuidanceRequestsPage =
 
 
           {/* ERROR */}
-
           {error && (
 
             <div className="bg-red-100 text-red-600 p-4 rounded-xl mb-5">
@@ -319,7 +373,6 @@ const GuidanceRequestsPage =
 
 
           {/* LOADING */}
-
           {loading ? (
 
             <div className="flex items-center justify-center py-20">
@@ -330,7 +383,7 @@ const GuidanceRequestsPage =
 
           ) : requests.length === 0 ? (
 
-            <Card className="shadow-xl rounded-2xl">
+            <Card>
 
               <CardContent className="py-20 text-center">
 
@@ -339,12 +392,6 @@ const GuidanceRequestsPage =
                   No Requests Found
 
                 </h2>
-
-                <p className="text-muted-foreground">
-
-                  Student mentorship requests will appear here
-
-                </p>
 
               </CardContent>
 
@@ -364,9 +411,8 @@ const GuidanceRequestsPage =
 
                     <CardContent className="p-6">
 
-                      {/* TOP SECTION */}
-
-                      <div className="flex items-start justify-between gap-4 mb-5">
+                      {/* TOP */}
+                      <div className="flex items-start justify-between mb-5">
 
                         <div>
 
@@ -392,7 +438,6 @@ const GuidanceRequestsPage =
 
 
                       {/* CONTENT */}
-
                       <div className="space-y-4">
 
                         <div>
@@ -400,9 +445,10 @@ const GuidanceRequestsPage =
                           <span className="font-semibold">
 
                             Domain:
+
                           </span>
 
-                          <p className="text-muted-foreground mt-1">
+                          <p>
 
                             {request.domain}
 
@@ -416,9 +462,10 @@ const GuidanceRequestsPage =
                           <span className="font-semibold">
 
                             Urgency:
+
                           </span>
 
-                          <p className="text-muted-foreground mt-1">
+                          <p>
 
                             {request.urgency}
 
@@ -432,9 +479,10 @@ const GuidanceRequestsPage =
                           <span className="font-semibold">
 
                             Description:
+
                           </span>
 
-                          <p className="text-muted-foreground mt-1 leading-7">
+                          <p className="leading-7">
 
                             {request.description}
 
@@ -443,58 +491,135 @@ const GuidanceRequestsPage =
                         </div>
 
 
-                        <div className="text-xs text-muted-foreground pt-2">
+                        {/* MEETING LINK */}
+                        {request.meetingLink && (
 
-                          {new Date(
-                            request.createdAt
-                          ).toLocaleString()}
+                          <div>
 
-                        </div>
+                            <span className="font-semibold flex items-center gap-2">
+
+                              <Video className="h-4 w-4" />
+
+                              Meeting Link
+
+                            </span>
+
+                            <a
+
+                              href={request.meetingLink}
+
+                              target="_blank"
+
+                              className="text-blue-600 underline"
+
+                            >
+
+                              Join Meeting
+
+                            </a>
+
+                          </div>
+
+                        )}
+
+
+                        {/* DATE */}
+                        {request.scheduledDate && (
+
+                          <div>
+
+                            <span className="font-semibold flex items-center gap-2">
+
+                              <Calendar className="h-4 w-4" />
+
+                              Scheduled Date
+
+                            </span>
+
+                            <p>
+
+                              {new Date(
+                                request.scheduledDate
+                              ).toLocaleString()}
+
+                            </p>
+
+                          </div>
+
+                        )}
 
                       </div>
 
 
-                      {/* BUTTONS */}
-
-                      <div className="flex flex-wrap gap-3 mt-6">
+                      {/* ACTIONS */}
+                      <div className="mt-6 space-y-3">
 
                         {request.status ===
                           "Pending" && (
 
                           <>
 
-                            <Button
-                              onClick={() =>
-                                updateStatus(
-                                  request._id,
-                                  "Accepted"
+                            <Input
+
+                              placeholder="Google Meet Link"
+
+                              value={meetingLink}
+
+                              onChange={(e) =>
+                                setMeetingLink(
+                                  e.target.value
                                 )
                               }
-                            >
 
-                              <CheckCircle2 className="h-4 w-4 mr-2" />
-
-                              Accept
-
-                            </Button>
+                            />
 
 
-                            <Button
-                              variant="destructive"
+                            <Input
 
-                              onClick={() =>
-                                updateStatus(
-                                  request._id,
-                                  "Rejected"
+                              type="datetime-local"
+
+                              value={scheduledDate}
+
+                              onChange={(e) =>
+                                setScheduledDate(
+                                  e.target.value
                                 )
                               }
-                            >
 
-                              <XCircle className="h-4 w-4 mr-2" />
+                            />
 
-                              Reject
 
-                            </Button>
+                            <div className="flex gap-3">
+
+                              <Button
+                                onClick={() =>
+                                  updateStatus(
+                                    request._id,
+                                    "Accepted"
+                                  )
+                                }
+                              >
+
+                                Accept
+
+                              </Button>
+
+
+                              <Button
+                                variant="destructive"
+                                onClick={() =>
+                                  updateStatus(
+                                    request._id,
+                                    "Rejected"
+                                  )
+                                }
+                              >
+
+                                Reject
+
+                              </Button>
+
+                            </div>
 
                           </>
 
@@ -504,23 +629,40 @@ const GuidanceRequestsPage =
                         {request.status ===
                           "Accepted" && (
 
-                          <Button
-                            variant="outline"
+                          <div className="flex gap-3">
 
-                            onClick={() => {
+                            <Button
+                              variant="outline"
+                              onClick={() =>
 
-                              navigate(
-                                `/alumni/chat/${request.studentId}`
-                              );
+                                navigate(
+                                  `/alumni/chat/${request.studentId}`
+                                )
 
-                            }}
-                          >
+                              }
+                            >
 
-                            <MessageCircle className="h-4 w-4 mr-2" />
+                              <MessageCircle className="h-4 w-4 mr-2" />
 
-                            Open Chat
+                              Open Chat
 
-                          </Button>
+                            </Button>
+
+
+                            <Button
+                              onClick={() =>
+                                updateStatus(
+                                  request._id,
+                                  "Completed"
+                                )
+                              }
+                            >
+
+                              Mark Completed
+
+                            </Button>
+
+                          </div>
 
                         )}
 

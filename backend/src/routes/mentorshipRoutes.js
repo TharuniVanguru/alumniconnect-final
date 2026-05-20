@@ -1,44 +1,81 @@
-const express = require("express");
+const express =
+  require("express");
 
 const {
+
   sendMentorshipRequest,
+
   getMentorshipRequests,
+
   updateMentorshipStatus,
+
 } = require(
   "../controllers/mentorshipController"
 );
 
 const {
+
   protect,
+
 } = require(
   "../middleware/authMiddleware"
 );
 
-const router = express.Router();
+
+const router =
+  express.Router();
 
 
-// SEND REQUEST
+// ======================================
+// SEND MENTORSHIP REQUEST
+// POST /mentorship/request
+// ACCESS: STUDENT
+// ======================================
 router.post(
+
   "/request",
+
   protect,
+
   sendMentorshipRequest
+
 );
 
 
-// GET REQUESTS
+// ======================================
+// GET ALL MENTORSHIP REQUESTS
+// GET /mentorship
+// ACCESS: PRIVATE
+// ======================================
 router.get(
+
   "/",
+
   protect,
+
   getMentorshipRequests
+
 );
 
 
-// UPDATE STATUS
+// ======================================
+// UPDATE REQUEST STATUS
+// PUT /mentorship/:id/status
+// ACCESS: ALUMNI / ADMIN
+// ======================================
 router.put(
+
   "/:id/status",
+
   protect,
+
   updateMentorshipStatus
+
 );
 
 
-module.exports = router;
+// ======================================
+// EXPORT ROUTER
+// ======================================
+module.exports =
+  router;

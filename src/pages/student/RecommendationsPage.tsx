@@ -34,6 +34,9 @@ import {
 } from "react-router-dom";
 
 
+// =========================
+// TYPES
+// =========================
 interface Alumni {
 
   _id: string;
@@ -54,9 +57,14 @@ interface Alumni {
 
   trustScore: number;
 
+  aiScore?: number;
+
 }
 
 
+// =========================
+// COMPONENT
+// =========================
 const RecommendationsPage =
   () => {
 
@@ -81,6 +89,9 @@ const RecommendationsPage =
     ] = useState("");
 
 
+    // =========================
+    // USER INFO
+    // =========================
     const userInfo =
       JSON.parse(
         localStorage.getItem(
@@ -99,6 +110,21 @@ const RecommendationsPage =
 
           setLoading(true);
 
+          setError("");
+
+
+          // TOKEN CHECK
+          if (!userInfo?.token) {
+
+            setError(
+              "Please login again"
+            );
+
+            return;
+
+          }
+
+
           const response =
             await axios.get(
 
@@ -106,12 +132,15 @@ const RecommendationsPage =
 
               {
                 headers: {
+
                   Authorization:
                     `Bearer ${userInfo.token}`,
+
                 },
               }
 
             );
+
 
           setAlumni(
             response.data
@@ -119,12 +148,19 @@ const RecommendationsPage =
 
         }
 
-        catch (error) {
+        catch (error: any) {
 
-          console.log(error);
+          console.log(
+            "Recommendation Error:",
+            error
+          );
 
           setError(
+
+            error?.response?.data?.message ||
+
             "Failed to load recommendations"
+
           );
 
         }
@@ -156,8 +192,8 @@ const RecommendationsPage =
 
         <div className="max-w-7xl mx-auto p-6">
 
-          {/* HEADER */}
 
+          {/* HEADER */}
           <div className="mb-8">
 
             <div className="flex items-center gap-3 mb-3">
@@ -178,8 +214,9 @@ const RecommendationsPage =
 
                 <p className="text-muted-foreground text-lg">
 
-                  Smart mentor matching based on skills,
-                  interests, domain & trust score
+                  Smart mentor matching based on
+                  skills, interests, domain &
+                  trust score
 
                 </p>
 
@@ -191,10 +228,9 @@ const RecommendationsPage =
 
 
           {/* ERROR */}
-
           {error && (
 
-            <div className="bg-red-100 text-red-600 p-4 rounded-xl mb-6">
+            <div className="bg-red-100 border border-red-300 text-red-600 p-4 rounded-xl mb-6">
 
               {error}
 
@@ -204,7 +240,6 @@ const RecommendationsPage =
 
 
           {/* LOADING */}
-
           {loading ? (
 
             <div className="text-center py-20">
@@ -237,7 +272,8 @@ const RecommendationsPage =
 
               <p className="text-muted-foreground">
 
-                Try updating your profile skills & interests
+                Try updating your profile
+                skills & interests
 
               </p>
 
@@ -255,8 +291,8 @@ const RecommendationsPage =
                     className="shadow-xl rounded-3xl border-0 overflow-hidden hover:scale-[1.02] transition-all duration-300"
                   >
 
-                    {/* TOP */}
 
+                    {/* TOP */}
                     <div className="bg-gradient-to-r from-primary to-purple-600 p-6 text-white">
 
                       <div className="flex items-center justify-between">
@@ -271,7 +307,8 @@ const RecommendationsPage =
 
                           <p className="text-white/90">
 
-                            {mentor.domain || "Alumni Mentor"}
+                            {mentor.domain ||
+                              "Alumni Mentor"}
 
                           </p>
 
@@ -289,22 +326,26 @@ const RecommendationsPage =
 
 
                     {/* CONTENT */}
-
                     <CardContent className="p-6">
 
-                      {/* BIO */}
 
+                      {/* BIO */}
                       <p className="text-muted-foreground mb-5 line-clamp-3">
 
-                        {mentor.bio || "Experienced alumni mentor helping students grow in career and technology."}
+                        {mentor.bio ||
+
+                          "Experienced alumni mentor helping students grow in career and technology."
+
+                        }
 
                       </p>
 
 
                       {/* DETAILS */}
-
                       <div className="space-y-3 mb-5">
 
+
+                        {/* DOMAIN */}
                         <div className="flex items-center gap-2 text-sm">
 
                           <Briefcase className="h-4 w-4 text-primary" />
@@ -313,9 +354,11 @@ const RecommendationsPage =
 
                             Domain:
                             {" "}
+
                             <span className="font-semibold">
 
-                              {mentor.domain || "General"}
+                              {mentor.domain ||
+                                "General"}
 
                             </span>
 
@@ -324,19 +367,22 @@ const RecommendationsPage =
                         </div>
 
 
+                        {/* BRANCH */}
                         <div className="flex items-center gap-2 text-sm">
 
                           <MapPin className="h-4 w-4 text-primary" />
 
                           <span>
 
-                            {mentor.branch || "Branch Not Added"}
+                            {mentor.branch ||
+                              "Branch Not Added"}
 
                           </span>
 
                         </div>
 
 
+                        {/* TRUST SCORE */}
                         <div className="flex items-center gap-2 text-sm">
 
                           <Star className="h-4 w-4 text-yellow-500" />
@@ -356,11 +402,31 @@ const RecommendationsPage =
 
                         </div>
 
+
+                        {/* AI SCORE */}
+                        <div className="flex items-center gap-2 text-sm">
+
+                          <Sparkles className="h-4 w-4 text-purple-500" />
+
+                          <span>
+
+                            AI Match Score:
+                            {" "}
+
+                            <span className="font-bold text-primary">
+
+                              {mentor.aiScore || 0}
+
+                            </span>
+
+                          </span>
+
+                        </div>
+
                       </div>
 
 
                       {/* SKILLS */}
-
                       <div className="flex flex-wrap gap-2 mb-6">
 
                         {mentor.skills?.slice(0, 5).map(
@@ -382,9 +448,10 @@ const RecommendationsPage =
 
 
                       {/* BUTTONS */}
-
                       <div className="flex gap-3">
 
+
+                        {/* REQUEST GUIDANCE */}
                         <Button
                           className="flex-1"
                           onClick={() =>
@@ -399,6 +466,7 @@ const RecommendationsPage =
                         </Button>
 
 
+                        {/* CHAT */}
                         <Button
                           variant="outline"
                           className="flex-1"
@@ -437,4 +505,5 @@ const RecommendationsPage =
   };
 
 
+// EXPORT
 export default RecommendationsPage;
