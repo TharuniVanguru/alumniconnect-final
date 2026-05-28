@@ -1,118 +1,485 @@
-export type UserRole = 'admin' | 'alumni' | 'student';
+// ==========================================
+// USER ROLE
+// ==========================================
+export type UserRole =
+  | "admin"
+  | "alumni"
+  | "student";
 
+
+// ==========================================
+// COMMON STATUS TYPES
+// ==========================================
+export type RequestStatus =
+  | "Pending"
+  | "Accepted"
+  | "Rejected"
+  | "Completed";
+
+export type MessageStatus =
+  | "sent"
+  | "delivered"
+  | "seen";
+
+export type NotificationPriority =
+  | "low"
+  | "medium"
+  | "high";
+
+
+// ==========================================
+// USER
+// ==========================================
 export interface User {
-  id: string;
-  email: string;
+
+  _id: string;
+
+  identifier: string;
+
   name: string;
+
+  email: string;
+
   role: UserRole;
-  avatar?: string;
+
+  phone?: string;
+
+  profileImage?: string;
+
   token?: string;
-  isActive: boolean;
-  createdAt: Date;
-  lastLogin?: Date;
-}
 
-export interface Alumni extends User {
-  role: 'alumni';
-  profile: AlumniProfile;
-  contributionScore: number;
-}
+  isActive?: boolean;
 
-export interface Student extends User {
-  role: 'student';
-  profile: StudentProfile;
-  achievementPoints: number;
-}
+  isVerified?: boolean;
 
-export interface AlumniProfile {
-  graduationYear: number;
-  degree: string;
-  department: string;
-  currentCompany?: string;
-  currentPosition?: string;
-  industry?: string;
-  location?: string;
+  isOnline?: boolean;
+
+  isFirstLogin?: boolean;
+
+  branch?: string;
+
+  batch?: string;
+
+  year?: string;
+
+  collegeName?: string;
+
+  domain?: string;
+
+  company?: string;
+
+  jobRole?: string;
+
   bio?: string;
-  expertise: string[];
-  achievements: string[];
-  isStartupFounder: boolean;
-  linkedinUrl?: string;
-  websiteUrl?: string;
-}
 
-export interface StudentProfile {
-  currentYear: number;
-  degree: string;
-  department: string;
-  gpa?: number;
-  skills: string[];
-  projects: Project[];
-  experience: Experience[];
-  resumeUrl?: string;
+  skills?: string[];
+
+  interests?: string[];
+
+  linkedinUrl?: string;
+
+  githubUrl?: string;
+
   portfolioUrl?: string;
-  githubUrl?: string;
-  linkedinUrl?: string;
+
+  trustScore?: number;
+
+  profileStrength?: string;
+
+  mentorshipAvailable?: boolean;
+
+  aiScore?: number;
+
+  createdAt?: string;
+
+  updatedAt?: string;
+
 }
 
+
+// ==========================================
+// PROJECT
+// ==========================================
 export interface Project {
-  id: string;
+
+  _id?: string;
+
   title: string;
+
   description: string;
-  technologies: string[];
-  projectUrl?: string;
+
+  techStack: string[];
+
   githubUrl?: string;
-  imageUrl?: string;
-  startDate: Date;
-  endDate?: Date;
+
+  projectUrl?: string;
+
 }
 
-export interface Experience {
-  id: string;
-  company: string;
-  position: string;
-  description: string;
-  startDate: Date;
-  endDate?: Date;
-  isCurrentRole: boolean;
+
+// ==========================================
+// PROFILE
+// ==========================================
+export interface Profile {
+
+  _id?: string;
+
+  user: string;
+
+  name: string;
+
+  email: string;
+
+  role: UserRole;
+
+  identifier?: string;
+
+  phone?: string;
+
+  profileImage?: string;
+
+  branch?: string;
+
+  year?: string;
+
+  batch?: string;
+
+  domain?: string;
+
+  skills?: string[];
+
+  interests?: string[];
+
+  linkedinUrl?: string;
+
+  githubUrl?: string;
+
+  portfolioUrl?: string;
+
+  bio?: string;
+
+  projects?: Project[];
+
+  company?: string;
+
+  jobRole?: string;
+
+  experience?: string;
+
+  mentorshipAvailable?: boolean;
+
+  profileCompleted?: boolean;
+
+  profileStrength?: string;
+
+  trustScore?: number;
+
+  isVerified?: boolean;
+
+  lastProfileUpdate?: string;
+
 }
 
+
+// ==========================================
+// JOB
+// ==========================================
 export interface Job {
-  id: string;
+
+  _id: string;
+
   title: string;
+
   company: string;
-  description: string;
-  requirements: string[];
+
   location: string;
-  type: 'full-time' | 'part-time' | 'internship' | 'contract';
-  salaryRange?: string;
-  postedBy: string; // Alumni ID
-  postedAt: Date;
-  deadline: Date;
-  isActive: boolean;
-  applicants: string[]; // Student IDs
+
+  type:
+    | "Internship"
+    | "Full-time"
+    | "Part-time"
+    | "Remote";
+
+  description: string;
+
+  skillsRequired: string[];
+
+  salary?: string;
+
+  deadline?: string;
+
+  postedBy: string;
+
+  applications?: JobApplication[];
+
+  isActive?: boolean;
+
+  createdAt?: string;
+
 }
 
+
+// ==========================================
+// JOB APPLICATION
+// ==========================================
+export interface JobApplication {
+
+  _id?: string;
+
+  student: string;
+
+  resumeUrl?: string;
+
+  status?:
+    | "Applied"
+    | "Shortlisted"
+    | "Rejected"
+    | "Selected";
+
+  appliedAt?: string;
+
+}
+
+
+// ==========================================
+// EVENT
+// ==========================================
 export interface Event {
-  id: string;
+
+  _id: string;
+
   title: string;
+
   description: string;
-  type: 'workshop' | 'seminar' | 'networking' | 'mentorship' | 'startup-pitch';
-  date: Date;
-  location: string;
-  isVirtual: boolean;
+
+  type:
+    | "Workshop"
+    | "Webinar"
+    | "Networking"
+    | "Hackathon"
+    | "Mentorship"
+    | "Seminar"
+    | "Placement Drive";
+
+  status?:
+    | "Upcoming"
+    | "Ongoing"
+    | "Completed"
+    | "Cancelled";
+
+  date: string;
+
+  time?: string;
+
+  location?: string;
+
+  mode?:
+    | "Online"
+    | "Offline"
+    | "Hybrid";
+
   meetingLink?: string;
-  organizer: string; // Alumni or Admin ID
-  maxAttendees?: number;
-  attendees: string[];
-  isActive: boolean;
+
+  bannerImage?: string;
+
+  organizer?: string;
+
+  attendees?: string[];
+
+  tags?: string[];
+
+  totalRegistrations?: number;
+
+  createdAt?: string;
+
 }
 
-export interface Contribution {
-  id: string;
-  type: 'job-posted' | 'event-organized' | 'mentorship-session' | 'project-collaboration' | 'student-helped';
-  points: number;
+
+// ==========================================
+// MESSAGE
+// ==========================================
+export interface Message {
+
+  _id?: string;
+
+  sender?: string;
+
+  receiver?: string;
+
+  senderId?: string;
+
+  receiverId?: string;
+
+  senderName?: string;
+
+  receiverName?: string;
+
+  message: string;
+
+  status?: MessageStatus;
+
+  messageType?:
+    | "text"
+    | "image"
+    | "file"
+    | "audio"
+    | "video";
+
+  attachment?: string;
+
+  isRead?: boolean;
+
+  delivered?: boolean;
+
+  createdAt?: string;
+
+}
+
+
+// ==========================================
+// CHAT USER
+// ==========================================
+export interface ChatUser {
+
+  _id: string;
+
+  name: string;
+
+  email: string;
+
+  role: UserRole;
+
+  profileImage?: string;
+
+  isOnline?: boolean;
+
+}
+
+
+// ==========================================
+// MENTORSHIP REQUEST
+// ==========================================
+export interface MentorshipRequest {
+
+  _id?: string;
+
+  studentId: string;
+
+  alumniId: string;
+
+  alumniName?: string;
+
+  studentName?: string;
+
+  domain?: string;
+
+  message?: string;
+
+  status?: RequestStatus;
+
+  createdAt?: string;
+
+}
+
+
+// ==========================================
+// GUIDANCE REQUEST
+// ==========================================
+export interface GuidanceRequest {
+
+  _id?: string;
+
+  studentId?: string;
+
+  alumniId?: string;
+
+  alumniName?: string;
+
+  domain: string;
+
+  topic: string;
+
   description: string;
-  date: Date;
-  userId: string;
-  relatedEntityId?: string;
+
+  urgency:
+    | "Low"
+    | "Medium"
+    | "High";
+
+  status?: RequestStatus;
+
+  meetingLink?: string;
+
+  scheduledDate?: string;
+
+  feedback?: string;
+
+  rating?: number;
+
+  createdAt?: string;
+
+}
+
+
+// ==========================================
+// NOTIFICATION
+// ==========================================
+export interface Notification {
+
+  _id: string;
+
+  recipient: string;
+
+  sender?: string;
+
+  title: string;
+
+  message: string;
+
+  type:
+    | "message"
+    | "guidance"
+    | "mentorship"
+    | "job"
+    | "event"
+    | "system"
+    | "warning"
+    | "reminder";
+
+  priority?: NotificationPriority;
+
+  isRead?: boolean;
+
+  createdAt?: string;
+
+}
+
+
+// ==========================================
+// AI CHAT MESSAGE
+// ==========================================
+export interface AIChatMessage {
+
+  role:
+    | "user"
+    | "assistant";
+
+  content: string;
+
+}
+
+
+// ==========================================
+// RECOMMENDATION
+// ==========================================
+export interface Recommendation {
+
+  user: User;
+
+  aiScore: number;
+
+  matchedSkills?: string[];
+
+  matchedDomain?: boolean;
+
 }

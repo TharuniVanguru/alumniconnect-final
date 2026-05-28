@@ -1,5 +1,6 @@
 import {
   useEffect,
+  useMemo,
   useState,
 } from "react";
 
@@ -11,8 +12,6 @@ import { Header }
 import {
   Card,
   CardContent,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 
 import { Button }
@@ -47,8 +46,17 @@ import {
   Briefcase,
   Sparkles,
   Send,
+  Search,
+  Star,
+  ShieldCheck,
+  Loader2,
+  MessageCircle,
 
 } from "lucide-react";
+
+import {
+  useNavigate,
+} from "react-router-dom";
 
 
 // =====================================
@@ -66,9 +74,15 @@ interface Alumni {
 
   bio?: string;
 
+  company?: string;
+
+  experience?: string;
+
   skills?: string[];
 
   trustScore?: number;
+
+  availability?: string;
 
 }
 
@@ -78,8 +92,20 @@ interface Alumni {
 // =====================================
 const MentorshipPage = () => {
 
+  const navigate =
+    useNavigate();
+
   const [alumni, setAlumni] =
     useState<Alumni[]>([]);
+
+  const [search, setSearch] =
+    useState("");
+
+  const [selectedDomain, setSelectedDomain] =
+    useState("All");
+
+  const [selectedMentor, setSelectedMentor] =
+    useState<Alumni | null>(null);
 
   const [message, setMessage] =
     useState("");
@@ -115,8 +141,22 @@ const MentorshipPage = () => {
             "http://localhost:5000/profile/alumni"
           );
 
+        // SORT BY TRUST SCORE
+        const sorted =
+          response.data.sort(
+
+            (
+              a: Alumni,
+              b: Alumni
+            ) =>
+
+              (b.trustScore || 0) -
+              (a.trustScore || 0)
+
+          );
+
         setAlumni(
-          response.data
+          sorted
         );
 
       }
@@ -141,13 +181,96 @@ const MentorshipPage = () => {
 
 
   // =====================================
+  // FILTERED ALUMNI
+  // =====================================
+  const filteredAlumni =
+    useMemo(() => {
+
+      return alumni.filter(
+
+        (mentor) => {
+
+          const matchesSearch =
+
+            mentor.name
+              ?.toLowerCase()
+              .includes(
+                search.toLowerCase()
+              ) ||
+
+            mentor.domain
+              ?.toLowerCase()
+              .includes(
+                search.toLowerCase()
+              ) ||
+
+            mentor.skills?.some(
+
+              (skill) =>
+
+                skill
+                  .toLowerCase()
+                  .includes(
+                    search.toLowerCase()
+                  )
+
+            );
+
+
+          const matchesDomain =
+
+            selectedDomain ===
+              "All" ||
+
+            mentor.domain ===
+              selectedDomain;
+
+
+          return (
+            matchesSearch &&
+            matchesDomain
+          );
+
+        }
+
+      );
+
+    }, [
+
+      alumni,
+      search,
+      selectedDomain,
+
+    ]);
+
+
+  // =====================================
+  // UNIQUE DOMAINS
+  // =====================================
+  const domains =
+    [
+
+      "All",
+
+      ...new Set(
+        alumni.map(
+          (a) =>
+            a.domain
+        )
+      ),
+
+    ];
+
+
+  // =====================================
   // SEND REQUEST
   // =====================================
   const sendRequest =
-    async (
-      alumniId: string,
-      alumniName: string
-    ) => {
+    async () => {
+
+      if (
+        !selectedMentor
+      ) return;
 
       try {
 
@@ -168,9 +291,14 @@ const MentorshipPage = () => {
 
           {
 
-            alumniId,
-            alumniName,
+            alumniId:
+              selectedMentor._id,
+
+            alumniName:
+              selectedMentor.name,
+
             message,
+
             domain,
 
           },
@@ -192,18 +320,21 @@ const MentorshipPage = () => {
         toast({
 
           title:
-            "Mentorship Request Sent",
+            "Mentorship Request Sent 🚀",
 
           description:
-            "Your request was successfully sent to alumni",
+            `Request successfully sent to ${selectedMentor.name}`,
 
         });
 
 
-        // CLEAR INPUTS
         setMessage("");
 
         setDomain("");
+
+        setSelectedMentor(
+          null
+        );
 
       }
 
@@ -217,7 +348,9 @@ const MentorshipPage = () => {
             "Request Failed",
 
           description:
+
             error.response?.data?.message ||
+
             "Something went wrong",
 
           variant:
@@ -257,30 +390,40 @@ const MentorshipPage = () => {
 
       <div className="max-w-7xl mx-auto p-6">
 
-        {/* HEADER */}
+        {/* ================================= */}
+        {/* HERO */}
+        {/* ================================= */}
         <div className="mb-10">
 
-          <div className="flex items-center gap-4">
+          <div className="rounded-3xl overflow-hidden bg-gradient-to-r from-primary via-purple-600 to-pink-500 text-white shadow-2xl">
 
-            <div className="h-16 w-16 rounded-2xl bg-gradient-primary flex items-center justify-center shadow-lg">
+            <div className="p-8 md:p-10">
 
-              <Brain className="h-8 w-8 text-white" />
+              <div className="flex items-center gap-5">
 
-            </div>
+                <div className="h-20 w-20 rounded-3xl bg-white/20 flex items-center justify-center">
 
-            <div>
+                  <Brain className="h-10 w-10" />
 
-              <h1 className="text-4xl font-bold">
+                </div>
 
-                Alumni Mentorship
+                <div>
 
-              </h1>
+                  <h1 className="text-4xl md:text-5xl font-bold">
 
-              <p className="text-muted-foreground text-lg">
+                    Alumni Mentorship
 
-                Connect with experienced alumni mentors and grow your career
+                  </h1>
 
-              </p>
+                  <p className="text-white/90 text-lg mt-2">
+
+                    Connect with expert alumni mentors and accelerate your career growth
+
+                  </p>
+
+                </div>
+
+              </div>
 
             </div>
 
@@ -289,7 +432,72 @@ const MentorshipPage = () => {
         </div>
 
 
+        {/* ================================= */}
+        {/* SEARCH + FILTER */}
+        {/* ================================= */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+
+          {/* SEARCH */}
+          <div className="md:col-span-3 relative">
+
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+
+            <Input
+
+              placeholder="Search mentors by name, domain, or skills..."
+
+              className="pl-10 h-12 rounded-2xl"
+
+              value={search}
+
+              onChange={(e) =>
+                setSearch(
+                  e.target.value
+                )
+              }
+
+            />
+
+          </div>
+
+
+          {/* DOMAIN FILTER */}
+          <select
+
+            className="border border-input rounded-2xl h-12 px-4 bg-background"
+
+            value={selectedDomain}
+
+            onChange={(e) =>
+              setSelectedDomain(
+                e.target.value
+              )
+            }
+
+          >
+
+            {domains.map(
+              (item) => (
+
+                <option
+                  key={item}
+                >
+
+                  {item}
+
+                </option>
+
+              )
+            )}
+
+          </select>
+
+        </div>
+
+
+        {/* ================================= */}
         {/* ERROR */}
+        {/* ================================= */}
         {error && (
 
           <div className="bg-red-100 text-red-600 p-4 rounded-xl mb-6">
@@ -301,40 +509,38 @@ const MentorshipPage = () => {
         )}
 
 
+        {/* ================================= */}
         {/* LOADING */}
+        {/* ================================= */}
         {loading ? (
 
-          <div className="text-center py-20">
+          <div className="flex flex-col items-center justify-center py-24">
 
-            <Sparkles className="h-10 w-10 animate-pulse mx-auto mb-4 text-primary" />
+            <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
 
-            <h2 className="text-2xl font-bold mb-2">
+            <h2 className="text-2xl font-bold">
 
-              Loading Alumni...
+              Loading Mentors...
 
             </h2>
-
-            <p className="text-muted-foreground">
-
-              Please wait while we fetch mentors
-
-            </p>
 
           </div>
 
-        ) : alumni.length === 0 ? (
+        ) : filteredAlumni.length === 0 ? (
 
           <div className="text-center py-20">
 
-            <h2 className="text-2xl font-bold mb-2">
+            <Sparkles className="h-16 w-16 mx-auto text-primary mb-4" />
 
-              No Alumni Found
+            <h2 className="text-3xl font-bold mb-2">
+
+              No Mentors Found
 
             </h2>
 
             <p className="text-muted-foreground">
 
-              Alumni mentors will appear here
+              Try changing filters or search query
 
             </p>
 
@@ -344,211 +550,287 @@ const MentorshipPage = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
 
-            {alumni.map((mentor) => (
+            {filteredAlumni.map(
+              (mentor) => (
 
-              <Card
-                key={mentor._id}
-                className="rounded-3xl shadow-xl border-0 overflow-hidden hover:scale-[1.02] transition-all duration-300"
-              >
+                <Card
 
-                {/* TOP */}
-                <div className="bg-gradient-to-r from-primary to-purple-600 text-white p-6">
+                  key={mentor._id}
 
-                  <div className="flex items-center justify-between">
+                  className="rounded-3xl shadow-xl border-0 overflow-hidden hover:scale-[1.02] transition-all duration-300"
 
-                    <div>
+                >
 
-                      <h2 className="text-2xl font-bold">
+                  {/* TOP */}
+                  <div className="bg-gradient-to-r from-primary to-purple-600 text-white p-6">
 
-                        {mentor.name}
+                    <div className="flex items-start justify-between">
 
-                      </h2>
+                      <div>
 
-                      <p className="text-white/90">
+                        <h2 className="text-2xl font-bold">
 
-                        {mentor.domain || "Mentor"}
+                          {mentor.name}
 
-                      </p>
+                        </h2>
 
-                    </div>
+                        <p className="text-white/90 mt-1">
 
-                    <div className="h-14 w-14 rounded-full bg-white/20 flex items-center justify-center">
+                          {mentor.company ||
 
-                      <Briefcase className="h-7 w-7" />
+                            mentor.domain ||
 
-                    </div>
+                            "Mentor"}
 
-                  </div>
-
-                </div>
-
-
-                {/* CONTENT */}
-                <CardContent className="p-6">
-
-                  {/* BIO */}
-                  <p className="text-muted-foreground mb-5 line-clamp-3">
-
-                    {mentor.bio ||
-                      "Experienced alumni mentor helping students build successful careers."}
-
-                  </p>
-
-
-                  {/* DETAILS */}
-                  <div className="space-y-3 mb-5">
-
-                    <div className="flex items-center gap-2 text-sm">
-
-                      <Mail className="h-4 w-4 text-primary" />
-
-                      <span>
-
-                        {mentor.email}
-
-                      </span>
-
-                    </div>
-
-
-                    <div className="flex items-center gap-2 text-sm">
-
-                      <Briefcase className="h-4 w-4 text-primary" />
-
-                      <span>
-
-                        Domain:
-                        {" "}
-
-                        <span className="font-semibold">
-
-                          {mentor.domain || "General"}
-
-                        </span>
-
-                      </span>
-
-                    </div>
-
-                  </div>
-
-
-                  {/* SKILLS */}
-                  <div className="flex flex-wrap gap-2 mb-6">
-
-                    {mentor.skills?.slice(0, 5).map(
-
-                      (skill) => (
-
-                        <Badge
-                          key={skill}
-                          variant="secondary"
-                        >
-
-                          {skill}
-
-                        </Badge>
-
-                      )
-
-                    )}
-
-                  </div>
-
-
-                  {/* REQUEST BUTTON */}
-                  <Dialog>
-
-                    <DialogTrigger asChild>
-
-                      <Button className="w-full">
-
-                        Request Mentorship
-
-                      </Button>
-
-                    </DialogTrigger>
-
-
-                    <DialogContent>
-
-                      <DialogHeader>
-
-                        <DialogTitle>
-
-                          Send Mentorship Request
-
-                        </DialogTitle>
-
-                      </DialogHeader>
-
-
-                      <div className="space-y-4">
-
-                        <Input
-
-                          placeholder="Enter your domain"
-
-                          value={domain}
-
-                          onChange={(e) =>
-                            setDomain(
-                              e.target.value
-                            )
-                          }
-
-                        />
-
-
-                        <Textarea
-
-                          placeholder="Write your mentorship request message"
-
-                          value={message}
-
-                          onChange={(e) =>
-                            setMessage(
-                              e.target.value
-                            )
-                          }
-
-                        />
-
-
-                        <Button
-
-                          className="w-full"
-
-                          disabled={sending}
-
-                          onClick={() =>
-                            sendRequest(
-                              mentor._id,
-                              mentor.name
-                            )
-                          }
-
-                        >
-
-                          <Send className="h-4 w-4 mr-2" />
-
-                          {sending
-                            ? "Sending..."
-                            : "Send Request"}
-
-                        </Button>
+                        </p>
 
                       </div>
 
-                    </DialogContent>
 
-                  </Dialog>
+                      <div className="h-14 w-14 rounded-2xl bg-white/20 flex items-center justify-center">
 
-                </CardContent>
+                        <Briefcase className="h-7 w-7" />
 
-              </Card>
+                      </div>
 
-            ))}
+                    </div>
+
+                  </div>
+
+
+                  {/* CONTENT */}
+                  <CardContent className="p-6">
+
+                    {/* BIO */}
+                    <p className="text-muted-foreground mb-5 line-clamp-3">
+
+                      {mentor.bio ||
+
+                        "Experienced alumni mentor helping students build successful careers."}
+
+                    </p>
+
+
+                    {/* DETAILS */}
+                    <div className="space-y-3 mb-5">
+
+                      <div className="flex items-center gap-2 text-sm">
+
+                        <Mail className="h-4 w-4 text-primary" />
+
+                        <span>
+
+                          {mentor.email}
+
+                        </span>
+
+                      </div>
+
+
+                      <div className="flex items-center gap-2 text-sm">
+
+                        <Briefcase className="h-4 w-4 text-primary" />
+
+                        <span>
+
+                          Domain:
+                          {" "}
+
+                          <span className="font-semibold">
+
+                            {mentor.domain || "General"}
+
+                          </span>
+
+                        </span>
+
+                      </div>
+
+
+                      {/* TRUST SCORE */}
+                      <div className="flex items-center gap-2 text-sm">
+
+                        <ShieldCheck className="h-4 w-4 text-green-600" />
+
+                        <span>
+
+                          Trust Score:
+                          {" "}
+
+                          <span className="font-semibold text-green-600">
+
+                            {mentor.trustScore || 80}
+
+                          </span>
+
+                        </span>
+
+                      </div>
+
+                    </div>
+
+
+                    {/* SKILLS */}
+                    <div className="flex flex-wrap gap-2 mb-6">
+
+                      {mentor.skills?.slice(0, 5).map(
+
+                        (skill) => (
+
+                          <Badge
+                            key={skill}
+                            variant="secondary"
+                          >
+
+                            {skill}
+
+                          </Badge>
+
+                        )
+
+                      )}
+
+                    </div>
+
+
+                    {/* BUTTONS */}
+                    <div className="grid grid-cols-2 gap-3">
+
+                      <Button
+
+                        variant="outline"
+
+                        onClick={() =>
+
+                          navigate(
+                            `/student/chat/${mentor._id}`
+                          )
+
+                        }
+
+                      >
+
+                        <MessageCircle className="h-4 w-4 mr-2" />
+
+                        Chat
+
+                      </Button>
+
+
+                      <Dialog>
+
+                        <DialogTrigger asChild>
+
+                          <Button
+                            onClick={() =>
+                              setSelectedMentor(
+                                mentor
+                              )
+                            }
+                          >
+
+                            Request
+
+                          </Button>
+
+                        </DialogTrigger>
+
+
+                        <DialogContent className="rounded-3xl">
+
+                          <DialogHeader>
+
+                            <DialogTitle className="text-2xl">
+
+                              Send Mentorship Request
+
+                            </DialogTitle>
+
+                          </DialogHeader>
+
+
+                          <div className="space-y-4">
+
+                            <Input
+
+                              placeholder="Your interested domain"
+
+                              value={domain}
+
+                              onChange={(e) =>
+                                setDomain(
+                                  e.target.value
+                                )
+                              }
+
+                            />
+
+
+                            <Textarea
+
+                              placeholder="Write your mentorship request..."
+
+                              value={message}
+
+                              onChange={(e) =>
+                                setMessage(
+                                  e.target.value
+                                )
+                              }
+
+                              className="min-h-[140px]"
+
+                            />
+
+
+                            <Button
+
+                              className="w-full"
+
+                              disabled={sending}
+
+                              onClick={sendRequest}
+
+                            >
+
+                              {sending ? (
+
+                                <>
+
+                                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+
+                                  Sending...
+
+                                </>
+
+                              ) : (
+
+                                <>
+
+                                  <Send className="h-4 w-4 mr-2" />
+
+                                  Send Request
+
+                                </>
+
+                              )}
+
+                            </Button>
+
+                          </div>
+
+                        </DialogContent>
+
+                      </Dialog>
+
+                    </div>
+
+                  </CardContent>
+
+                </Card>
+
+              )
+            )}
 
           </div>
 

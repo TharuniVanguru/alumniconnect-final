@@ -1,28 +1,92 @@
-const express = require("express");
+const express =
+  require("express");
 
 const {
+
   sendMessage,
+
   getConversation,
-  getChatList
-} = require("../controllers/messageController");
+
+  getChatList,
+
+  markMessagesAsRead,
+
+} = require(
+  "../controllers/messageController"
+);
 
 const {
+
   protect,
-} = require("../middleware/authMiddleware");
 
-const router = express.Router();
+} = require(
+  "../middleware/authMiddleware"
+);
+
+const router =
+  express.Router();
 
 
+// ==========================================
 // SEND MESSAGE
-router.post("/", protect, sendMessage);
+// ==========================================
+router.post(
+
+  "/",
+
+  protect,
+
+  sendMessage
+
+);
 
 
+// ==========================================
+// CHAT LIST
+// IMPORTANT:
+// MUST COME BEFORE :userId
+// ==========================================
+router.get(
+
+  "/chat-list",
+
+  protect,
+
+  getChatList
+
+);
+
+
+// ==========================================
+// MARK MESSAGES AS READ
+// ==========================================
+router.put(
+
+  "/read/:userId",
+
+  protect,
+
+  markMessagesAsRead
+
+);
+
+
+// ==========================================
 // GET CONVERSATION
-router.get("/:userId", protect, getConversation);
+// ==========================================
+router.get(
+
+  "/:userId",
+
+  protect,
+
+  getConversation
+
+);
 
 
-// CHAT LIST (NEW)
-router.get("/chat-list", protect, getChatList);
-
-
-module.exports = router;
+// ==========================================
+// EXPORT
+// ==========================================
+module.exports =
+  router;

@@ -4,33 +4,44 @@ import {
   useRef,
 } from "react";
 
-import axios from "axios";
-
 import {
   useParams,
 } from "react-router-dom";
 
-import { socket }
-  from "@/socket";
+import api from "@/utils/api";
 
-import { Button }
-  from "@/components/ui/button";
+import {
+  socket,
+} from "@/socket";
 
-import { Input }
-  from "@/components/ui/input";
+import {
+  Button,
+} from "@/components/ui/button";
+
+import {
+  Input,
+} from "@/components/ui/input";
 
 import {
   Card,
   CardContent,
 } from "@/components/ui/card";
 
-import { Header }
-  from "@/components/layout/Header";
+import {
+  Header,
+} from "@/components/layout/Header";
 
 
+// ==========================================
+// TYPES
+// ==========================================
 interface Message {
 
   _id?: string;
+
+  senderId?: string;
+
+  receiverId?: string;
 
   senderName: string;
 
@@ -57,13 +68,19 @@ interface ChatUser {
 
   role: string;
 
-  isOnline: boolean;
+  isOnline?: boolean;
 
 }
 
 
+// ==========================================
+// COMPONENT
+// ==========================================
 const ChatPage = () => {
 
+  // ========================================
+  // STATES
+  // ========================================
   const [messages, setMessages] =
     useState<Message[]>([]);
 
@@ -91,24 +108,26 @@ const ChatPage = () => {
     );
 
 
-  // URL PARAM
+  // ========================================
+  // PARAMS
+  // ========================================
   const { userId } =
     useParams();
 
 
-  // AUTO SCROLL REF
+  // ========================================
+  // REFS
+  // ========================================
   const bottomRef =
     useRef<HTMLDivElement | null>(
       null
     );
 
-  // INPUT REF
   const inputRef =
     useRef<HTMLInputElement | null>(
       null
     );
 
-  // TYPING TIMER REF
   const typingTimeoutRef =
     useRef<
       ReturnType<
@@ -117,30 +136,54 @@ const ChatPage = () => {
     >(null);
 
 
+  // ========================================
   // USER INFO
-  const userInfo =
-    JSON.parse(
-      localStorage.getItem(
-        "userInfo"
-      ) || "{}"
+  // ========================================
+  const storedUser =
+    localStorage.getItem(
+      "userInfo"
     );
 
+  const userInfo =
+    storedUser
+      ? JSON.parse(storedUser)
+      : null;
 
+
+  // ========================================
+  // AUTO SCROLL
+  // ========================================
+  useEffect(() => {
+
+    bottomRef.current
+      ?.scrollIntoView({
+        behavior: "smooth",
+      });
+
+  }, [messages]);
+
+
+  // ========================================
+  // AUTO FOCUS
+  // ========================================
+  useEffect(() => {
+
+    inputRef.current?.focus();
+
+  }, []);
+
+
+  // ========================================
   // FETCH CHAT USER
+  // ========================================
   const fetchChatUser =
     async () => {
 
       try {
 
         const response =
-          await axios.get(
-            `http://localhost:5000/profile/${userId}`,
-            {
-              headers: {
-                Authorization:
-                  `Bearer ${userInfo.token}`,
-              },
-            }
+          await api.get(
+            `/profile/${userId}`
           );
 
         setChatUser(
@@ -151,14 +194,19 @@ const ChatPage = () => {
 
       catch (error) {
 
-        console.log(error);
+        console.log(
+          "FETCH USER ERROR:",
+          error
+        );
 
       }
 
     };
 
 
-  // FETCH OLD MESSAGES
+  // ========================================
+  // FETCH MESSAGES
+  // ========================================
   const fetchMessages =
     async () => {
 
@@ -167,27 +215,20 @@ const ChatPage = () => {
         setLoading(true);
 
         const response =
-          await axios.get(
-            `http://localhost:5000/messages/${userId}`,
-            {
-              headers: {
-                Authorization:
-                  `Bearer ${userInfo.token}`,
-              },
-            }
+          await api.get(
+            `/messages/${userId}`
           );
 
         setMessages(
-          response.data
+          response.data || []
         );
 
 
-        // MESSAGE SEEN
+        // MARK SEEN
         socket.emit(
           "messageSeen",
           {
-            senderId:
-              userId,
+            senderId: userId,
           }
         );
 
@@ -195,7 +236,10 @@ const ChatPage = () => {
 
       catch (error) {
 
-        console.log(error);
+        console.log(
+          "FETCH MESSAGE ERROR:",
+          error
+        );
 
         setError(
           "Failed to load messages"
@@ -212,180 +256,13 @@ const ChatPage = () => {
     };
 
 
-  // AUTO SCROLL
-  useEffect(() => {
-
-    bottomRef.current
-      ?.scrollIntoView({
-        behavior:
-          "smooth",
-      });
-
-  }, [messages]);
-
-
-  // AUTO FOCUS
-  useEffect(() => {
-
-    inputRef.current?.focus();
-
-  }, []);
-
-
-  // SOCKET CONNECTION
-  useEffect(() => {
-
-    if (!userId) return;
-
-    // JOIN ROOM
-    socket.emit(
-      "joinRoom",
-      userInfo._id
-    );{onlineUsers.includes(userId ?? "") ? "Online" : "Offline"}
-
-
-    // RECEIVE MESSAGE
-    socket.on(
-      "receiveMessage",
-      (message) => {
-
-        setMessages((prev) => [
-
-          ...prev,
-
-          message,
-
-        ]);
-
-
-        // MESSAGE DELIVERED
-        socket.emit(
-          "messageDelivered",
-          {
-            senderId:
-              userId,
-          }
-        );
-
-      }
-    );
-
-
-    // ONLINE USERS
-    socket.on(
-      "onlineUsers",
-      (users) => {
-
-        setOnlineUsers(users);
-
-      }
-    );
-
-
-    // USER TYPING
-    socket.on(
-      "userTyping",
-      () => {
-
-        setIsTyping(true);
-
-      }
-    );
-
-
-    // USER STOP TYPING
-    socket.on(
-      "userStopTyping",
-      () => {
-
-        setIsTyping(false);
-
-      }
-    );
-
-
-    // MESSAGE DELIVERED
-    socket.on(
-      "messageDelivered",
-      () => {
-
-        setMessages((prev) =>
-          prev.map((msg) => ({
-
-            ...msg,
-
-            status:
-              msg.senderName ===
-              userInfo.name
-                ? "delivered"
-                : msg.status,
-
-          }))
-        );
-
-      }
-    );
-
-
-    // MESSAGE SEEN
-    socket.on(
-      "messageSeen",
-      () => {
-
-        setMessages((prev) =>
-          prev.map((msg) => ({
-
-            ...msg,
-
-            status:
-              msg.senderName ===
-              userInfo.name
-                ? "seen"
-                : msg.status,
-
-          }))
-        );
-
-      }
-    );
-
-
-    // CLEANUP
-    return () => {
-
-      socket.off(
-        "receiveMessage"
-      );
-
-      socket.off(
-        "onlineUsers"
-      );
-
-      socket.off(
-        "userTyping"
-      );
-
-      socket.off(
-        "userStopTyping"
-      );
-
-      socket.off(
-        "messageDelivered"
-      );
-
-      socket.off(
-        "messageSeen"
-      );
-
-    };
-
-  }, [userId]);
-
-
+  // ========================================
   // INITIAL LOAD
+  // ========================================
   useEffect(() => {
 
-    if (!userId) return;
+    if (!userId)
+      return;
 
     fetchMessages();
 
@@ -394,86 +271,296 @@ const ChatPage = () => {
   }, [userId]);
 
 
+  // ========================================
+  // SOCKET CONNECTION
+  // ========================================
+  useEffect(() => {
+
+    if (
+      !userInfo?._id ||
+      !userId
+    ) {
+
+      return;
+
+    }
+
+
+    // ======================================
+    // JOIN ROOM
+    // ======================================
+    socket.emit(
+      "joinRoom",
+      userInfo._id
+    );
+
+
+    // ======================================
+    // RECEIVE MESSAGE
+    // ======================================
+    const handleReceiveMessage =
+      (message: Message) => {
+
+        setMessages((prev) => [
+
+          ...prev,
+          message,
+
+        ]);
+
+
+        socket.emit(
+          "messageDelivered",
+          {
+            senderId:
+              message.senderId,
+            messageId:
+              message._id,
+          }
+        );
+
+      };
+
+
+    // ======================================
+    // ONLINE USERS
+    // ======================================
+    const handleOnlineUsers =
+      (users: string[]) => {
+
+        setOnlineUsers(users);
+
+      };
+
+
+    // ======================================
+    // USER TYPING
+    // ======================================
+    const handleTyping =
+      () => {
+
+        setIsTyping(true);
+
+      };
+
+
+    // ======================================
+    // STOP TYPING
+    // ======================================
+    const handleStopTyping =
+      () => {
+
+        setIsTyping(false);
+
+      };
+
+
+    // ======================================
+    // DELIVERED
+    // ======================================
+    const handleDelivered =
+      (data: any) => {
+
+        setMessages((prev) =>
+
+          prev.map((msg) => {
+
+            if (
+              msg._id ===
+              data.messageId
+            ) {
+
+              return {
+
+                ...msg,
+
+                status:
+                  "delivered",
+
+              };
+
+            }
+
+            return msg;
+
+          })
+
+        );
+
+      };
+
+
+    // ======================================
+    // SEEN
+    // ======================================
+    const handleSeen =
+      (data: any) => {
+
+        setMessages((prev) =>
+
+          prev.map((msg) => {
+
+            if (
+              msg._id ===
+              data.messageId
+            ) {
+
+              return {
+
+                ...msg,
+
+                status:
+                  "seen",
+
+              };
+
+            }
+
+            return msg;
+
+          })
+
+        );
+
+      };
+
+
+    // ======================================
+    // LISTENERS
+    // ======================================
+    socket.on(
+      "receiveMessage",
+      handleReceiveMessage
+    );
+
+    socket.on(
+      "onlineUsers",
+      handleOnlineUsers
+    );
+
+    socket.on(
+      "userTyping",
+      handleTyping
+    );
+
+    socket.on(
+      "userStopTyping",
+      handleStopTyping
+    );
+
+    socket.on(
+      "messageDelivered",
+      handleDelivered
+    );
+
+    socket.on(
+      "messageSeen",
+      handleSeen
+    );
+
+
+    // ======================================
+    // CLEANUP
+    // ======================================
+    return () => {
+
+      socket.off(
+        "receiveMessage",
+        handleReceiveMessage
+      );
+
+      socket.off(
+        "onlineUsers",
+        handleOnlineUsers
+      );
+
+      socket.off(
+        "userTyping",
+        handleTyping
+      );
+
+      socket.off(
+        "userStopTyping",
+        handleStopTyping
+      );
+
+      socket.off(
+        "messageDelivered",
+        handleDelivered
+      );
+
+      socket.off(
+        "messageSeen",
+        handleSeen
+      );
+
+    };
+
+  }, [userId]);
+
+
+  // ========================================
   // SEND MESSAGE
+  // ========================================
   const sendMessage =
     async () => {
 
       if (
         !newMessage.trim() ||
         !userId
-      ) return;
+      ) {
+
+        return;
+
+      }
 
       try {
 
         setSending(true);
 
-        const messageData = {
+        const response =
+          await api.post(
+            "/messages",
+            {
+              receiverId:
+                userId,
 
-          senderName:
-            userInfo.name,
+              receiverName:
+                chatUser?.name,
 
-          receiverName:
-            chatUser?.name || "",
-
-          receiverId:
-            userId,
-
-          message:
-            newMessage,
-
-          createdAt:
-            new Date().toISOString(),
-
-          status:
-            "sent" as const,
-
-        };
+              message:
+                newMessage,
+            }
+          );
 
 
-        // SAVE TO DATABASE
-        await axios.post(
-          "http://localhost:5000/messages",
-
-          {
-
-            receiverId:
-              userId,
-
-            receiverName:
-              chatUser?.name,
-
-            message:
-              newMessage,
-
-          },
-
-          {
-            headers: {
-              Authorization:
-                `Bearer ${userInfo.token}`,
-            },
-          }
-        );
+        const savedMessage =
+          response.data;
 
 
+        // ====================================
         // SOCKET EMIT
+        // ====================================
         socket.emit(
           "sendMessage",
-          messageData
+          savedMessage
         );
 
 
+        // ====================================
         // UPDATE UI
+        // ====================================
         setMessages((prev) => [
 
           ...prev,
-
-          messageData,
+          savedMessage,
 
         ]);
 
 
+        // ====================================
         // STOP TYPING
+        // ====================================
         socket.emit(
           "stopTyping",
           {
@@ -485,13 +572,14 @@ const ChatPage = () => {
 
         setNewMessage("");
 
-        setIsTyping(false);
-
       }
 
       catch (error) {
 
-        console.log(error);
+        console.log(
+          "SEND ERROR:",
+          error
+        );
 
         setError(
           "Failed to send message"
@@ -508,8 +596,10 @@ const ChatPage = () => {
     };
 
 
+  // ========================================
   // HANDLE TYPING
-  const handleTyping =
+  // ========================================
+  const handleInputTyping =
     (
       e: React.ChangeEvent<HTMLInputElement>
     ) => {
@@ -519,7 +609,6 @@ const ChatPage = () => {
       );
 
 
-      // TYPING EVENT
       socket.emit(
         "typing",
         {
@@ -529,7 +618,6 @@ const ChatPage = () => {
       );
 
 
-      // CLEAR OLD TIMER
       if (
         typingTimeoutRef.current
       ) {
@@ -541,7 +629,6 @@ const ChatPage = () => {
       }
 
 
-      // STOP TYPING
       typingTimeoutRef.current =
         setTimeout(() => {
 
@@ -558,52 +645,60 @@ const ChatPage = () => {
     };
 
 
+  // ========================================
+  // ONLINE STATUS
+  // ========================================
+  const isUserOnline =
+    onlineUsers.includes(
+      userId || ""
+    );
+
+
+  // ========================================
+  // UI
+  // ========================================
   return (
 
     <div className="min-h-screen bg-background">
 
       <Header />
 
-      <div className="p-3 md:p-6">
+      <div className="p-4 md:p-6">
 
         {/* HEADER */}
         <div className="flex items-center justify-between mb-6">
 
           <div>
 
-            <h1 className="text-2xl md:text-3xl font-bold">
+            <h1 className="text-2xl font-bold">
 
               {chatUser?.name || "Chat"}
 
             </h1>
 
-            <p className="text-muted-foreground text-sm">
+            <p className="text-sm text-muted-foreground">
 
-              Real-time Socket.IO Chat
+              Real-time chat
 
             </p>
 
           </div>
 
 
-          {/* ONLINE STATUS */}
+          {/* ONLINE */}
           <div className="flex items-center gap-2">
 
             <div
-              className={`h-3 w-3 rounded-full animate-pulse ${
-                onlineUsers.includes(
-                  userId || ""
-                )
+              className={`h-3 w-3 rounded-full ${
+                isUserOnline
                   ? "bg-green-500"
                   : "bg-gray-400"
               }`}
             />
 
-            <span className="text-sm font-medium">
+            <span className="text-sm">
 
-              {onlineUsers.includes(
-                userId || ""
-              )
+              {isUserOnline
                 ? "Online"
                 : "Offline"}
 
@@ -617,7 +712,7 @@ const ChatPage = () => {
         {/* ERROR */}
         {error && (
 
-          <div className="mb-4 p-3 rounded-lg bg-red-100 text-red-600 text-sm">
+          <div className="mb-4 bg-red-100 text-red-600 p-3 rounded-lg">
 
             {error}
 
@@ -627,41 +722,15 @@ const ChatPage = () => {
 
 
         {/* CHAT CARD */}
-        <Card className="h-[80vh] flex flex-col shadow-xl rounded-2xl">
+        <Card className="h-[80vh] flex flex-col">
 
-          <CardContent className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 bg-muted/20">
+          <CardContent className="flex-1 overflow-y-auto p-4 space-y-4">
 
             {loading ? (
 
-              <div className="flex items-center justify-center h-full">
+              <div className="h-full flex items-center justify-center">
 
-                <p className="text-muted-foreground">
-
-                  Loading messages...
-
-                </p>
-
-              </div>
-
-            ) : messages.length === 0 ? (
-
-              <div className="flex items-center justify-center h-full">
-
-                <div className="text-center">
-
-                  <p className="text-xl font-semibold mb-2">
-
-                    No messages yet 🚀
-
-                  </p>
-
-                  <p className="text-muted-foreground">
-
-                    Start chatting now
-
-                  </p>
-
-                </div>
+                Loading messages...
 
               </div>
 
@@ -675,25 +744,24 @@ const ChatPage = () => {
 
                   <div
                     key={index}
-                    className={`max-w-[85%] md:max-w-[70%] ${
+                    className={`max-w-[75%] ${
                       msg.senderName ===
-                      userInfo.name
+                      userInfo?.name
                         ? "ml-auto"
                         : "mr-auto"
                     }`}
                   >
 
                     <div
-                      className={`p-4 rounded-2xl shadow-sm ${
+                      className={`p-4 rounded-2xl ${
                         msg.senderName ===
-                        userInfo.name
-                          ? "bg-primary text-white rounded-br-sm"
-                          : "bg-background border rounded-bl-sm"
+                        userInfo?.name
+                          ? "bg-primary text-white"
+                          : "bg-muted"
                       }`}
                     >
 
-                      {/* NAME */}
-                      <p className="font-semibold text-sm mb-1">
+                      <p className="text-sm font-semibold mb-1">
 
                         {
                           msg.senderName
@@ -701,20 +769,15 @@ const ChatPage = () => {
 
                       </p>
 
-
-                      {/* MESSAGE */}
-                      <p className="break-words">
+                      <p>
 
                         {msg.message}
 
                       </p>
 
+                      <div className="flex justify-between mt-2 text-xs opacity-70">
 
-                      {/* FOOTER */}
-                      <div className="flex items-center justify-between mt-2">
-
-                        {/* TIME */}
-                        <p className="text-xs opacity-70">
+                        <span>
 
                           {new Date(
                             msg.createdAt
@@ -729,28 +792,26 @@ const ChatPage = () => {
                             }
                           )}
 
-                        </p>
+                        </span>
 
-
-                        {/* STATUS */}
                         {msg.senderName ===
-                          userInfo.name && (
+                          userInfo?.name && (
 
-                          <p className="text-xs opacity-70">
+                          <span>
 
                             {msg.status ===
                               "sent" &&
-                              "✓ Sent"}
+                              "✓"}
 
                             {msg.status ===
                               "delivered" &&
-                              "✓✓ Delivered"}
+                              "✓✓"}
 
                             {msg.status ===
                               "seen" &&
                               "✓✓ Seen"}
 
-                          </p>
+                          </span>
 
                         )}
 
@@ -778,14 +839,13 @@ const ChatPage = () => {
             )}
 
 
-            {/* AUTO SCROLL */}
             <div ref={bottomRef} />
 
           </CardContent>
 
 
           {/* INPUT */}
-          <div className="flex gap-2 p-4 border-t">
+          <div className="border-t p-4 flex gap-2">
 
             <Input
               ref={inputRef}
@@ -795,7 +855,7 @@ const ChatPage = () => {
               value={newMessage}
 
               onChange={
-                handleTyping
+                handleInputTyping
               }
 
               onKeyDown={(e) => {
@@ -809,8 +869,6 @@ const ChatPage = () => {
                 }
 
               }}
-
-              className="h-12 rounded-xl"
             />
 
             <Button
@@ -819,8 +877,6 @@ const ChatPage = () => {
               }
 
               disabled={sending}
-
-              className="h-12 px-6 rounded-xl"
             >
 
               {sending

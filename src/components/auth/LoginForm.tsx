@@ -1,148 +1,235 @@
-import { useState, useEffect } from 'react';
-
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import {
+  useState,
+} from "react";
 
 import {
+  Button,
+} from "@/components/ui/button";
+
+import {
+  Input,
+} from "@/components/ui/input";
+
+import {
+  Label,
+} from "@/components/ui/label";
+
+import {
+
   Card,
+
   CardContent,
+
   CardDescription,
+
   CardFooter,
+
   CardHeader,
-  CardTitle
-} from '@/components/ui/card';
+
+  CardTitle,
+
+} from "@/components/ui/card";
 
 import {
+
   Tabs,
+
   TabsContent,
+
   TabsList,
-  TabsTrigger
-} from '@/components/ui/tabs';
 
-import { UserRole } from '@/types/user';
+  TabsTrigger,
+
+} from "@/components/ui/tabs";
 
 import {
+  UserRole,
+} from "@/types/user";
+
+import {
+
   useNavigate,
-  Link
-} from 'react-router-dom';
+
+  Link,
+
+  useLocation,
+
+} from "react-router-dom";
 
 import {
+
   User,
+
   GraduationCap,
-  Shield
-} from 'lucide-react';
 
-import { useToast } from '@/hooks/use-toast';
+  Shield,
 
+  Loader2,
+
+} from "lucide-react";
+
+import {
+  useToast,
+} from "@/hooks/use-toast";
+
+import {
+  useAuth,
+} from "@/contexts/AuthContext";
+
+
+// ==========================================
+// COMPONENT
+// ==========================================
 export const LoginForm = () => {
 
+  // ========================================
+  // STATES
+  // ========================================
   const [identifier, setIdentifier] =
-    useState('');
+    useState("");
 
   const [password, setPassword] =
-    useState('');
+    useState("");
 
   const [activeRole, setActiveRole] =
-    useState<UserRole>('student');
+    useState<UserRole>("student");
 
-  const [isLoading, setIsLoading] =
-    useState(false);
-
-  const navigate = useNavigate();
-
-  const { toast } = useToast();
+  const [formError, setFormError] =
+    useState("");
 
 
-  // =========================
-  // CLEAR INPUTS
-  // =========================
-  useEffect(() => {
+  // ========================================
+  // HOOKS
+  // ========================================
+  const navigate =
+    useNavigate();
 
-    setIdentifier('');
+  const location =
+    useLocation();
 
-    setPassword('');
+  const { toast } =
+    useToast();
 
-  }, []);
+  const {
+
+    login,
+
+    isLoading,
+
+  } = useAuth();
 
 
-  // =========================
-  // LOGIN FUNCTION
-  // =========================
+  // ========================================
+  // REDIRECT PATH
+  // ========================================
+  const from =
+    (
+      location.state as any
+    )?.from?.pathname;
+
+
+  // ========================================
+  // HANDLE LOGIN
+  // ========================================
   const handleSubmit = async (
     e: React.FormEvent
   ) => {
 
     e.preventDefault();
 
-    try {
+    setFormError("");
 
-      setIsLoading(true);
 
-      console.log(
-        "Sending login request..."
+    // ======================================
+    // VALIDATION
+    // ======================================
+    if (
+
+      !identifier.trim() ||
+
+      !password.trim()
+
+    ) {
+
+      setFormError(
+        "All fields are required"
       );
 
-      const response =
-        await fetch(
+      toast({
 
-          'http://localhost:5000/auth/login',
+        title:
+          "Validation Error",
 
-          {
+        description:
+          "Please fill all fields",
 
-            method: 'POST',
+        variant:
+          "destructive",
 
-            headers: {
+      });
 
-              'Content-Type':
-                'application/json',
+      return;
 
-            },
+    }
 
-            body: JSON.stringify({
 
-              identifier,
+    // ======================================
+    // PASSWORD VALIDATION
+    // ======================================
+    if (password.length < 6) {
 
-              password,
+      setFormError(
+        "Password too short"
+      );
 
-              role: activeRole,
+      return;
 
-            }),
+    }
 
-          }
+
+    try {
+
+      // ====================================
+      // LOGIN API
+      // ====================================
+      const result =
+        await login(
+
+          identifier.trim(),
+
+          password,
+
+          activeRole
 
         );
 
-      console.log(
-        "Response Status:",
-        response.status
-      );
 
-      const data =
-        await response.json();
-
-      console.log(
-        "Response Data:",
-        data
-      );
-
-
-      // =========================
+      // ====================================
       // LOGIN FAILED
-      // =========================
-      if (!response.ok) {
+      // ====================================
+      if (!result.success) {
+
+        setFormError(
+
+          result.message ||
+
+          "Invalid credentials"
+
+        );
 
         toast({
 
           title:
-            'Login failed',
+            "Login Failed",
 
           description:
-            data.message ||
-            'Invalid credentials',
+
+            result.message ||
+
+            "Invalid credentials",
 
           variant:
-            'destructive',
+            "destructive",
 
         });
 
@@ -151,56 +238,112 @@ export const LoginForm = () => {
       }
 
 
-      // =========================
-      // SAVE USER INFO
-      // =========================
-      localStorage.setItem(
+      // ====================================
+      // GET USER
+      // ====================================
+      const storedUser =
+        localStorage.getItem(
+          "userInfo"
+        );
 
-        'userInfo',
+      if (!storedUser) {
 
-        JSON.stringify(data)
+        navigate("/");
 
-      );
+        return;
+
+      }
+
+      const user =
+        JSON.parse(
+          storedUser
+        );
 
 
-      // =========================
+      // ====================================
       // SUCCESS TOAST
-      // =========================
+      // ====================================
       toast({
 
         title:
-          'Welcome back!',
+          "Login Successful",
 
         description:
-          `Successfully logged in as ${data.role}`,
+          `Welcome back ${user.name}`,
 
       });
 
 
-      // =========================
-      // CLEAR INPUTS
-      // =========================
-      setIdentifier('');
+      // ====================================
+      // RESET FORM
+      // ====================================
+      setIdentifier("");
 
-      setPassword('');
+      setPassword("");
+
+      setFormError("");
 
 
-      // =========================
-      // REDIRECT
-      // =========================
-      if (data.isFirstLogin) {
+      // ====================================
+      // FIRST LOGIN
+      // ====================================
+      if (
+        user.isFirstLogin
+      ) {
 
         navigate(
-          '/change-password'
+          "/change-password"
         );
+
+        return;
 
       }
 
-      else {
 
-        navigate(
-          `/${data.role}/dashboard`
-        );
+      // ====================================
+      // REDIRECT TO PREVIOUS PAGE
+      // ====================================
+      if (from) {
+
+        navigate(from);
+
+        return;
+
+      }
+
+
+      // ====================================
+      // ROLE BASED REDIRECT
+      // ====================================
+      switch (user.role) {
+
+        case "student":
+
+          navigate(
+            "/student/dashboard"
+          );
+
+          break;
+
+        case "alumni":
+
+          navigate(
+            "/alumni/dashboard"
+          );
+
+          break;
+
+        case "admin":
+
+          navigate(
+            "/admin/dashboard"
+          );
+
+          break;
+
+        default:
+
+          navigate("/");
 
       }
 
@@ -213,33 +356,59 @@ export const LoginForm = () => {
         error
       );
 
+      setFormError(
+        "Server connection failed"
+      );
+
       toast({
 
         title:
-          'Server Error',
+          "Server Error",
 
         description:
-          'Backend connection failed',
+          "Backend connection failed",
 
         variant:
-          'destructive',
+          "destructive",
 
       });
-
-    }
-
-    finally {
-
-      setIsLoading(false);
 
     }
 
   };
 
 
-  // =========================
+  // ========================================
+  // QUICK LOGIN
+  // ========================================
+  const quickLogin = (
+
+    role: UserRole,
+
+    demoIdentifier: string
+
+  ) => {
+
+    setIdentifier(
+      demoIdentifier
+    );
+
+    setPassword(
+      "123456"
+    );
+
+    setActiveRole(
+      role
+    );
+
+    setFormError("");
+
+  };
+
+
+  // ========================================
   // ROLE ICONS
-  // =========================
+  // ========================================
   const roleIcons = {
 
     student:
@@ -254,49 +423,26 @@ export const LoginForm = () => {
   };
 
 
-  // =========================
-  // QUICK LOGIN
-  // =========================
-  const quickLogin = (
-
-    role: UserRole,
-
-    demoIdentifier: string
-
-  ) => {
-
-    setIdentifier(
-      demoIdentifier
-    );
-
-    setPassword(
-      '123456'
-    );
-
-    setActiveRole(
-      role
-    );
-
-  };
-
-
+  // ========================================
+  // UI
+  // ========================================
   return (
 
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-primary/5 to-accent/10 p-4">
 
-      <Card className="w-full max-w-md shadow-strong">
+      <Card className="w-full max-w-md shadow-strong border-0">
 
         <CardHeader className="text-center">
 
-          <CardTitle className="text-2xl font-bold bg-gradient-hero bg-clip-text text-transparent">
+          <CardTitle className="text-3xl font-bold bg-gradient-hero bg-clip-text text-transparent">
 
-            Welcome to AlumniConnect
+            AlumniConnect
 
           </CardTitle>
 
           <CardDescription>
 
-            Connect, collaborate, and grow with your alumni network
+            Connect with alumni and grow together
 
           </CardDescription>
 
@@ -310,20 +456,23 @@ export const LoginForm = () => {
             value={activeRole}
 
             onValueChange={(value) =>
+
               setActiveRole(
                 value as UserRole
               )
+
             }
 
             className="w-full"
 
           >
 
+            {/* ROLE TABS */}
             <TabsList className="grid w-full grid-cols-3">
 
               <TabsTrigger
                 value="student"
-                className="flex items-center space-x-1"
+                className="flex items-center gap-1"
               >
 
                 {roleIcons.student}
@@ -339,7 +488,7 @@ export const LoginForm = () => {
 
               <TabsTrigger
                 value="alumni"
-                className="flex items-center space-x-1"
+                className="flex items-center gap-1"
               >
 
                 {roleIcons.alumni}
@@ -355,7 +504,7 @@ export const LoginForm = () => {
 
               <TabsTrigger
                 value="admin"
-                className="flex items-center space-x-1"
+                className="flex items-center gap-1"
               >
 
                 {roleIcons.admin}
@@ -379,8 +528,19 @@ export const LoginForm = () => {
               <form
                 onSubmit={handleSubmit}
                 className="space-y-4"
-                autoComplete="off"
               >
+
+                {/* ERROR */}
+                {formError && (
+
+                  <div className="p-3 rounded-lg bg-red-100 text-red-600 text-sm">
+
+                    {formError}
+
+                  </div>
+
+                )}
+
 
                 {/* IDENTIFIER */}
                 <div className="space-y-2">
@@ -397,17 +557,21 @@ export const LoginForm = () => {
 
                     type="text"
 
-                    autoComplete="off"
+                    placeholder="Enter identifier"
 
-                    placeholder="Enter your identifier"
+                    autoComplete="username"
 
                     value={identifier}
 
                     onChange={(e) =>
+
                       setIdentifier(
                         e.target.value
                       )
+
                     }
+
+                    disabled={isLoading}
 
                     required
 
@@ -431,17 +595,21 @@ export const LoginForm = () => {
 
                     type="password"
 
-                    autoComplete="new-password"
+                    placeholder="Enter password"
 
-                    placeholder="Enter your password"
+                    autoComplete="current-password"
 
                     value={password}
 
                     onChange={(e) =>
+
                       setPassword(
                         e.target.value
                       )
+
                     }
+
+                    disabled={isLoading}
 
                     required
 
@@ -463,15 +631,21 @@ export const LoginForm = () => {
 
                 >
 
-                  {
+                  {isLoading ? (
 
-                    isLoading
+                    <div className="flex items-center gap-2">
 
-                      ? 'Signing in...'
+                      <Loader2 className="h-4 w-4 animate-spin" />
 
-                      : 'Sign In'
+                      Signing In...
 
-                  }
+                    </div>
+
+                  ) : (
+
+                    "Sign In"
+
+                  )}
 
                 </Button>
 
@@ -479,7 +653,7 @@ export const LoginForm = () => {
 
 
               {/* FORGOT PASSWORD */}
-              <div className="text-right mt-2">
+              <div className="text-right mt-3">
 
                 <Link
 
@@ -497,30 +671,37 @@ export const LoginForm = () => {
 
 
               {/* QUICK LOGIN */}
-              <div className="mt-4 p-3 bg-muted rounded-lg">
+              <div className="mt-5 p-3 rounded-xl bg-muted">
 
                 <p className="text-sm text-muted-foreground mb-2">
 
-                  Quick demo login:
+                  Quick demo login
 
                 </p>
 
-                <div className="flex flex-col space-y-1">
+                <div className="flex flex-col gap-2">
 
                   <Button
+
+                    type="button"
 
                     variant="ghost"
 
                     size="sm"
 
-                    onClick={() =>
-                      quickLogin(
-                        'student',
-                        '22A91A05A1'
-                      )
-                    }
-
                     className="justify-start"
+
+                    onClick={() =>
+
+                      quickLogin(
+
+                        "student",
+
+                        "22A91A05A1"
+
+                      )
+
+                    }
 
                   >
 
@@ -533,18 +714,25 @@ export const LoginForm = () => {
 
                   <Button
 
+                    type="button"
+
                     variant="ghost"
 
                     size="sm"
 
-                    onClick={() =>
-                      quickLogin(
-                        'alumni',
-                        'ALU001'
-                      )
-                    }
-
                     className="justify-start"
+
+                    onClick={() =>
+
+                      quickLogin(
+
+                        "alumni",
+
+                        "ALU001"
+
+                      )
+
+                    }
 
                   >
 
@@ -557,18 +745,25 @@ export const LoginForm = () => {
 
                   <Button
 
+                    type="button"
+
                     variant="ghost"
 
                     size="sm"
 
-                    onClick={() =>
-                      quickLogin(
-                        'admin',
-                        'ADMIN001'
-                      )
-                    }
-
                     className="justify-start"
+
+                    onClick={() =>
+
+                      quickLogin(
+
+                        "admin",
+
+                        "ADMIN001"
+
+                      )
+
+                    }
 
                   >
 
@@ -599,7 +794,7 @@ export const LoginForm = () => {
 
               to="/register"
 
-              className="text-primary hover:underline ml-1"
+              className="ml-1 text-primary hover:underline"
 
             >
 

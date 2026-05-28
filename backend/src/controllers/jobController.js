@@ -1,298 +1,885 @@
-const Job = require("../models/Job");
+const Job =
+  require("../models/Job");
+
+const Notification =
+  require("../models/Notification");
 
 
-// @desc    Create Job
-// @route   POST /jobs
-// @access  Alumni/Admin
+// ==========================================
+// CREATE JOB
+// ==========================================
+const createJob =
+  async (req, res) => {
 
-const createJob = async (req, res) => {
+    try {
 
-  try {
+      const {
 
-    const {
-      title,
-      company,
-      location,
-      type,
-      description,
-      skillsRequired,
-      salary,
-      deadline,
-    } = req.body;
+        title,
+        company,
+        location,
+        type,
+        description,
+        skillsRequired,
+        salary,
+        deadline,
 
-    // CHECK ROLE
-    if (
-      req.user.role !== "alumni" &&
-      req.user.role !== "admin"
-    ) {
+      } = req.body;
 
-      return res.status(403).json({
+
+      // ====================================
+      // VALIDATION
+      // ====================================
+      if (
+
+        !title ||
+        !company ||
+        !location ||
+        !description
+
+      ) {
+
+        return res.status(400).json({
+
+          success: false,
+
+          message:
+            "Please fill all required fields",
+
+        });
+
+      }
+
+
+      // ====================================
+      // ONLY ALUMNI / ADMIN
+      // ====================================
+      if (
+
+        req.user.role !== "alumni" &&
+
+        req.user.role !== "admin"
+
+      ) {
+
+        return res.status(403).json({
+
+          success: false,
+
+          message:
+            "Only alumni/admin can post jobs",
+
+        });
+
+      }
+
+
+      // ====================================
+      // CREATE JOB
+      // ====================================
+      const job =
+        await Job.create({
+
+          title,
+
+          company,
+
+          location,
+
+          type:
+            type || "Internship",
+
+          description,
+
+          skillsRequired:
+            skillsRequired || [],
+
+          salary:
+            salary || "",
+
+          deadline,
+
+          postedBy:
+            req.user._id,
+
+          isActive:
+            true,
+
+        });
+
+
+      // ====================================
+      // RESPONSE
+      // ====================================
+      res.status(201).json({
+
+        success: true,
+
         message:
-          "Only alumni/admin can post jobs",
+          "Job posted successfully",
+
+        job,
+
       });
 
     }
 
-    const job = await Job.create({
-      title,
-      company,
-      location,
-      type,
-      description,
-      skillsRequired,
-      salary,
-      deadline,
-      postedBy: req.user._id,
-    });
+    catch (error) {
 
-    res.status(201).json(job);
-
-  }
-
-  catch (error) {
-
-    console.log(error);
-
-    res.status(500).json({
-      message: "Server Error",
-    });
-
-  }
-
-};
-
-
-// @desc    Get All Jobs
-// @route   GET /jobs
-// @access  Private
-
-const getJobs = async (req, res) => {
-
-  try {
-
-    const jobs = await Job.find({
-      isActive: true,
-    })
-      .populate(
-        "postedBy",
-        "name role"
-      )
-      .sort({
-        createdAt: -1,
-      });
-
-    res.status(200).json(jobs);
-
-  }
-
-  catch (error) {
-
-    console.log(error);
-
-    res.status(500).json({
-      message: "Server Error",
-    });
-
-  }
-
-};
-
-
-// @desc    Apply For Job
-// @route   POST /jobs/:id/apply
-// @access  Student
-
-const applyJob = async (req, res) => {
-
-  try {
-
-    // ONLY STUDENTS
-    if (req.user.role !== "student") {
-
-      return res.status(403).json({
-        message:
-          "Only students can apply",
-      });
-
-    }
-
-    const job = await Job.findById(
-      req.params.id
-    );
-
-    if (!job) {
-
-      return res.status(404).json({
-        message: "Job not found",
-      });
-
-    }
-
-    // CHECK ALREADY APPLIED
-    const alreadyApplied =
-      job.applications.find(
-        (app) =>
-          app.student.toString() ===
-          req.user._id.toString()
+      console.log(
+        "CREATE JOB ERROR:",
+        error
       );
 
-    if (alreadyApplied) {
+      res.status(500).json({
 
-      return res.status(400).json({
+        success: false,
+
         message:
-          "Already applied for this job",
+          "Server Error",
+
       });
 
     }
 
-    // ADD APPLICATION
-    job.applications.push({
-      student: req.user._id,
-      studentName: req.user.name,
-      studentEmail: req.user.email,
-    });
-
-    await job.save();
-
-    res.status(200).json({
-      message:
-        "Applied successfully",
-    });
-
-  }
-
-  catch (error) {
-
-    console.log(error);
-
-    res.status(500).json({
-      message: "Server Error",
-    });
-
-  }
-
-};
+  };
 
 
-// @desc    Get Job Applications
-// @route   GET /jobs/:id/applications
-// @access  Alumni/Admin
+// ==========================================
+// GET ALL JOBS
+// ==========================================
+const getJobs =
+  async (req, res) => {
 
-const getJobApplications = async (
-  req,
-  res
-) => {
+    try {
 
-  try {
+      const {
 
-    const job = await Job.findById(
-      req.params.id
-    ).populate(
-      "applications.student",
-      "name email role"
-    );
+        keyword,
+        location,
+        type,
+        skill,
 
-    if (!job) {
+      } = req.query;
 
-      return res.status(404).json({
-        message: "Job not found",
+
+      const filters = {
+
+        isActive: true,
+
+      };
+
+
+      if (location) {
+
+        filters.location = {
+
+          $regex: location,
+
+          $options: "i",
+
+        };
+
+      }
+
+
+      if (type) {
+
+        filters.type = type;
+
+      }
+
+
+      if (skill) {
+
+        filters.skillsRequired = {
+
+          $in: [skill],
+
+        };
+
+      }
+
+
+      if (keyword) {
+
+        filters.$or = [
+
+          {
+
+            title: {
+
+              $regex: keyword,
+
+              $options: "i",
+
+            },
+
+          },
+
+          {
+
+            company: {
+
+              $regex: keyword,
+
+              $options: "i",
+
+            },
+
+          },
+
+          {
+
+            description: {
+
+              $regex: keyword,
+
+              $options: "i",
+
+            },
+
+          },
+
+        ];
+
+      }
+
+
+      const jobs =
+        await Job.find(filters)
+
+          .populate(
+
+            "postedBy",
+
+            "name role"
+
+          )
+
+          .sort({
+
+            createdAt: -1,
+
+          });
+
+
+      res.status(200).json({
+
+        success: true,
+
+        total:
+          jobs.length,
+
+        jobs,
+
       });
 
     }
 
-    // ONLY OWNER OR ADMIN
-    if (
-      job.postedBy.toString() !==
-        req.user._id.toString() &&
-      req.user.role !== "admin"
-    ) {
+    catch (error) {
 
-      return res.status(403).json({
+      console.log(
+        "GET JOBS ERROR:",
+        error
+      );
+
+      res.status(500).json({
+
+        success: false,
+
         message:
-          "Not authorized",
+          "Server Error",
+
       });
 
     }
 
-    res.status(200).json(
-      job.applications
-    );
-
-  }
-
-  catch (error) {
-
-    console.log(error);
-
-    res.status(500).json({
-      message: "Server Error",
-    });
-
-  }
-
-};
+  };
 
 
-// @desc    Delete Job
-// @route   DELETE /jobs/:id
-// @access  Alumni/Admin
+// ==========================================
+// GET SINGLE JOB
+// ==========================================
+const getSingleJob =
+  async (req, res) => {
 
-const deleteJob = async (req, res) => {
+    try {
 
-  try {
+      const job =
+        await Job.findById(
+          req.params.id
+        ).populate(
 
-    const job = await Job.findById(
-      req.params.id
-    );
+          "postedBy",
 
-    if (!job) {
+          "name email role"
 
-      return res.status(404).json({
-        message: "Job not found",
+        );
+
+
+      if (!job) {
+
+        return res.status(404).json({
+
+          success: false,
+
+          message:
+            "Job not found",
+
+        });
+
+      }
+
+
+      res.status(200).json({
+
+        success: true,
+
+        job,
+
       });
 
     }
 
-    // OWNER OR ADMIN
-    if (
-      job.postedBy.toString() !==
-        req.user._id.toString() &&
-      req.user.role !== "admin"
-    ) {
+    catch (error) {
 
-      return res.status(403).json({
+      console.log(
+        "GET SINGLE JOB ERROR:",
+        error
+      );
+
+      res.status(500).json({
+
+        success: false,
+
         message:
-          "Not authorized",
+          "Server Error",
+
       });
 
     }
 
-    await job.deleteOne();
-
-    res.status(200).json({
-      message:
-        "Job deleted successfully",
-    });
-
-  }
-
-  catch (error) {
-
-    console.log(error);
-
-    res.status(500).json({
-      message: "Server Error",
-    });
-
-  }
-
-};
+  };
 
 
+// ==========================================
+// UPDATE JOB
+// ==========================================
+const updateJob =
+  async (req, res) => {
+
+    try {
+
+      const job =
+        await Job.findById(
+          req.params.id
+        );
+
+
+      if (!job) {
+
+        return res.status(404).json({
+
+          success: false,
+
+          message:
+            "Job not found",
+
+        });
+
+      }
+
+
+      // ====================================
+      // OWNER OR ADMIN
+      // ====================================
+      if (
+
+        job.postedBy.toString() !==
+          req.user._id.toString() &&
+
+        req.user.role !== "admin"
+
+      ) {
+
+        return res.status(403).json({
+
+          success: false,
+
+          message:
+            "Not authorized",
+
+        });
+
+      }
+
+
+      const updatedJob =
+        await Job.findByIdAndUpdate(
+
+          req.params.id,
+
+          req.body,
+
+          {
+
+            new: true,
+
+          }
+
+        );
+
+
+      res.status(200).json({
+
+        success: true,
+
+        message:
+          "Job updated successfully",
+
+        job:
+          updatedJob,
+
+      });
+
+    }
+
+    catch (error) {
+
+      console.log(
+        "UPDATE JOB ERROR:",
+        error
+      );
+
+      res.status(500).json({
+
+        success: false,
+
+        message:
+          "Server Error",
+
+      });
+
+    }
+
+  };
+
+
+// ==========================================
+// APPLY FOR JOB
+// ==========================================
+const applyJob =
+  async (req, res) => {
+
+    try {
+
+      if (
+        req.user.role !== "student"
+      ) {
+
+        return res.status(403).json({
+
+          success: false,
+
+          message:
+            "Only students can apply",
+
+        });
+
+      }
+
+
+      const job =
+        await Job.findById(
+          req.params.id
+        );
+
+
+      if (!job) {
+
+        return res.status(404).json({
+
+          success: false,
+
+          message:
+            "Job not found",
+
+        });
+
+      }
+
+
+      if (
+
+        job.deadline &&
+
+        new Date(job.deadline) <
+          new Date()
+
+      ) {
+
+        return res.status(400).json({
+
+          success: false,
+
+          message:
+            "Application deadline passed",
+
+        });
+
+      }
+
+
+      const alreadyApplied =
+
+        job.applications.find(
+
+          (app) =>
+
+            app.student.toString() ===
+
+            req.user._id.toString()
+
+        );
+
+
+      if (alreadyApplied) {
+
+        return res.status(400).json({
+
+          success: false,
+
+          message:
+            "Already applied for this job",
+
+        });
+
+      }
+
+
+      job.applications.push({
+
+        student:
+          req.user._id,
+
+        studentName:
+          req.user.name,
+
+        studentEmail:
+          req.user.email,
+
+      });
+
+
+      await job.save();
+
+
+      await Notification.create({
+
+        recipient:
+          job.postedBy,
+
+        sender:
+          req.user._id,
+
+        title:
+          "New Job Application",
+
+        message:
+          `${req.user.name} applied for ${job.title}`,
+
+        type:
+          "job",
+
+        relatedId:
+          job._id,
+
+      });
+
+
+      res.status(200).json({
+
+        success: true,
+
+        message:
+          "Applied successfully",
+
+      });
+
+    }
+
+    catch (error) {
+
+      console.log(
+        "APPLY JOB ERROR:",
+        error
+      );
+
+      res.status(500).json({
+
+        success: false,
+
+        message:
+          "Server Error",
+
+      });
+
+    }
+
+  };
+
+
+// ==========================================
+// GET JOB APPLICATIONS
+// ==========================================
+const getJobApplications =
+  async (req, res) => {
+
+    try {
+
+      const job =
+        await Job.findById(
+          req.params.id
+        ).populate(
+
+          "applications.student",
+
+          "name email role"
+
+        );
+
+
+      if (!job) {
+
+        return res.status(404).json({
+
+          success: false,
+
+          message:
+            "Job not found",
+
+        });
+
+      }
+
+
+      if (
+
+        job.postedBy.toString() !==
+
+          req.user._id.toString() &&
+
+        req.user.role !== "admin"
+
+      ) {
+
+        return res.status(403).json({
+
+          success: false,
+
+          message:
+            "Not authorized",
+
+        });
+
+      }
+
+
+      res.status(200).json({
+
+        success: true,
+
+        total:
+          job.applications.length,
+
+        applications:
+          job.applications,
+
+      });
+
+    }
+
+    catch (error) {
+
+      console.log(
+        "GET APPLICATIONS ERROR:",
+        error
+      );
+
+      res.status(500).json({
+
+        success: false,
+
+        message:
+          "Server Error",
+
+      });
+
+    }
+
+  };
+
+
+// ==========================================
+// DELETE JOB
+// ==========================================
+const deleteJob =
+  async (req, res) => {
+
+    try {
+
+      const job =
+        await Job.findById(
+          req.params.id
+        );
+
+
+      if (!job) {
+
+        return res.status(404).json({
+
+          success: false,
+
+          message:
+            "Job not found",
+
+        });
+
+      }
+
+
+      if (
+
+        job.postedBy.toString() !==
+
+          req.user._id.toString() &&
+
+        req.user.role !== "admin"
+
+      ) {
+
+        return res.status(403).json({
+
+          success: false,
+
+          message:
+            "Not authorized",
+
+        });
+
+      }
+
+
+      await job.deleteOne();
+
+
+      res.status(200).json({
+
+        success: true,
+
+        message:
+          "Job deleted successfully",
+
+      });
+
+    }
+
+    catch (error) {
+
+      console.log(
+        "DELETE JOB ERROR:",
+        error
+      );
+
+      res.status(500).json({
+
+        success: false,
+
+        message:
+          "Server Error",
+
+      });
+
+    }
+
+  };
+
+
+// ==========================================
+// GET MY POSTED JOBS
+// ==========================================
+const getMyPostedJobs =
+  async (req, res) => {
+
+    try {
+
+      const jobs =
+        await Job.find({
+
+          postedBy:
+            req.user._id,
+
+        }).sort({
+
+          createdAt: -1,
+
+        });
+
+
+      res.status(200).json({
+
+        success: true,
+
+        total:
+          jobs.length,
+
+        jobs,
+
+      });
+
+    }
+
+    catch (error) {
+
+      console.log(
+        "MY JOBS ERROR:",
+        error
+      );
+
+      res.status(500).json({
+
+        success: false,
+
+        message:
+          "Server Error",
+
+      });
+
+    }
+
+  };
+
+
+// ==========================================
+// EXPORTS
+// ==========================================
 module.exports = {
+
   createJob,
+
   getJobs,
+
+  getSingleJob,
+
+  updateJob,
+
   applyJob,
+
   getJobApplications,
+
   deleteJob,
+
+  getMyPostedJobs,
+
 };

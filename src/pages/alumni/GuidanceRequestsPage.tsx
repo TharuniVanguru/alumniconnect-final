@@ -13,8 +13,10 @@ import { Header }
   from "@/components/layout/Header";
 
 import {
+
   Card,
   CardContent,
+
 } from "@/components/ui/card";
 
 import { Button }
@@ -28,6 +30,11 @@ import { Input }
   from "@/components/ui/input";
 
 import {
+  useToast,
+} from "@/hooks/use-toast";
+
+import {
+
   Loader2,
   MessageCircle,
   CheckCircle2,
@@ -35,6 +42,8 @@ import {
   Clock3,
   Calendar,
   Video,
+  RefreshCw,
+
 } from "lucide-react";
 
 
@@ -74,56 +83,100 @@ interface GuidanceRequest {
 const GuidanceRequestsPage =
   () => {
 
+    // ====================================
+    // NAVIGATION
+    // ====================================
     const navigate =
       useNavigate();
 
+    const { toast } =
+      useToast();
+
+
+    // ====================================
+    // STATES
+    // ====================================
     const [
+
       requests,
       setRequests,
+
     ] = useState<
       GuidanceRequest[]
     >([]);
 
+
     const [
+
       loading,
       setLoading,
+
     ] = useState(false);
 
+
     const [
+
+      actionLoading,
+      setActionLoading,
+
+    ] = useState(false);
+
+
+    const [
+
       error,
       setError,
+
     ] = useState("");
 
 
+    // ====================================
+    // FORM STATE
+    // ====================================
     const [
-      meetingLink,
-      setMeetingLink,
-    ] = useState("");
+
+      formData,
+      setFormData,
+
+    ] = useState<
+
+      Record<
+        string,
+        {
+          meetingLink: string;
+          scheduledDate: string;
+        }
+
+      >
+
+    >({});
 
 
-    const [
-      scheduledDate,
-      setScheduledDate,
-    ] = useState("");
-
-
+    // ====================================
+    // USER INFO
+    // ====================================
     const userInfo =
       JSON.parse(
+
         localStorage.getItem(
           "userInfo"
         ) || "{}"
+
       );
 
 
-    // ======================================
+    // ====================================
     // FETCH REQUESTS
-    // ======================================
+    // ====================================
     const fetchRequests =
       async () => {
 
         try {
 
           setLoading(true);
+
+          setError("");
+
 
           const response =
             await axios.get(
@@ -143,8 +196,9 @@ const GuidanceRequestsPage =
 
             );
 
+
           setRequests(
-            response.data
+            response.data || []
           );
 
         }
@@ -154,7 +208,7 @@ const GuidanceRequestsPage =
           console.log(error);
 
           setError(
-            "Failed to load requests"
+            "Failed to load guidance requests"
           );
 
         }
@@ -168,9 +222,44 @@ const GuidanceRequestsPage =
       };
 
 
-    // ======================================
+    // ====================================
+    // UPDATE FORM
+    // ====================================
+    const updateFormData =
+      (
+        requestId: string,
+        field:
+          | "meetingLink"
+          | "scheduledDate",
+        value: string
+      ) => {
+
+        setFormData(
+          (prev) => ({
+
+            ...prev,
+
+            [requestId]: {
+
+              ...prev[
+                requestId
+              ],
+
+              [field]:
+                value,
+
+            },
+
+          })
+
+        );
+
+      };
+
+
+    // ====================================
     // UPDATE STATUS
-    // ======================================
+    // ====================================
     const updateStatus =
       async (
         requestId: string,
@@ -178,6 +267,22 @@ const GuidanceRequestsPage =
       ) => {
 
         try {
+
+          setActionLoading(
+            true
+          );
+
+          const currentForm =
+            formData[
+              requestId
+            ] || {
+
+              meetingLink: "",
+
+              scheduledDate: "",
+
+            };
+
 
           await axios.put(
 
@@ -187,9 +292,11 @@ const GuidanceRequestsPage =
 
               status,
 
-              meetingLink,
+              meetingLink:
+                currentForm.meetingLink,
 
-              scheduledDate,
+              scheduledDate:
+                currentForm.scheduledDate,
 
             },
 
@@ -207,11 +314,12 @@ const GuidanceRequestsPage =
           );
 
 
+          // ================================
           // UPDATE UI
+          // ================================
           setRequests(
-            (
-              prev
-            ) =>
+
+            (prev) =>
 
               prev.map(
                 (
@@ -227,9 +335,11 @@ const GuidanceRequestsPage =
 
                         status,
 
-                        meetingLink,
+                        meetingLink:
+                          currentForm.meetingLink,
 
-                        scheduledDate,
+                        scheduledDate:
+                          currentForm.scheduledDate,
 
                       }
 
@@ -239,14 +349,46 @@ const GuidanceRequestsPage =
 
           );
 
+
+          toast({
+
+            title:
+              `Request ${status}`,
+
+            description:
+              `Guidance request has been ${status.toLowerCase()}.`,
+
+          });
+
         }
 
-        catch (error) {
+        catch (error: any) {
 
           console.log(error);
 
-          alert(
-            "Failed to update request"
+          toast({
+
+            title:
+              "Update Failed",
+
+            description:
+
+              error?.response?.data
+                ?.message ||
+
+              "Server Error",
+
+            variant:
+              "destructive",
+
+          });
+
+        }
+
+        finally {
+
+          setActionLoading(
+            false
           );
 
         }
@@ -254,9 +396,9 @@ const GuidanceRequestsPage =
       };
 
 
-    // ======================================
+    // ====================================
     // INITIAL LOAD
-    // ======================================
+    // ====================================
     useEffect(() => {
 
       fetchRequests();
@@ -264,11 +406,13 @@ const GuidanceRequestsPage =
     }, []);
 
 
-    // ======================================
+    // ====================================
     // STATUS BADGE
-    // ======================================
+    // ====================================
     const renderStatusBadge =
-      (status: string) => {
+      (
+        status: string
+      ) => {
 
         switch (status) {
 
@@ -276,7 +420,7 @@ const GuidanceRequestsPage =
 
             return (
 
-              <Badge className="bg-green-600">
+              <Badge className="bg-green-600 text-white">
 
                 <CheckCircle2 className="h-3 w-3 mr-1" />
 
@@ -304,7 +448,7 @@ const GuidanceRequestsPage =
 
             return (
 
-              <Badge className="bg-blue-600">
+              <Badge className="bg-blue-600 text-white">
 
                 Completed
 
@@ -334,6 +478,9 @@ const GuidanceRequestsPage =
       };
 
 
+    // ====================================
+    // UI
+    // ====================================
     return (
 
       <div className="min-h-screen bg-background">
@@ -343,24 +490,44 @@ const GuidanceRequestsPage =
         <div className="max-w-7xl mx-auto p-6">
 
           {/* HEADER */}
-          <div className="mb-8">
 
-            <h1 className="text-4xl font-bold">
+          <div className="flex items-center justify-between mb-8">
 
-              Guidance Requests
+            <div>
 
-            </h1>
+              <h1 className="text-4xl font-bold">
 
-            <p className="text-muted-foreground mt-2">
+                Guidance Requests
 
-              Manage student mentorship requests
+              </h1>
 
-            </p>
+              <p className="text-muted-foreground mt-2">
+
+                Manage mentorship and student guidance requests
+
+              </p>
+
+            </div>
+
+
+            <Button
+              variant="outline"
+              onClick={
+                fetchRequests
+              }
+            >
+
+              <RefreshCw className="h-4 w-4 mr-2" />
+
+              Refresh
+
+            </Button>
 
           </div>
 
 
           {/* ERROR */}
+
           {error && (
 
             <div className="bg-red-100 text-red-600 p-4 rounded-xl mb-5">
@@ -373,6 +540,7 @@ const GuidanceRequestsPage =
 
 
           {/* LOADING */}
+
           {loading ? (
 
             <div className="flex items-center justify-center py-20">
@@ -381,7 +549,8 @@ const GuidanceRequestsPage =
 
             </div>
 
-          ) : requests.length === 0 ? (
+          ) : requests.length ===
+            0 ? (
 
             <Card>
 
@@ -393,6 +562,12 @@ const GuidanceRequestsPage =
 
                 </h2>
 
+                <p className="text-muted-foreground">
+
+                  Students haven’t requested mentorship yet.
+
+                </p>
+
               </CardContent>
 
             </Card>
@@ -402,29 +577,40 @@ const GuidanceRequestsPage =
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
               {requests.map(
-                (request) => (
+                (
+                  request
+                ) => (
 
                   <Card
-                    key={request._id}
+                    key={
+                      request._id
+                    }
+
                     className="shadow-xl rounded-3xl border-0"
+
                   >
 
                     <CardContent className="p-6">
 
                       {/* TOP */}
+
                       <div className="flex items-start justify-between mb-5">
 
                         <div>
 
                           <h2 className="text-2xl font-bold">
 
-                            {request.topic}
+                            {
+                              request.topic
+                            }
 
                           </h2>
 
                           <p className="text-muted-foreground">
 
-                            by {request.studentName}
+                            by {
+                              request.studentName
+                            }
 
                           </p>
 
@@ -438,6 +624,7 @@ const GuidanceRequestsPage =
 
 
                       {/* CONTENT */}
+
                       <div className="space-y-4">
 
                         <div>
@@ -450,7 +637,9 @@ const GuidanceRequestsPage =
 
                           <p>
 
-                            {request.domain}
+                            {
+                              request.domain
+                            }
 
                           </p>
 
@@ -467,7 +656,9 @@ const GuidanceRequestsPage =
 
                           <p>
 
-                            {request.urgency}
+                            {
+                              request.urgency
+                            }
 
                           </p>
 
@@ -484,7 +675,9 @@ const GuidanceRequestsPage =
 
                           <p className="leading-7">
 
-                            {request.description}
+                            {
+                              request.description
+                            }
 
                           </p>
 
@@ -492,6 +685,7 @@ const GuidanceRequestsPage =
 
 
                         {/* MEETING LINK */}
+
                         {request.meetingLink && (
 
                           <div>
@@ -506,11 +700,15 @@ const GuidanceRequestsPage =
 
                             <a
 
-                              href={request.meetingLink}
+                              href={
+                                request.meetingLink
+                              }
 
                               target="_blank"
 
-                              className="text-blue-600 underline"
+                              rel="noreferrer"
+
+                              className="text-blue-600 underline break-all"
 
                             >
 
@@ -524,6 +722,7 @@ const GuidanceRequestsPage =
 
 
                         {/* DATE */}
+
                         {request.scheduledDate && (
 
                           <div>
@@ -539,7 +738,9 @@ const GuidanceRequestsPage =
                             <p>
 
                               {new Date(
+
                                 request.scheduledDate
+
                               ).toLocaleString()}
 
                             </p>
@@ -552,6 +753,7 @@ const GuidanceRequestsPage =
 
 
                       {/* ACTIONS */}
+
                       <div className="mt-6 space-y-3">
 
                         {request.status ===
@@ -561,14 +763,32 @@ const GuidanceRequestsPage =
 
                             <Input
 
-                              placeholder="Google Meet Link"
+                              placeholder="Google Meet / Zoom Link"
 
-                              value={meetingLink}
+                              value={
+
+                                formData[
+                                  request._id
+                                ]
+                                  ?.meetingLink ||
+
+                                ""
+
+                              }
 
                               onChange={(e) =>
-                                setMeetingLink(
-                                  e.target.value
+
+                                updateFormData(
+
+                                  request._id,
+
+                                  "meetingLink",
+
+                                  e.target
+                                    .value
+
                                 )
+
                               }
 
                             />
@@ -578,12 +798,30 @@ const GuidanceRequestsPage =
 
                               type="datetime-local"
 
-                              value={scheduledDate}
+                              value={
+
+                                formData[
+                                  request._id
+                                ]
+                                  ?.scheduledDate ||
+
+                                ""
+
+                              }
 
                               onChange={(e) =>
-                                setScheduledDate(
-                                  e.target.value
+
+                                updateFormData(
+
+                                  request._id,
+
+                                  "scheduledDate",
+
+                                  e.target
+                                    .value
+
                                 )
+
                               }
 
                             />
@@ -592,13 +830,34 @@ const GuidanceRequestsPage =
                             <div className="flex gap-3">
 
                               <Button
-                                onClick={() =>
-                                  updateStatus(
-                                    request._id,
-                                    "Accepted"
-                                  )
+
+                                disabled={
+                                  actionLoading
                                 }
+
+                                onClick={() =>
+
+                                  updateStatus(
+
+                                    request._id,
+
+                                    "Accepted"
+
+                                  )
+
+                                }
+
                               >
+
+                                {actionLoading ? (
+
+                                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+
+                                ) : (
+
+                                  <CheckCircle2 className="h-4 w-4 mr-2" />
+
+                                )}
 
                                 Accept
 
@@ -606,14 +865,28 @@ const GuidanceRequestsPage =
 
 
                               <Button
+
                                 variant="destructive"
-                                onClick={() =>
-                                  updateStatus(
-                                    request._id,
-                                    "Rejected"
-                                  )
+
+                                disabled={
+                                  actionLoading
                                 }
+
+                                onClick={() =>
+
+                                  updateStatus(
+
+                                    request._id,
+
+                                    "Rejected"
+
+                                  )
+
+                                }
+
                               >
+
+                                <XCircle className="h-4 w-4 mr-2" />
 
                                 Reject
 
@@ -626,20 +899,27 @@ const GuidanceRequestsPage =
                         )}
 
 
+                        {/* ACCEPTED */}
+
                         {request.status ===
                           "Accepted" && (
 
                           <div className="flex gap-3">
 
                             <Button
+
                               variant="outline"
+
                               onClick={() =>
 
                                 navigate(
+
                                   `/alumni/chat/${request.studentId}`
+
                                 )
 
                               }
+
                             >
 
                               <MessageCircle className="h-4 w-4 mr-2" />
@@ -650,12 +930,23 @@ const GuidanceRequestsPage =
 
 
                             <Button
-                              onClick={() =>
-                                updateStatus(
-                                  request._id,
-                                  "Completed"
-                                )
+
+                              disabled={
+                                actionLoading
                               }
+
+                              onClick={() =>
+
+                                updateStatus(
+
+                                  request._id,
+
+                                  "Completed"
+
+                                )
+
+                              }
+
                             >
 
                               Mark Completed
@@ -673,6 +964,7 @@ const GuidanceRequestsPage =
                   </Card>
 
                 )
+
               )}
 
             </div>

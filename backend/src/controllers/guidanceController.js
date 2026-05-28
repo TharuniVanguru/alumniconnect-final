@@ -14,33 +14,42 @@ const User =
   );
 
 
-// =========================
-// CREATE REQUEST
-// =========================
+// ==========================================
+// CREATE GUIDANCE REQUEST
+// ==========================================
 const createRequest =
   async (req, res) => {
 
     try {
 
       const {
+
         alumniId,
         alumniName,
         domain,
         topic,
         description,
         urgency,
+        category,
+
       } = req.body;
 
 
+      // ====================================
       // VALIDATION
+      // ====================================
       if (
+
         !alumniId ||
         !domain ||
         !topic ||
         !description
+
       ) {
 
         return res.status(400).json({
+
+          success: false,
 
           message:
             "Please fill all required fields",
@@ -50,7 +59,9 @@ const createRequest =
       }
 
 
-      // CHECK DUPLICATE PENDING REQUEST
+      // ====================================
+      // DUPLICATE CHECK
+      // ====================================
       const existingRequest =
         await GuidanceRequest.findOne({
 
@@ -61,13 +72,16 @@ const createRequest =
 
           topic,
 
-          status: "Pending",
+          status:
+            "Pending",
 
         });
 
       if (existingRequest) {
 
         return res.status(400).json({
+
+          success: false,
 
           message:
             "You already sent a similar request",
@@ -77,7 +91,9 @@ const createRequest =
       }
 
 
+      // ====================================
       // CREATE REQUEST
+      // ====================================
       const request =
         await GuidanceRequest.create({
 
@@ -97,12 +113,21 @@ const createRequest =
 
           description,
 
-          urgency,
+          urgency:
+            urgency || "Medium",
+
+          category:
+            category || "General",
+
+          status:
+            "Pending",
 
         });
 
 
+      // ====================================
       // CREATE NOTIFICATION
+      // ====================================
       await Notification.create({
 
         recipient:
@@ -117,12 +142,25 @@ const createRequest =
         type:
           "guidance",
 
+        priority:
+          urgency || "Medium",
+
       });
 
 
-      res.status(201).json(
-        request
-      );
+      // ====================================
+      // RESPONSE
+      // ====================================
+      res.status(201).json({
+
+        success: true,
+
+        message:
+          "Guidance request created successfully",
+
+        request,
+
+      });
 
     }
 
@@ -135,6 +173,8 @@ const createRequest =
 
       res.status(500).json({
 
+        success: false,
+
         message:
           "Server Error",
 
@@ -145,9 +185,9 @@ const createRequest =
   };
 
 
-// =========================
+// ==========================================
 // GET ALUMNI REQUESTS
-// =========================
+// ==========================================
 const getMyRequests =
   async (req, res) => {
 
@@ -159,16 +199,71 @@ const getMyRequests =
           alumniId:
             req.user._id,
 
-        }).sort({
+        })
+
+        .sort({
 
           createdAt: -1,
 
         });
 
 
-      res.status(200).json(
-        requests
-      );
+      // ====================================
+      // ANALYTICS
+      // ====================================
+      const analytics = {
+
+        total:
+          requests.length,
+
+        pending:
+          requests.filter(
+
+            (r) =>
+              r.status ===
+              "Pending"
+
+          ).length,
+
+        accepted:
+          requests.filter(
+
+            (r) =>
+              r.status ===
+              "Accepted"
+
+          ).length,
+
+        completed:
+          requests.filter(
+
+            (r) =>
+              r.status ===
+              "Completed"
+
+          ).length,
+
+        highPriority:
+          requests.filter(
+
+            (r) =>
+              r.urgency ===
+              "High"
+
+          ).length,
+
+      };
+
+
+      res.status(200).json({
+
+        success: true,
+
+        analytics,
+
+        requests,
+
+      });
 
     }
 
@@ -181,6 +276,8 @@ const getMyRequests =
 
       res.status(500).json({
 
+        success: false,
+
         message:
           "Server Error",
 
@@ -191,9 +288,9 @@ const getMyRequests =
   };
 
 
-// =========================
+// ==========================================
 // GET STUDENT REQUESTS
-// =========================
+// ==========================================
 const getStudentRequests =
   async (req, res) => {
 
@@ -205,16 +302,25 @@ const getStudentRequests =
           studentId:
             req.user._id,
 
-        }).sort({
+        })
+
+        .sort({
 
           createdAt: -1,
 
         });
 
 
-      res.status(200).json(
-        requests
-      );
+      res.status(200).json({
+
+        success: true,
+
+        total:
+          requests.length,
+
+        requests,
+
+      });
 
     }
 
@@ -227,6 +333,8 @@ const getStudentRequests =
 
       res.status(500).json({
 
+        success: false,
+
         message:
           "Server Error",
 
@@ -237,9 +345,96 @@ const getStudentRequests =
   };
 
 
-// =========================
-// UPDATE STATUS
-// =========================
+// ==========================================
+// GET SINGLE REQUEST
+// ==========================================
+const getSingleRequest =
+  async (req, res) => {
+
+    try {
+
+      const request =
+        await GuidanceRequest.findById(
+          req.params.id
+        );
+
+      if (!request) {
+
+        return res.status(404).json({
+
+          success: false,
+
+          message:
+            "Request not found",
+
+        });
+
+      }
+
+
+      // ====================================
+      // ACCESS CONTROL
+      // ====================================
+      const isAllowed =
+
+        request.studentId.toString() ===
+          req.user._id.toString()
+
+        ||
+
+        request.alumniId.toString() ===
+          req.user._id.toString()
+
+        ||
+
+        req.user.role === "admin";
+
+
+      if (!isAllowed) {
+
+        return res.status(403).json({
+
+          success: false,
+
+          message:
+            "Not authorized",
+
+        });
+
+      }
+
+
+      res.status(200).json({
+
+        success: true,
+
+        request,
+
+      });
+
+    }
+
+    catch (error) {
+
+      console.log(error);
+
+      res.status(500).json({
+
+        success: false,
+
+        message:
+          "Server Error",
+
+      });
+
+    }
+
+  };
+
+
+// ==========================================
+// UPDATE GUIDANCE STATUS
+// ==========================================
 const updateStatus =
   async (req, res) => {
 
@@ -251,9 +446,14 @@ const updateStatus =
         );
 
 
+      // ====================================
+      // REQUEST CHECK
+      // ====================================
       if (!request) {
 
         return res.status(404).json({
+
+          success: false,
 
           message:
             "Request not found",
@@ -263,9 +463,9 @@ const updateStatus =
       }
 
 
-      // =========================
+      // ====================================
       // VALID STATUSES
-      // =========================
+      // ====================================
       const validStatuses = [
 
         "Pending",
@@ -291,6 +491,8 @@ const updateStatus =
 
         return res.status(400).json({
 
+          success: false,
+
           message:
             "Invalid status",
 
@@ -299,9 +501,34 @@ const updateStatus =
       }
 
 
-      // =========================
-      // UPDATE STATUS
-      // =========================
+      // ====================================
+      // RESPONSE TIME
+      // ====================================
+      if (
+        req.body.status ===
+        "Accepted"
+      ) {
+
+        request.responseTime =
+          Math.floor(
+
+            (
+              new Date() -
+              new Date(
+                request.createdAt
+              )
+            ) /
+
+            (1000 * 60)
+
+          );
+
+      }
+
+
+      // ====================================
+      // UPDATE FIELDS
+      // ====================================
       if (req.body.status) {
 
         request.status =
@@ -309,10 +536,6 @@ const updateStatus =
 
       }
 
-
-      // =========================
-      // UPDATE MEETING LINK
-      // =========================
       if (req.body.meetingLink) {
 
         request.meetingLink =
@@ -320,10 +543,6 @@ const updateStatus =
 
       }
 
-
-      // =========================
-      // UPDATE SCHEDULE DATE
-      // =========================
       if (req.body.scheduledDate) {
 
         request.scheduledDate =
@@ -331,10 +550,6 @@ const updateStatus =
 
       }
 
-
-      // =========================
-      // UPDATE FEEDBACK
-      // =========================
       if (req.body.feedback) {
 
         request.feedback =
@@ -342,17 +557,22 @@ const updateStatus =
 
       }
 
+      if (req.body.sessionNotes) {
 
-      // =========================
-      // UPDATE RATING
-      // =========================
+        request.sessionNotes =
+          req.body.sessionNotes;
+
+      }
+
       if (req.body.rating) {
 
         request.rating =
           req.body.rating;
 
 
-        // UPDATE ALUMNI TRUST SCORE
+        // ==================================
+        // UPDATE TRUST SCORE
+        // ==================================
         const alumni =
           await User.findById(
             request.alumniId
@@ -365,7 +585,10 @@ const updateStatus =
 
               100,
 
-              (alumni.trustScore || 40) +
+              (alumni.trustScore || 40)
+
+              +
+
               req.body.rating
 
             );
@@ -377,14 +600,69 @@ const updateStatus =
       }
 
 
-      // SAVE REQUEST
+      // ====================================
+      // COMPLETED
+      // ====================================
+      if (
+        req.body.status ===
+        "Completed"
+      ) {
+
+        request.completedAt =
+          new Date();
+
+      }
+
+
+      // ====================================
+      // SAVE
+      // ====================================
       const updatedRequest =
         await request.save();
 
 
-      // =========================
+      // ====================================
+      // NOTIFICATION MESSAGE
+      // ====================================
+      let notificationMessage =
+
+        `Your guidance request status changed to ${request.status}`;
+
+
+      if (
+        req.body.status ===
+        "Accepted"
+      ) {
+
+        notificationMessage =
+          `${req.user.name} accepted your guidance request`;
+
+      }
+
+      if (
+        req.body.status ===
+        "Rejected"
+      ) {
+
+        notificationMessage =
+          `${req.user.name} rejected your guidance request`;
+
+      }
+
+      if (
+        req.body.status ===
+        "Completed"
+      ) {
+
+        notificationMessage =
+          `${req.user.name} marked guidance session as completed`;
+
+      }
+
+
+      // ====================================
       // CREATE NOTIFICATION
-      // =========================
+      // ====================================
       await Notification.create({
 
         recipient:
@@ -394,7 +672,7 @@ const updateStatus =
           "Guidance Request Updated",
 
         message:
-          `Your guidance request status changed to ${request.status}`,
+          notificationMessage,
 
         type:
           "guidance",
@@ -402,9 +680,20 @@ const updateStatus =
       });
 
 
-      res.status(200).json(
-        updatedRequest
-      );
+      // ====================================
+      // RESPONSE
+      // ====================================
+      res.status(200).json({
+
+        success: true,
+
+        message:
+          "Guidance request updated successfully",
+
+        request:
+          updatedRequest,
+
+      });
 
     }
 
@@ -417,6 +706,8 @@ const updateStatus =
 
       res.status(500).json({
 
+        success: false,
+
         message:
           "Server Error",
 
@@ -427,9 +718,316 @@ const updateStatus =
   };
 
 
-// =========================
+// ==========================================
+// SUBMIT GUIDANCE FEEDBACK
+// ==========================================
+const submitGuidanceFeedback =
+  async (req, res) => {
+
+    try {
+
+      const request =
+        await GuidanceRequest.findById(
+          req.params.id
+        );
+
+      if (!request) {
+
+        return res.status(404).json({
+
+          success: false,
+
+          message:
+            "Request not found",
+
+        });
+
+      }
+
+
+      // ====================================
+      // ONLY STUDENT
+      // ====================================
+      if (
+
+        request.studentId.toString() !==
+          req.user._id.toString()
+
+      ) {
+
+        return res.status(403).json({
+
+          success: false,
+
+          message:
+            "Not authorized",
+
+        });
+
+      }
+
+
+      request.feedback =
+        req.body.feedback || "";
+
+      request.rating =
+        req.body.rating || 0;
+
+      request.status =
+        "Completed";
+
+      request.completedAt =
+        new Date();
+
+
+      // ====================================
+      // UPDATE ALUMNI TRUST SCORE
+      // ====================================
+      const alumni =
+        await User.findById(
+          request.alumniId
+        );
+
+      if (alumni && req.body.rating) {
+
+        alumni.trustScore =
+          Math.min(
+
+            100,
+
+            (alumni.trustScore || 40)
+
+            +
+
+            req.body.rating
+
+          );
+
+        await alumni.save();
+
+      }
+
+
+      await request.save();
+
+
+      res.status(200).json({
+
+        success: true,
+
+        message:
+          "Feedback submitted successfully",
+
+        request,
+
+      });
+
+    }
+
+    catch (error) {
+
+      console.log(error);
+
+      res.status(500).json({
+
+        success: false,
+
+        message:
+          "Server Error",
+
+      });
+
+    }
+
+  };
+
+
+// ==========================================
+// DELETE GUIDANCE REQUEST
+// ==========================================
+const deleteGuidanceRequest =
+  async (req, res) => {
+
+    try {
+
+      const request =
+        await GuidanceRequest.findById(
+          req.params.id
+        );
+
+      if (!request) {
+
+        return res.status(404).json({
+
+          success: false,
+
+          message:
+            "Request not found",
+
+        });
+
+      }
+
+
+      // ====================================
+      // OWNER OR ADMIN
+      // ====================================
+      if (
+
+        request.studentId.toString() !==
+          req.user._id.toString()
+
+        &&
+
+        req.user.role !== "admin"
+
+      ) {
+
+        return res.status(403).json({
+
+          success: false,
+
+          message:
+            "Not authorized",
+
+        });
+
+      }
+
+
+      await request.deleteOne();
+
+
+      res.status(200).json({
+
+        success: true,
+
+        message:
+          "Guidance request deleted successfully",
+
+      });
+
+    }
+
+    catch (error) {
+
+      console.log(error);
+
+      res.status(500).json({
+
+        success: false,
+
+        message:
+          "Server Error",
+
+      });
+
+    }
+
+  };
+
+
+// ==========================================
+// GUIDANCE STATS
+// ==========================================
+const getGuidanceStats =
+  async (req, res) => {
+
+    try {
+
+      const requests =
+        await GuidanceRequest.find({
+
+          alumniId:
+            req.user._id,
+
+        });
+
+
+      const stats = {
+
+        total:
+          requests.length,
+
+        pending:
+          requests.filter(
+
+            (r) =>
+              r.status ===
+              "Pending"
+
+          ).length,
+
+        accepted:
+          requests.filter(
+
+            (r) =>
+              r.status ===
+              "Accepted"
+
+          ).length,
+
+        rejected:
+          requests.filter(
+
+            (r) =>
+              r.status ===
+              "Rejected"
+
+          ).length,
+
+        completed:
+          requests.filter(
+
+            (r) =>
+              r.status ===
+              "Completed"
+
+          ).length,
+
+        highPriority:
+          requests.filter(
+
+            (r) =>
+              r.urgency ===
+              "High"
+
+          ).length,
+
+      };
+
+
+      res.status(200).json({
+
+        success: true,
+
+        stats,
+
+      });
+
+    }
+
+    catch (error) {
+
+      console.log(error);
+
+      res.status(500).json({
+
+        success: false,
+
+        message:
+          "Server Error",
+
+      });
+
+    }
+
+  };
+
+
+// ==========================================
 // EXPORTS
-// =========================
+// ==========================================
 module.exports = {
 
   createRequest,
@@ -438,6 +1036,14 @@ module.exports = {
 
   getStudentRequests,
 
+  getSingleRequest,
+
   updateStatus,
+
+  submitGuidanceFeedback,
+
+  deleteGuidanceRequest,
+
+  getGuidanceStats,
 
 };

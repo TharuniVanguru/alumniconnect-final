@@ -1,26 +1,65 @@
-const express = require("express");
+const express =
+  require("express");
 
-const router = express.Router();
+const router =
+  express.Router();
 
-const chatbotController =
-  require("../controllers/chatbotController");
+const {
+  chatbot,
+} = require(
+  "../controllers/chatbotController"
+);
 
-const authMiddleware =
-  require("../middleware/authMiddleware");
+const {
+
+  protect,
+
+} = require(
+  "../middleware/authMiddleware"
+);
 
 
-// =========================
+// ==========================================
 // AI CHATBOT ROUTE
-// =========================
+// ==========================================
 router.post(
 
   "/ask",
 
-  authMiddleware.protect,
+  protect,
 
-  chatbotController.chatbot
+  chatbot
 
 );
 
 
-module.exports = router;
+// ==========================================
+// AI HEALTH CHECK
+// ==========================================
+router.get(
+
+  "/",
+
+  protect,
+
+  (req, res) => {
+
+    res.status(200).json({
+
+      success: true,
+
+      message:
+        "AI Chatbot Routes Working",
+
+    });
+
+  }
+
+);
+
+
+// ==========================================
+// EXPORT ROUTER
+// ==========================================
+module.exports =
+  router;

@@ -8,10 +8,13 @@ import axios from "axios";
 
 import {
   useParams,
+  useNavigate,
 } from "react-router-dom";
 
-import { socket }
-  from "@/socket";
+import {
+  socket,
+  connectSocket,
+} from "@/socket";
 
 import { Button }
   from "@/components/ui/button";
@@ -20,14 +23,32 @@ import { Input }
   from "@/components/ui/input";
 
 import {
+
   Card,
   CardContent,
+
 } from "@/components/ui/card";
 
 import { Header }
   from "@/components/layout/Header";
 
+import {
 
+  Loader2,
+  Send,
+  Phone,
+  Video,
+  ArrowLeft,
+
+} from "lucide-react";
+
+import { useToast }
+  from "@/hooks/use-toast";
+
+
+// ==========================================
+// TYPES
+// ==========================================
 interface Message {
 
   _id?: string;
@@ -36,13 +57,16 @@ interface Message {
 
   receiverName: string;
 
+  receiverId?: string;
+
   message: string;
 
   createdAt: string;
 
-  status?: "sent" |
-    "delivered" |
-    "seen";
+  status?:
+    | "sent"
+    | "delivered"
+    | "seen";
 
 }
 
@@ -59,11 +83,19 @@ interface ChatUser {
 
   isOnline: boolean;
 
+  profileImage?: string;
+
 }
 
 
+// ==========================================
+// COMPONENT
+// ==========================================
 const AlumniChatPage = () => {
 
+  // ========================================
+  // STATES
+  // ========================================
   const [messages, setMessages] =
     useState<Message[]>([]);
 
@@ -91,24 +123,32 @@ const AlumniChatPage = () => {
     );
 
 
-  // URL PARAM
+  // ========================================
+  // HOOKS
+  // ========================================
   const { userId } =
     useParams();
 
+  const navigate =
+    useNavigate();
 
-  // AUTO SCROLL REF
+  const { toast } =
+    useToast();
+
+
+  // ========================================
+  // REFS
+  // ========================================
   const bottomRef =
     useRef<HTMLDivElement | null>(
       null
     );
 
-  // INPUT REF
   const inputRef =
     useRef<HTMLInputElement | null>(
       null
     );
 
-  // TYPING TIMER REF
   const typingTimeoutRef =
     useRef<
       ReturnType<
@@ -117,16 +157,38 @@ const AlumniChatPage = () => {
     >(null);
 
 
+  // ========================================
   // USER INFO
+  // ========================================
   const userInfo =
     JSON.parse(
+
       localStorage.getItem(
         "userInfo"
       ) || "{}"
+
     );
 
 
+  // ========================================
+  // CONNECT SOCKET
+  // ========================================
+  useEffect(() => {
+
+    if (userInfo?._id) {
+
+      connectSocket(
+        userInfo._id
+      );
+
+    }
+
+  }, []);
+
+
+  // ========================================
   // FETCH CHAT USER
+  // ========================================
   const fetchChatUser =
     async () => {
 
@@ -134,13 +196,20 @@ const AlumniChatPage = () => {
 
         const response =
           await axios.get(
+
             `http://localhost:5000/profile/${userId}`,
+
             {
+
               headers: {
+
                 Authorization:
                   `Bearer ${userInfo.token}`,
+
               },
+
             }
+
           );
 
         setChatUser(
@@ -158,7 +227,9 @@ const AlumniChatPage = () => {
     };
 
 
+  // ========================================
   // FETCH MESSAGES
+  // ========================================
   const fetchMessages =
     async () => {
 
@@ -168,26 +239,55 @@ const AlumniChatPage = () => {
 
         const response =
           await axios.get(
+
             `http://localhost:5000/messages/${userId}`,
+
             {
+
               headers: {
+
                 Authorization:
                   `Bearer ${userInfo.token}`,
+
               },
+
             }
+
           );
 
         setMessages(
-          response.data
+          response.data || []
         );
 
 
-        // MESSAGE SEEN
-        socket.emit(
+        // MARK AS READ
+        await axios.put(
+
+          `http://localhost:5000/messages/read/${userId}`,
+
+          {},
+
+          {
+
+            headers: {
+
+              Authorization:
+                `Bearer ${userInfo.token}`,
+
+            },
+
+          }
+
+        );
+
+
+        socket?.emit(
           "messageSeen",
           {
+
             senderId:
               userId,
+
           }
         );
 
@@ -212,19 +312,25 @@ const AlumniChatPage = () => {
     };
 
 
+  // ========================================
   // AUTO SCROLL
+  // ========================================
   useEffect(() => {
 
     bottomRef.current
       ?.scrollIntoView({
+
         behavior:
           "smooth",
+
       });
 
   }, [messages]);
 
 
+  // ========================================
   // AUTO FOCUS
+  // ========================================
   useEffect(() => {
 
     inputRef.current?.focus();
@@ -232,22 +338,31 @@ const AlumniChatPage = () => {
   }, []);
 
 
-  // SOCKET CONNECTION
+  // ========================================
+  // SOCKET EVENTS
+  // ========================================
   useEffect(() => {
 
-    if (!userId) return;
+    if (!socket || !userId)
+      return;
+
 
     // JOIN ROOM
     socket.emit(
+
       "joinRoom",
+
       userInfo._id
+
     );
 
 
     // RECEIVE MESSAGE
     socket.on(
+
       "receiveMessage",
-      (message) => {
+
+      (message: Message) => {
 
         setMessages((prev) => [
 
@@ -258,95 +373,127 @@ const AlumniChatPage = () => {
         ]);
 
 
-        // MESSAGE DELIVERED
         socket.emit(
+
           "messageDelivered",
+
           {
+
             senderId:
               userId,
+
           }
+
         );
 
       }
+
     );
 
 
     // ONLINE USERS
     socket.on(
-      "onlineUsers",
-      (users) => {
 
-        setOnlineUsers(users);
+      "onlineUsers",
+
+      (users: string[]) => {
+
+        setOnlineUsers(
+          users
+        );
 
       }
+
     );
 
 
     // USER TYPING
     socket.on(
+
       "userTyping",
+
       () => {
 
         setIsTyping(true);
 
       }
+
     );
 
 
-    // USER STOP TYPING
+    // STOP TYPING
     socket.on(
+
       "userStopTyping",
+
       () => {
 
         setIsTyping(false);
 
       }
+
     );
 
 
-    // MESSAGE DELIVERED
+    // DELIVERED
     socket.on(
+
       "messageDelivered",
+
       () => {
 
         setMessages((prev) =>
+
           prev.map((msg) => ({
 
             ...msg,
 
             status:
+
               msg.senderName ===
               userInfo.name
+
                 ? "delivered"
+
                 : msg.status,
 
           }))
+
         );
 
       }
+
     );
 
 
-    // MESSAGE SEEN
+    // SEEN
     socket.on(
+
       "messageSeen",
+
       () => {
 
         setMessages((prev) =>
+
           prev.map((msg) => ({
 
             ...msg,
 
             status:
+
               msg.senderName ===
               userInfo.name
+
                 ? "seen"
+
                 : msg.status,
 
           }))
+
         );
 
       }
+
     );
 
 
@@ -382,10 +529,13 @@ const AlumniChatPage = () => {
   }, [userId]);
 
 
+  // ========================================
   // INITIAL LOAD
+  // ========================================
   useEffect(() => {
 
-    if (!userId) return;
+    if (!userId)
+      return;
 
     fetchMessages();
 
@@ -394,7 +544,9 @@ const AlumniChatPage = () => {
   }, [userId]);
 
 
+  // ========================================
   // SEND MESSAGE
+  // ========================================
   const sendMessage =
     async () => {
 
@@ -419,7 +571,7 @@ const AlumniChatPage = () => {
             userId,
 
           message:
-            newMessage,
+            newMessage.trim(),
 
           createdAt:
             new Date().toISOString(),
@@ -430,8 +582,9 @@ const AlumniChatPage = () => {
         };
 
 
-        // SAVE TO DATABASE
+        // SAVE MESSAGE
         await axios.post(
+
           "http://localhost:5000/messages",
 
           {
@@ -443,27 +596,35 @@ const AlumniChatPage = () => {
               chatUser?.name,
 
             message:
-              newMessage,
+              newMessage.trim(),
 
           },
 
           {
+
             headers: {
+
               Authorization:
                 `Bearer ${userInfo.token}`,
+
             },
+
           }
+
         );
 
 
         // SOCKET EMIT
-        socket.emit(
+        socket?.emit(
+
           "sendMessage",
+
           messageData
+
         );
 
 
-        // UPDATE UI
+        // UI UPDATE
         setMessages((prev) => [
 
           ...prev,
@@ -474,12 +635,17 @@ const AlumniChatPage = () => {
 
 
         // STOP TYPING
-        socket.emit(
+        socket?.emit(
+
           "stopTyping",
+
           {
+
             receiverId:
               userId,
+
           }
+
         );
 
 
@@ -493,9 +659,15 @@ const AlumniChatPage = () => {
 
         console.log(error);
 
-        setError(
-          "Failed to send message"
-        );
+        toast({
+
+          title:
+            "Failed to send message",
+
+          variant:
+            "destructive",
+
+        });
 
       }
 
@@ -508,7 +680,9 @@ const AlumniChatPage = () => {
     };
 
 
+  // ========================================
   // HANDLE TYPING
+  // ========================================
   const handleTyping =
     (
       e: React.ChangeEvent<HTMLInputElement>
@@ -519,23 +693,32 @@ const AlumniChatPage = () => {
       );
 
 
-      // TYPING EVENT
-      socket.emit(
+      socket?.emit(
+
         "typing",
+
         {
+
           receiverId:
             userId,
+
+          senderId:
+            userInfo._id,
+
         }
+
       );
 
 
-      // CLEAR OLD TIMER
+      // CLEAR TIMER
       if (
         typingTimeoutRef.current
       ) {
 
         clearTimeout(
+
           typingTimeoutRef.current
+
         );
 
       }
@@ -545,12 +728,20 @@ const AlumniChatPage = () => {
       typingTimeoutRef.current =
         setTimeout(() => {
 
-          socket.emit(
+          socket?.emit(
+
             "stopTyping",
+
             {
+
               receiverId:
                 userId,
+
+              senderId:
+                userInfo._id,
+
             }
+
           );
 
         }, 1000);
@@ -558,6 +749,18 @@ const AlumniChatPage = () => {
     };
 
 
+  // ========================================
+  // ONLINE STATUS
+  // ========================================
+  const isOnline =
+    onlineUsers.includes(
+      userId || ""
+    );
+
+
+  // ========================================
+  // UI
+  // ========================================
   return (
 
     <div className="min-h-screen bg-background">
@@ -566,55 +769,97 @@ const AlumniChatPage = () => {
 
       <div className="p-3 md:p-6">
 
+        {/* ================================= */}
         {/* HEADER */}
+        {/* ================================= */}
+
         <div className="flex items-center justify-between mb-6">
 
-          <div>
+          <div className="flex items-center gap-4">
 
-            <h1 className="text-2xl md:text-3xl font-bold">
+            <Button
+              size="icon"
+              variant="outline"
+              onClick={() =>
 
-              {chatUser?.name || "Chat"}
+                navigate(-1)
 
-            </h1>
+              }
+            >
 
-            <p className="text-muted-foreground text-sm">
+              <ArrowLeft className="h-4 w-4" />
 
-              Real-time Socket.IO Chat
+            </Button>
 
-            </p>
+
+            <div>
+
+              <h1 className="text-2xl md:text-3xl font-bold">
+
+                {chatUser?.name || "Chat"}
+
+              </h1>
+
+
+              <div className="flex items-center gap-2 mt-1">
+
+                <div
+                  className={`h-3 w-3 rounded-full animate-pulse ${
+                    isOnline
+
+                      ? "bg-green-500"
+
+                      : "bg-gray-400"
+                  }`}
+                />
+
+
+                <p className="text-sm text-muted-foreground">
+
+                  {isOnline
+                    ? "Online"
+                    : "Offline"}
+
+                </p>
+
+              </div>
+
+            </div>
 
           </div>
 
 
-          {/* ONLINE STATUS */}
+          {/* CALL BUTTONS */}
           <div className="flex items-center gap-2">
 
-            <div
-              className={`h-3 w-3 rounded-full animate-pulse ${
-                onlineUsers.includes(
-                  userId || ""
-                )
-                  ? "bg-green-500"
-                  : "bg-gray-400"
-              }`}
-            />
+            <Button
+              size="icon"
+              variant="outline"
+            >
 
-            <span className="text-sm font-medium">
+              <Phone className="h-4 w-4" />
 
-              {onlineUsers.includes(
-                userId || ""
-              )
-                ? "Online"
-                : "Offline"}
+            </Button>
 
-            </span>
+
+            <Button
+              size="icon"
+              variant="outline"
+            >
+
+              <Video className="h-4 w-4" />
+
+            </Button>
 
           </div>
 
         </div>
 
 
+        {/* ================================= */}
         {/* ERROR */}
+        {/* ================================= */}
+
         {error && (
 
           <div className="mb-4 p-3 rounded-lg bg-red-100 text-red-600 text-sm">
@@ -626,20 +871,20 @@ const AlumniChatPage = () => {
         )}
 
 
+        {/* ================================= */}
         {/* CHAT CARD */}
+        {/* ================================= */}
+
         <Card className="h-[80vh] flex flex-col shadow-xl rounded-2xl">
 
           <CardContent className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 bg-muted/20">
 
+            {/* LOADING */}
             {loading ? (
 
               <div className="flex items-center justify-center h-full">
 
-                <p className="text-muted-foreground">
-
-                  Loading messages...
-
-                </p>
+                <Loader2 className="h-6 w-6 animate-spin text-primary" />
 
               </div>
 
@@ -668,36 +913,44 @@ const AlumniChatPage = () => {
             ) : (
 
               messages.map(
+
                 (
                   msg,
                   index
                 ) => (
 
                   <div
+
                     key={index}
+
                     className={`max-w-[85%] md:max-w-[70%] ${
                       msg.senderName ===
                       userInfo.name
+
                         ? "ml-auto"
+
                         : "mr-auto"
                     }`}
+
                   >
 
                     <div
+
                       className={`p-4 rounded-2xl shadow-sm ${
                         msg.senderName ===
                         userInfo.name
+
                           ? "bg-primary text-white rounded-br-sm"
+
                           : "bg-background border rounded-bl-sm"
                       }`}
+
                     >
 
                       {/* NAME */}
                       <p className="font-semibold text-sm mb-1">
 
-                        {
-                          msg.senderName
-                        }
+                        {msg.senderName}
 
                       </p>
 
@@ -711,7 +964,7 @@ const AlumniChatPage = () => {
 
 
                       {/* FOOTER */}
-                      <div className="flex items-center justify-between mt-2">
+                      <div className="flex items-center justify-between mt-2 gap-3">
 
                         {/* TIME */}
                         <p className="text-xs opacity-70">
@@ -721,11 +974,13 @@ const AlumniChatPage = () => {
                           ).toLocaleTimeString(
                             [],
                             {
+
                               hour:
                                 "2-digit",
 
                               minute:
                                 "2-digit",
+
                             }
                           )}
 
@@ -761,6 +1016,7 @@ const AlumniChatPage = () => {
                   </div>
 
                 )
+
               )
 
             )}
@@ -784,10 +1040,14 @@ const AlumniChatPage = () => {
           </CardContent>
 
 
+          {/* ================================= */}
           {/* INPUT */}
-          <div className="flex gap-2 p-4 border-t">
+          {/* ================================= */}
+
+          <div className="flex gap-2 p-4 border-t bg-background">
 
             <Input
+
               ref={inputRef}
 
               placeholder="Type message..."
@@ -811,9 +1071,12 @@ const AlumniChatPage = () => {
               }}
 
               className="h-12 rounded-xl"
+
             />
 
+
             <Button
+
               onClick={
                 sendMessage
               }
@@ -821,11 +1084,18 @@ const AlumniChatPage = () => {
               disabled={sending}
 
               className="h-12 px-6 rounded-xl"
+
             >
 
-              {sending
-                ? "Sending..."
-                : "Send"}
+              {sending ? (
+
+                <Loader2 className="h-4 w-4 animate-spin" />
+
+              ) : (
+
+                <Send className="h-4 w-4" />
+
+              )}
 
             </Button>
 
@@ -842,4 +1112,7 @@ const AlumniChatPage = () => {
 };
 
 
+// ==========================================
+// EXPORT
+// ==========================================
 export default AlumniChatPage;

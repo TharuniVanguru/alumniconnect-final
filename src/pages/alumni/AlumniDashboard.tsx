@@ -1,20 +1,37 @@
-import { Header } from '@/components/layout/Header';
-import { StatsCard } from '@/components/common/StatsCard';
-import { ContributionBadge } from '@/components/common/ContributionBadge';
+import {
+  useEffect,
+  useState,
+} from "react";
 
-import { Button } from '@/components/ui/button';
+import axios from "axios";
+
+import { Header }
+  from "@/components/layout/Header";
+
+import { StatsCard }
+  from "@/components/common/StatsCard";
+
+import { ContributionBadge }
+  from "@/components/common/ContributionBadge";
+
+import { Button }
+  from "@/components/ui/button";
 
 import {
+
   Card,
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle
-} from '@/components/ui/card';
+  CardTitle,
 
-import { Badge } from '@/components/ui/badge';
+} from "@/components/ui/card";
+
+import { Badge }
+  from "@/components/ui/badge";
 
 import {
+
   Users,
   Briefcase,
   Calendar,
@@ -23,17 +40,77 @@ import {
   Star,
   Plus,
   GraduationCap,
-  Bell
-} from 'lucide-react';
+  Bell,
+  Loader2,
 
-import { Link } from 'react-router-dom';
+} from "lucide-react";
+
+import {
+  Link,
+  useNavigate,
+} from "react-router-dom";
+
+import { useToast }
+  from "@/hooks/use-toast";
 
 
+// ==========================================
+// TYPES
+// ==========================================
+interface GuidanceRequest {
+
+  _id: string;
+
+  studentName: string;
+
+  topic: string;
+
+  domain: string;
+
+  urgency: string;
+
+}
+
+
+interface Student {
+
+  _id: string;
+
+  name: string;
+
+  role: string;
+
+  branch?: string;
+
+  skills?: string[];
+
+  email?: string;
+
+}
+
+
+// ==========================================
+// COMPONENT
+// ==========================================
 export const AlumniDashboard = () => {
 
-  // GET LOGGED IN USER
+  // ========================================
+  // HOOKS
+  // ========================================
+  const navigate =
+    useNavigate();
+
+  const { toast } =
+    useToast();
+
+
+  // ========================================
+  // USER
+  // ========================================
   const userInfo =
-    localStorage.getItem("userInfo");
+    localStorage.getItem(
+      "userInfo"
+    );
 
   const user =
     userInfo
@@ -41,62 +118,287 @@ export const AlumniDashboard = () => {
       : null;
 
 
-  // MOCK DATA
-  const alumniStats = {
-    studentsHelped: 25,
-    jobsPosted: 8,
-    eventsOrganized: 3,
-    contributionScore: 850,
-  };
+  // ========================================
+  // STATES
+  // ========================================
+  const [loading, setLoading] =
+    useState(false);
+
+  const [
+
+    recentGuidanceRequests,
+
+    setRecentGuidanceRequests,
+
+  ] = useState<GuidanceRequest[]>(
+    []
+  );
+
+  const [
+
+    students,
+
+    setStudents,
+
+  ] = useState<Student[]>(
+    []
+  );
+
+  const [
+
+    alumniStats,
+
+    setAlumniStats,
+
+  ] = useState({
+
+    studentsHelped: 0,
+
+    jobsPosted: 0,
+
+    eventsOrganized: 0,
+
+    contributionScore: 0,
+
+  });
 
 
-  // MOCK GUIDANCE REQUESTS
-  const recentGuidanceRequests = [
-    {
-      id: '1',
-      studentName: 'Alex Kumar',
-      topic: 'Frontend Career Guidance',
-      domain: 'Web Development',
-      urgency: 'High',
-    },
+  // ========================================
+  // FETCH DASHBOARD DATA
+  // ========================================
+  const fetchDashboardData =
+    async () => {
 
-    {
-      id: '2',
-      studentName: 'Maria Santos',
-      topic: 'Resume Review',
-      domain: 'Career Support',
-      urgency: 'Medium',
-    },
-  ];
+      try {
 
+        setLoading(true);
 
-  const mockStudents = [
-    {
-      id: '1',
-      name: 'Alex Kumar',
-      year: 'Final Year',
-      department: 'Computer Science',
-      skills: ['React', 'Node.js', 'Python'],
-    },
+        const token =
+          user?.token;
 
-    {
-      id: '2',
-      name: 'Maria Santos',
-      year: 'Third Year',
-      department: 'Information Technology',
-      skills: ['Java', 'Spring Boot', 'AWS'],
-    },
+        // ====================================
+        // FETCH USERS
+        // ====================================
+        const usersResponse =
+          await axios.get(
 
-    {
-      id: '3',
-      name: 'David Lee',
-      year: 'Second Year',
-      department: 'Software Engineering',
-      skills: ['MongoDB', 'Docker', 'Vue'],
-    },
-  ];
+            "http://localhost:5000/users",
+
+            {
+
+              headers: {
+
+                Authorization:
+                  `Bearer ${token}`,
+
+              },
+
+            }
+
+          );
 
 
+        const allUsers =
+          usersResponse.data || [];
+
+
+        const studentUsers =
+          allUsers.filter(
+            (u: Student) =>
+              u.role ===
+              "student"
+          );
+
+
+        setStudents(
+          studentUsers.slice(0, 5)
+        );
+
+
+        // ====================================
+        // FETCH JOBS
+        // ====================================
+        let jobsCount = 0;
+
+        try {
+
+          const jobsResponse =
+            await axios.get(
+
+              "http://localhost:5000/jobs",
+
+              {
+
+                headers: {
+
+                  Authorization:
+                    `Bearer ${token}`,
+
+                },
+
+              }
+
+            );
+
+          jobsCount =
+            jobsResponse.data
+              ?.length || 0;
+
+        }
+
+        catch (error) {
+
+          console.log(
+            "Jobs fetch error:",
+            error
+          );
+
+        }
+
+
+        // ====================================
+        // FETCH EVENTS
+        // ====================================
+        let eventsCount = 0;
+
+        try {
+
+          const eventsResponse =
+            await axios.get(
+
+              "http://localhost:5000/events",
+
+              {
+
+                headers: {
+
+                  Authorization:
+                    `Bearer ${token}`,
+
+                },
+
+              }
+
+            );
+
+          eventsCount =
+            eventsResponse.data
+              ?.length || 0;
+
+        }
+
+        catch (error) {
+
+          console.log(
+            "Events fetch error:",
+            error
+          );
+
+        }
+
+
+        // ====================================
+        // FETCH GUIDANCE REQUESTS
+        // ====================================
+        try {
+
+          const guidanceResponse =
+            await axios.get(
+
+              "http://localhost:5000/guidance",
+
+              {
+
+                headers: {
+
+                  Authorization:
+                    `Bearer ${token}`,
+
+                },
+
+              }
+
+            );
+
+          setRecentGuidanceRequests(
+
+            guidanceResponse.data
+              ?.slice(0, 5) || []
+
+          );
+
+        }
+
+        catch (error) {
+
+          console.log(
+            "Guidance fetch error:",
+            error
+          );
+
+        }
+
+
+        // ====================================
+        // SET STATS
+        // ====================================
+        setAlumniStats({
+
+          studentsHelped:
+            studentUsers.length,
+
+          jobsPosted:
+            jobsCount,
+
+          eventsOrganized:
+            eventsCount,
+
+          contributionScore:
+            user?.trustScore ||
+            850,
+
+        });
+
+      }
+
+      catch (error) {
+
+        console.log(error);
+
+        toast({
+
+          title:
+            "Failed to load dashboard",
+
+          variant:
+            "destructive",
+
+        });
+
+      }
+
+      finally {
+
+        setLoading(false);
+
+      }
+
+    };
+
+
+  // ========================================
+  // INITIAL LOAD
+  // ========================================
+  useEffect(() => {
+
+    fetchDashboardData();
+
+  }, []);
+
+
+  // ========================================
+  // UI
+  // ========================================
   return (
 
     <div className="min-h-screen bg-background">
@@ -105,11 +407,13 @@ export const AlumniDashboard = () => {
 
       <main className="container mx-auto px-4 py-6">
 
-        {/* WELCOME SECTION */}
+        {/* ================================= */}
+        {/* WELCOME */}
+        {/* ================================= */}
 
         <div className="mb-8">
 
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-wrap gap-4">
 
             <div>
 
@@ -129,6 +433,7 @@ export const AlumniDashboard = () => {
 
             </div>
 
+
             <ContributionBadge
               points={alumniStats.contributionScore}
               size="lg"
@@ -139,7 +444,24 @@ export const AlumniDashboard = () => {
         </div>
 
 
+        {/* ================================= */}
+        {/* LOADING */}
+        {/* ================================= */}
+
+        {loading && (
+
+          <div className="flex items-center justify-center py-10">
+
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+
+          </div>
+
+        )}
+
+
+        {/* ================================= */}
         {/* STATS */}
+        {/* ================================= */}
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
 
@@ -149,11 +471,16 @@ export const AlumniDashboard = () => {
             description="Direct mentorship & guidance"
             icon={Users}
             trend={{
+
               value: 15,
-              label: 'this month',
-              isPositive: true
+
+              label: "this month",
+
+              isPositive: true,
+
             }}
           />
+
 
           <StatsCard
             title="Jobs Posted"
@@ -161,11 +488,16 @@ export const AlumniDashboard = () => {
             description="Opportunities created"
             icon={Briefcase}
             trend={{
+
               value: 33,
-              label: 'this month',
-              isPositive: true
+
+              label: "this month",
+
+              isPositive: true,
+
             }}
           />
+
 
           <StatsCard
             title="Events Organized"
@@ -173,11 +505,16 @@ export const AlumniDashboard = () => {
             description="Knowledge sharing sessions"
             icon={Calendar}
             trend={{
+
               value: 100,
-              label: 'this month',
-              isPositive: true
+
+              label: "this month",
+
+              isPositive: true,
+
             }}
           />
+
 
           <StatsCard
             title="Contribution Score"
@@ -190,13 +527,13 @@ export const AlumniDashboard = () => {
         </div>
 
 
+        {/* ================================= */}
         {/* QUICK LINKS */}
+        {/* ================================= */}
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6 mb-8">
 
-
           {/* STUDENTS DIRECTORY */}
-
           <Link to="/alumni/students-directory">
 
             <Card className="shadow-soft hover:shadow-medium transition-all cursor-pointer h-full bg-gradient-card">
@@ -228,8 +565,7 @@ export const AlumniDashboard = () => {
           </Link>
 
 
-          {/* GUIDANCE REQUESTS */}
-
+          {/* GUIDANCE */}
           <Link to="/alumni/guidance-requests">
 
             <Card className="shadow-soft hover:shadow-medium transition-all cursor-pointer h-full bg-gradient-card border-primary/20">
@@ -261,8 +597,7 @@ export const AlumniDashboard = () => {
           </Link>
 
 
-          {/* POST JOB */}
-
+          {/* JOB */}
           <Link to="/alumni/post-job">
 
             <Card className="shadow-soft hover:shadow-medium transition-all cursor-pointer h-full bg-gradient-card">
@@ -294,8 +629,7 @@ export const AlumniDashboard = () => {
           </Link>
 
 
-          {/* CREATE EVENT */}
-
+          {/* EVENT */}
           <Link to="/alumni/create-event">
 
             <Card className="shadow-soft hover:shadow-medium transition-all cursor-pointer h-full bg-gradient-card">
@@ -328,7 +662,6 @@ export const AlumniDashboard = () => {
 
 
           {/* CHAT */}
-
           <Link to="/alumni/chat">
 
             <Card className="shadow-soft hover:shadow-medium transition-all cursor-pointer h-full bg-gradient-card">
@@ -361,7 +694,6 @@ export const AlumniDashboard = () => {
 
 
           {/* PREMIUM */}
-
           <Link to="/premium">
 
             <Card className="shadow-soft hover:shadow-medium transition-all cursor-pointer h-full bg-gradient-primary text-white">
@@ -395,18 +727,16 @@ export const AlumniDashboard = () => {
         </div>
 
 
+        {/* ================================= */}
         {/* MAIN SECTION */}
+        {/* ================================= */}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-
-          {/* STUDENTS */}
-
+          {/* LEFT */}
           <div className="lg:col-span-2 space-y-6">
 
-
             {/* GUIDANCE REQUESTS */}
-
             <Card className="shadow-soft border-primary/20">
 
               <CardHeader>
@@ -434,70 +764,81 @@ export const AlumniDashboard = () => {
 
               <CardContent className="space-y-4">
 
-                {recentGuidanceRequests.map((request) => (
+                {recentGuidanceRequests.length === 0 ? (
 
-                  <div
-                    key={request.id}
-                    className="flex items-center justify-between p-4 rounded-lg border bg-gradient-card"
-                  >
+                  <p className="text-muted-foreground text-sm">
 
-                    <div>
+                    No guidance requests found
 
-                      <h3 className="font-semibold">
+                  </p>
 
-                        {request.studentName}
+                ) : (
 
-                      </h3>
+                  recentGuidanceRequests.map((request) => (
 
-                      <p className="text-sm text-muted-foreground">
+                    <div
+                      key={request._id}
+                      className="flex items-center justify-between p-4 rounded-lg border bg-gradient-card"
+                    >
 
-                        {request.topic}
+                      <div>
 
-                      </p>
+                        <h3 className="font-semibold">
 
-                      <div className="flex items-center gap-2 mt-2">
+                          {request.studentName}
 
-                        <Badge variant="outline">
+                        </h3>
 
-                          {request.domain}
+                        <p className="text-sm text-muted-foreground">
 
-                        </Badge>
+                          {request.topic}
 
-                        <Badge>
+                        </p>
 
-                          {request.urgency}
+                        <div className="flex items-center gap-2 mt-2">
 
-                        </Badge>
+                          <Badge variant="outline">
+
+                            {request.domain}
+
+                          </Badge>
+
+                          <Badge>
+
+                            {request.urgency}
+
+                          </Badge>
+
+                        </div>
 
                       </div>
 
+
+                      <Button
+                        size="sm"
+                        asChild
+                      >
+
+                        <Link to="/alumni/guidance-requests">
+
+                          View
+
+                        </Link>
+
+                      </Button>
+
                     </div>
 
+                  ))
 
-                    <Button
-                      size="sm"
-                      asChild
-                    >
-
-                      <Link to="/alumni/guidance-requests">
-
-                        View
-
-                      </Link>
-
-                    </Button>
-
-                  </div>
-
-                ))}
+                )}
 
               </CardContent>
 
             </Card>
 
 
-            {/* TALENTED STUDENTS */}
-
+            {/* STUDENTS */}
             <Card className="shadow-soft">
 
               <CardHeader>
@@ -525,78 +866,105 @@ export const AlumniDashboard = () => {
 
               <CardContent className="space-y-4">
 
-                {mockStudents.map((student) => (
+                {students.length === 0 ? (
 
-                  <div
-                    key={student.id}
-                    className="flex items-center justify-between p-4 rounded-lg border bg-gradient-card"
-                  >
+                  <p className="text-muted-foreground text-sm">
 
-                    <div>
+                    No students found
 
-                      <h3 className="font-semibold">
+                  </p>
 
-                        {student.name}
+                ) : (
 
-                      </h3>
+                  students.map((student) => (
 
-                      <p className="text-sm text-muted-foreground">
+                    <div
+                      key={student._id}
+                      className="flex items-center justify-between p-4 rounded-lg border bg-gradient-card"
+                    >
 
-                        {student.year} • {student.department}
+                      <div>
 
-                      </p>
+                        <h3 className="font-semibold">
 
-                      <div className="flex flex-wrap gap-1 mt-2">
+                          {student.name}
 
-                        {student.skills.map((skill) => (
+                        </h3>
 
-                          <Badge
-                            key={skill}
-                            variant="outline"
-                            className="text-xs"
-                          >
+                        <p className="text-sm text-muted-foreground">
 
-                            {skill}
+                          {student.branch || "Student"}
 
-                          </Badge>
+                        </p>
 
-                        ))}
+                        <div className="flex flex-wrap gap-1 mt-2">
+
+                          {student.skills
+                            ?.slice(0, 4)
+                            .map((skill) => (
+
+                              <Badge
+                                key={skill}
+                                variant="outline"
+                                className="text-xs"
+                              >
+
+                                {skill}
+
+                              </Badge>
+
+                            ))}
+
+                        </div>
+
+                      </div>
+
+
+                      <div className="flex flex-col gap-2">
+
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() =>
+
+                            navigate(
+
+                              `/profile/${student._id}`
+
+                            )
+
+                          }
+                        >
+
+                          View Profile
+
+                        </Button>
+
+
+                        <Button
+                          size="sm"
+                          onClick={() =>
+
+                            navigate(
+
+                              `/alumni/chat/${student._id}`
+
+                            )
+
+                          }
+                        >
+
+                          Chat
+
+                        </Button>
 
                       </div>
 
                     </div>
 
+                  ))
 
-                    <div className="flex flex-col gap-2">
-
-                      <Button
-                        size="sm"
-                        variant="outline"
-                      >
-
-                        View Profile
-
-                      </Button>
-
-
-                      <Button
-                        size="sm"
-                        asChild
-                      >
-
-                        <Link to="/alumni/chat">
-
-                          Chat
-
-                        </Link>
-
-                      </Button>
-
-                    </div>
-
-                  </div>
-
-                ))}
+                )}
 
               </CardContent>
 
@@ -605,13 +973,10 @@ export const AlumniDashboard = () => {
           </div>
 
 
-          {/* SIDE SECTION */}
-
+          {/* RIGHT */}
           <div className="space-y-6">
 
-
             {/* QUICK ACTIONS */}
-
             <Card className="shadow-soft">
 
               <CardHeader>

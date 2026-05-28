@@ -21,12 +21,21 @@ import {
 } from "@/components/ui/badge";
 
 import {
+  Input
+} from "@/components/ui/input";
+
+import {
   Brain,
   MapPin,
   Briefcase,
   Star,
   MessageSquare,
   Sparkles,
+  Search,
+  GraduationCap,
+  Trophy,
+  Users,
+  Loader2,
 } from "lucide-react";
 
 import {
@@ -79,6 +88,13 @@ const RecommendationsPage =
     >([]);
 
     const [
+      filteredAlumni,
+      setFilteredAlumni,
+    ] = useState<
+      Alumni[]
+    >([]);
+
+    const [
       loading,
       setLoading,
     ] = useState(false);
@@ -86,6 +102,11 @@ const RecommendationsPage =
     const [
       error,
       setError,
+    ] = useState("");
+
+    const [
+      search,
+      setSearch,
     ] = useState("");
 
 
@@ -146,6 +167,10 @@ const RecommendationsPage =
             response.data
           );
 
+          setFilteredAlumni(
+            response.data
+          );
+
         }
 
         catch (error: any) {
@@ -175,6 +200,54 @@ const RecommendationsPage =
 
 
     // =========================
+    // SEARCH FILTER
+    // =========================
+    useEffect(() => {
+
+      const filtered =
+        alumni.filter(
+
+          (mentor) =>
+
+            mentor.name
+              .toLowerCase()
+              .includes(
+                search.toLowerCase()
+              ) ||
+
+            mentor.domain
+              .toLowerCase()
+              .includes(
+                search.toLowerCase()
+              ) ||
+
+            mentor.skills?.some(
+
+              (skill) =>
+
+                skill
+                  .toLowerCase()
+                  .includes(
+                    search.toLowerCase()
+                  )
+
+            )
+
+        );
+
+      setFilteredAlumni(
+        filtered
+      );
+
+    }, [
+
+      search,
+      alumni,
+
+    ]);
+
+
+    // =========================
     // INITIAL LOAD
     // =========================
     useEffect(() => {
@@ -193,34 +266,70 @@ const RecommendationsPage =
         <div className="max-w-7xl mx-auto p-6">
 
 
-          {/* HEADER */}
+          {/* HERO */}
+          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-primary via-purple-600 to-indigo-600 text-white shadow-2xl mb-10">
+
+            <div className="absolute inset-0 bg-black/10" />
+
+            <div className="relative p-8 md:p-10">
+
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+
+                <div className="flex items-center gap-5">
+
+                  <div className="h-20 w-20 rounded-3xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
+
+                    <Brain className="h-10 w-10 text-white" />
+
+                  </div>
+
+                  <div>
+
+                    <h1 className="text-4xl md:text-5xl font-bold">
+
+                      AI Mentor Match
+
+                    </h1>
+
+                    <p className="text-white/90 mt-3 text-lg max-w-2xl">
+
+                      Smart alumni recommendations powered by AI based on your skills, interests, career goals, and mentorship needs.
+
+                    </p>
+
+                  </div>
+
+                </div>
+
+              </div>
+
+            </div>
+
+          </div>
+
+
+          {/* SEARCH BAR */}
           <div className="mb-8">
 
-            <div className="flex items-center gap-3 mb-3">
+            <div className="relative max-w-2xl">
 
-              <div className="h-14 w-14 rounded-2xl bg-gradient-primary flex items-center justify-center">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
 
-                <Brain className="h-7 w-7 text-white" />
+              <Input
 
-              </div>
+                placeholder="Search mentors by domain, skills, or name..."
 
-              <div>
+                className="pl-12 h-14 rounded-2xl text-base shadow-sm"
 
-                <h1 className="text-4xl font-bold">
+                value={search}
 
-                  AI Alumni Recommendations
+                onChange={(e) =>
+                  setSearch(
+                    e.target.value
+                  )
+                }
 
-                </h1>
-
-                <p className="text-muted-foreground text-lg">
-
-                  Smart mentor matching based on
-                  skills, interests, domain &
-                  trust score
-
-                </p>
-
-              </div>
+              />
 
             </div>
 
@@ -230,7 +339,7 @@ const RecommendationsPage =
           {/* ERROR */}
           {error && (
 
-            <div className="bg-red-100 border border-red-300 text-red-600 p-4 rounded-xl mb-6">
+            <div className="bg-red-100 border border-red-300 text-red-600 p-4 rounded-2xl mb-6">
 
               {error}
 
@@ -242,11 +351,11 @@ const RecommendationsPage =
           {/* LOADING */}
           {loading ? (
 
-            <div className="text-center py-20">
+            <div className="text-center py-24">
 
-              <Sparkles className="h-10 w-10 mx-auto animate-pulse text-primary mb-4" />
+              <Loader2 className="h-12 w-12 mx-auto animate-spin text-primary mb-5" />
 
-              <h2 className="text-2xl font-bold mb-2">
+              <h2 className="text-3xl font-bold mb-2">
 
                 AI Matching Alumni...
 
@@ -254,17 +363,19 @@ const RecommendationsPage =
 
               <p className="text-muted-foreground">
 
-                Finding best mentors for you
+                Finding the best mentors for your journey
 
               </p>
 
             </div>
 
-          ) : alumni.length === 0 ? (
+          ) : filteredAlumni.length === 0 ? (
 
-            <div className="text-center py-20">
+            <div className="text-center py-24">
 
-              <h2 className="text-2xl font-bold mb-2">
+              <Sparkles className="h-14 w-14 mx-auto text-primary mb-5" />
+
+              <h2 className="text-3xl font-bold mb-2">
 
                 No Recommendations Found
 
@@ -272,8 +383,7 @@ const RecommendationsPage =
 
               <p className="text-muted-foreground">
 
-                Try updating your profile
-                skills & interests
+                Try updating your profile skills and interests
 
               </p>
 
@@ -281,218 +391,392 @@ const RecommendationsPage =
 
           ) : (
 
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            <>
 
-              {alumni.map(
-                (mentor) => (
+              {/* STATS */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
 
-                  <Card
-                    key={mentor._id}
-                    className="shadow-xl rounded-3xl border-0 overflow-hidden hover:scale-[1.02] transition-all duration-300"
-                  >
+                <Card className="rounded-3xl shadow-xl border-0">
 
+                  <CardContent className="p-6 flex items-center gap-4">
 
-                    {/* TOP */}
-                    <div className="bg-gradient-to-r from-primary to-purple-600 p-6 text-white">
+                    <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center">
 
-                      <div className="flex items-center justify-between">
-
-                        <div>
-
-                          <h2 className="text-2xl font-bold">
-
-                            {mentor.name}
-
-                          </h2>
-
-                          <p className="text-white/90">
-
-                            {mentor.domain ||
-                              "Alumni Mentor"}
-
-                          </p>
-
-                        </div>
-
-                        <div className="h-14 w-14 rounded-full bg-white/20 flex items-center justify-center">
-
-                          <Star className="h-7 w-7 text-yellow-300" />
-
-                        </div>
-
-                      </div>
+                      <Users className="h-7 w-7 text-primary" />
 
                     </div>
 
+                    <div>
 
-                    {/* CONTENT */}
-                    <CardContent className="p-6">
+                      <p className="text-muted-foreground text-sm">
 
-
-                      {/* BIO */}
-                      <p className="text-muted-foreground mb-5 line-clamp-3">
-
-                        {mentor.bio ||
-
-                          "Experienced alumni mentor helping students grow in career and technology."
-
-                        }
+                        Recommended Mentors
 
                       </p>
 
+                      <h2 className="text-3xl font-bold">
 
-                      {/* DETAILS */}
-                      <div className="space-y-3 mb-5">
+                        {filteredAlumni.length}
 
+                      </h2>
 
-                        {/* DOMAIN */}
-                        <div className="flex items-center gap-2 text-sm">
+                    </div>
 
-                          <Briefcase className="h-4 w-4 text-primary" />
+                  </CardContent>
 
-                          <span>
-
-                            Domain:
-                            {" "}
-
-                            <span className="font-semibold">
-
-                              {mentor.domain ||
-                                "General"}
-
-                            </span>
-
-                          </span>
-
-                        </div>
+                </Card>
 
 
-                        {/* BRANCH */}
-                        <div className="flex items-center gap-2 text-sm">
+                <Card className="rounded-3xl shadow-xl border-0">
 
-                          <MapPin className="h-4 w-4 text-primary" />
+                  <CardContent className="p-6 flex items-center gap-4">
 
-                          <span>
+                    <div className="h-14 w-14 rounded-2xl bg-yellow-100 flex items-center justify-center">
 
-                            {mentor.branch ||
-                              "Branch Not Added"}
+                      <Trophy className="h-7 w-7 text-yellow-600" />
 
-                          </span>
+                    </div>
 
-                        </div>
+                    <div>
 
+                      <p className="text-muted-foreground text-sm">
 
-                        {/* TRUST SCORE */}
-                        <div className="flex items-center gap-2 text-sm">
+                        Highest Trust Score
 
-                          <Star className="h-4 w-4 text-yellow-500" />
+                      </p>
 
-                          <span>
+                      <h2 className="text-3xl font-bold">
 
-                            Trust Score:
-                            {" "}
+                        {
 
-                            <span className="font-bold">
+                          Math.max(
+                            ...filteredAlumni.map(
+                              (m) =>
+                                m.trustScore || 0
+                            )
+                          )
 
-                              {mentor.trustScore}
+                        }
 
-                            </span>
+                      </h2>
 
-                          </span>
+                    </div>
 
-                        </div>
+                  </CardContent>
 
-
-                        {/* AI SCORE */}
-                        <div className="flex items-center gap-2 text-sm">
-
-                          <Sparkles className="h-4 w-4 text-purple-500" />
-
-                          <span>
-
-                            AI Match Score:
-                            {" "}
-
-                            <span className="font-bold text-primary">
-
-                              {mentor.aiScore || 0}
-
-                            </span>
-
-                          </span>
-
-                        </div>
-
-                      </div>
+                </Card>
 
 
-                      {/* SKILLS */}
-                      <div className="flex flex-wrap gap-2 mb-6">
+                <Card className="rounded-3xl shadow-xl border-0">
 
-                        {mentor.skills?.slice(0, 5).map(
-                          (skill) => (
+                  <CardContent className="p-6 flex items-center gap-4">
 
-                            <Badge
-                              key={skill}
-                              variant="secondary"
-                            >
+                    <div className="h-14 w-14 rounded-2xl bg-purple-100 flex items-center justify-center">
 
-                              {skill}
+                      <Sparkles className="h-7 w-7 text-purple-600" />
 
-                            </Badge>
+                    </div>
+
+                    <div>
+
+                      <p className="text-muted-foreground text-sm">
+
+                        Average AI Match
+
+                      </p>
+
+                      <h2 className="text-3xl font-bold">
+
+                        {
+
+                          Math.round(
+
+                            filteredAlumni.reduce(
+                              (
+                                acc,
+                                curr
+                              ) =>
+
+                                acc +
+                                (curr.aiScore || 0),
+
+                              0
+                            ) /
+
+                            filteredAlumni.length
 
                           )
-                        )}
+
+                        }%
+
+                      </h2>
+
+                    </div>
+
+                  </CardContent>
+
+                </Card>
+
+              </div>
+
+
+              {/* CARDS */}
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+
+                {filteredAlumni.map(
+                  (mentor) => (
+
+                    <Card
+                      key={mentor._id}
+                      className="shadow-2xl rounded-3xl border-0 overflow-hidden hover:scale-[1.02] transition-all duration-300"
+                    >
+
+
+                      {/* TOP */}
+                      <div className="bg-gradient-to-r from-primary to-purple-600 p-6 text-white">
+
+                        <div className="flex items-center justify-between">
+
+                          <div>
+
+                            <h2 className="text-2xl font-bold">
+
+                              {mentor.name}
+
+                            </h2>
+
+                            <p className="text-white/90">
+
+                              {mentor.domain ||
+                                "Alumni Mentor"}
+
+                            </p>
+
+                          </div>
+
+                          <div className="h-14 w-14 rounded-full bg-white/20 flex items-center justify-center">
+
+                            <Star className="h-7 w-7 text-yellow-300" />
+
+                          </div>
+
+                        </div>
 
                       </div>
 
 
-                      {/* BUTTONS */}
-                      <div className="flex gap-3">
+                      {/* CONTENT */}
+                      <CardContent className="p-6">
 
 
-                        {/* REQUEST GUIDANCE */}
-                        <Button
-                          className="flex-1"
-                          onClick={() =>
-                            navigate(
-                              `/student/guidance/${mentor._id}`
-                            )
+                        {/* BIO */}
+                        <p className="text-muted-foreground mb-5 line-clamp-3 leading-7">
+
+                          {mentor.bio ||
+
+                            "Experienced alumni mentor helping students grow in career and technology."
+
                           }
-                        >
 
-                          Request Guidance
-
-                        </Button>
+                        </p>
 
 
-                        {/* CHAT */}
-                        <Button
-                          variant="outline"
-                          className="flex-1"
-                          onClick={() =>
-                            navigate(
-                              `/student/chat/${mentor._id}`
+                        {/* DETAILS */}
+                        <div className="space-y-4 mb-6">
+
+
+                          {/* DOMAIN */}
+                          <div className="flex items-center gap-3 text-sm">
+
+                            <Briefcase className="h-4 w-4 text-primary" />
+
+                            <span>
+
+                              Domain:
+                              {" "}
+
+                              <span className="font-semibold">
+
+                                {mentor.domain ||
+                                  "General"}
+
+                              </span>
+
+                            </span>
+
+                          </div>
+
+
+                          {/* BRANCH */}
+                          <div className="flex items-center gap-3 text-sm">
+
+                            <GraduationCap className="h-4 w-4 text-primary" />
+
+                            <span>
+
+                              {mentor.branch ||
+                                "Branch Not Added"}
+
+                            </span>
+
+                          </div>
+
+
+                          {/* BATCH */}
+                          <div className="flex items-center gap-3 text-sm">
+
+                            <MapPin className="h-4 w-4 text-primary" />
+
+                            <span>
+
+                              Batch:
+                              {" "}
+
+                              {mentor.batch || "N/A"}
+
+                            </span>
+
+                          </div>
+
+
+                          {/* TRUST SCORE */}
+                          <div className="flex items-center gap-3 text-sm">
+
+                            <Star className="h-4 w-4 text-yellow-500" />
+
+                            <span>
+
+                              Trust Score:
+                              {" "}
+
+                              <span className="font-bold">
+
+                                {mentor.trustScore}
+
+                              </span>
+
+                            </span>
+
+                          </div>
+
+
+                          {/* AI SCORE */}
+                          <div>
+
+                            <div className="flex items-center justify-between mb-2 text-sm">
+
+                              <div className="flex items-center gap-2">
+
+                                <Sparkles className="h-4 w-4 text-purple-500" />
+
+                                <span>
+
+                                  AI Match Score
+
+                                </span>
+
+                              </div>
+
+                              <span className="font-bold text-primary">
+
+                                {mentor.aiScore || 0}%
+
+                              </span>
+
+                            </div>
+
+                            <div className="w-full h-3 rounded-full bg-muted overflow-hidden">
+
+                              <div
+
+                                className="h-full bg-gradient-to-r from-primary to-purple-600 rounded-full"
+
+                                style={{
+
+                                  width:
+                                    `${mentor.aiScore || 0}%`,
+
+                                }}
+
+                              />
+
+                            </div>
+
+                          </div>
+
+                        </div>
+
+
+                        {/* SKILLS */}
+                        <div className="flex flex-wrap gap-2 mb-6">
+
+                          {mentor.skills?.slice(0, 6).map(
+                            (skill) => (
+
+                              <Badge
+                                key={skill}
+                                variant="secondary"
+                                className="rounded-xl"
+                              >
+
+                                {skill}
+
+                              </Badge>
+
                             )
-                          }
-                        >
+                          )}
 
-                          <MessageSquare className="h-4 w-4 mr-2" />
+                        </div>
 
-                          Chat
 
-                        </Button>
+                        {/* BUTTONS */}
+                        <div className="flex gap-3">
 
-                      </div>
 
-                    </CardContent>
+                          {/* REQUEST GUIDANCE */}
+                          <Button
+                            className="flex-1 rounded-xl"
+                            onClick={() =>
+                              navigate(
+                                `/student/guidance/${mentor._id}`
+                              )
+                            }
+                          >
 
-                  </Card>
+                            Request Guidance
 
-                )
-              )}
+                          </Button>
 
-            </div>
+
+                          {/* CHAT */}
+                          <Button
+                            variant="outline"
+                            className="flex-1 rounded-xl"
+                            onClick={() =>
+                              navigate(
+                                `/student/chat/${mentor._id}`
+                              )
+                            }
+                          >
+
+                            <MessageSquare className="h-4 w-4 mr-2" />
+
+                            Chat
+
+                          </Button>
+
+                        </div>
+
+                      </CardContent>
+
+                    </Card>
+
+                  )
+                )}
+
+              </div>
+
+            </>
 
           )}
 

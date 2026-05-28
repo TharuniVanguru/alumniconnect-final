@@ -1,214 +1,612 @@
-const Message = require("../models/Message");
-const Notification = require("../models/Notification");
+const Message =
+  require("../models/Message");
+
+const Notification =
+  require("../models/Notification");
+
+const mongoose =
+  require("mongoose");
 
 
-// ===============================
+// ==========================================
 // SEND MESSAGE
-// ===============================
+// ==========================================
+const sendMessage =
+  async (req, res) => {
 
-const sendMessage = async (req, res) => {
+    try {
 
-  try {
+      const {
 
-    const {
-      receiver,
-      receiverName,
-      message,
-    } = req.body;
+        receiverId,
+        receiverName,
+        message,
 
-    if (!receiver || !message) {
-      return res.status(400).json({
-        message: "receiver and message are required",
+      } = req.body;
+
+
+      // ====================================
+      // VALIDATION
+      // ====================================
+      if (
+
+        !receiverId ||
+
+        !message?.trim()
+
+      ) {
+
+        return res.status(400).json({
+
+          success: false,
+
+          message:
+            "receiverId and message are required",
+
+        });
+
+      }
+
+
+      // ====================================
+      // CREATE MESSAGE
+      // ====================================
+      const newMessage =
+        await Message.create({
+
+          sender:
+            req.user._id,
+
+          receiver:
+            receiverId,
+
+          senderName:
+            req.user.name,
+
+          receiverName:
+            receiverName || "",
+
+          message:
+            message.trim(),
+
+          delivered: false,
+
+          isRead: false,
+
+        });
+
+
+      // ====================================
+      // POPULATE MESSAGE
+      // ====================================
+      const populatedMessage =
+        await Message.findById(
+          newMessage._id
+        )
+
+          .populate(
+            "sender",
+            "name email role"
+          )
+
+          .populate(
+            "receiver",
+            "name email role"
+          );
+
+
+      // ====================================
+      // CREATE NOTIFICATION
+      // ====================================
+      await Notification.create({
+
+        recipient:
+          receiverId,
+
+        sender:
+          req.user._id,
+
+        title:
+          "New Message",
+
+        message:
+          `${req.user.name} sent you a message`,
+
+        type:
+          "message",
+
+        relatedId:
+          newMessage._id,
+
+        isRead: false,
+
       });
+
+
+      // ====================================
+      // RESPONSE
+      // ====================================
+      return res.status(201).json({
+
+        success: true,
+
+        message:
+          populatedMessage,
+
+      });
+
     }
 
-    const newMessage = await Message.create({
+    catch (error) {
 
-      sender: req.user._id,
-      receiver: receiver,
+      console.log(
+        "SEND MESSAGE ERROR:",
+        error
+      );
 
-      senderName: req.user.name,
-      receiverName: receiverName || "",
+      res.status(500).json({
 
-      message: message,
+        success: false,
 
-      isRead: false,
+        message:
+          "Server Error",
 
-    });
+      });
 
+    }
 
-    // NOTIFICATION
-    await Notification.create({
-
-      recipient: receiver,
-      sender: req.user._id,
-
-      title: "New Message",
-
-      message: `${req.user.name} sent you a message`,
-
-      type: "message",
-
-      relatedId: newMessage._id,
-
-    });
+  };
 
 
-    return res.status(201).json(newMessage);
-
-  }
-
-  catch (error) {
-
-    console.log(error);
-
-    res.status(500).json({
-      message: "Server Error",
-    });
-
-  }
-};
-
-
-// ===============================
+// ==========================================
 // GET CONVERSATION
-// ===============================
+// ==========================================
+const getConversation =
+  async (req, res) => {
 
-const getConversation = async (req, res) => {
+    try {
 
-  try {
+      const userId =
+        req.params.userId;
 
-    const userId = req.params.userId;
-    const myId = req.user._id;
-
-    const messages = await Message.find({
-
-      $or: [
-
-        {
-          sender: myId,
-          receiver: userId,
-        },
-
-        {
-          sender: userId,
-          receiver: myId,
-        },
-
-      ],
-
-    }).sort({ createdAt: 1 });
+      const myId =
+        req.user._id;
 
 
-    // MARK AS READ (IMPORTANT)
-    await Message.updateMany(
+      // ====================================
+      // VALIDATION
+      // ====================================
+      if (
 
-      {
-        sender: userId,
-        receiver: myId,
-        isRead: false,
-      },
+        !mongoose.Types.ObjectId.isValid(
+          userId
+        )
 
-      {
-        $set: { isRead: true },
+      ) {
+
+        return res.status(400).json({
+
+          success: false,
+
+          message:
+            "Invalid userId",
+
+        });
+
       }
 
-    );
 
+      // ====================================
+      // FETCH MESSAGES
+      // ====================================
+      const messages =
+        await Message.find({
 
-    return res.status(200).json(messages);
-
-  }
-
-  catch (error) {
-
-    console.log(error);
-
-    res.status(500).json({
-      message: "Server Error",
-    });
-
-  }
-};
-
-
-// ===============================
-// CHAT LIST (SIDEBAR)
-// ===============================
-
-const getChatList = async (req, res) => {
-
-  try {
-
-    const myId = req.user._id;
-
-    const chats = await Message.aggregate([
-
-      {
-        $match: {
           $or: [
-            { sender: myId },
-            { receiver: myId }
-          ]
-        }
-      },
 
-      {
-        $sort: { createdAt: -1 }
-      },
+            {
 
-      {
-        $group: {
-          _id: {
-            $cond: [
-              { $eq: ["$sender", myId] },
-              "$receiver",
-              "$sender"
-            ]
+              sender: myId,
+
+              receiver: userId,
+
+            },
+
+            {
+
+              sender: userId,
+
+              receiver: myId,
+
+            },
+
+          ],
+
+        })
+
+          .sort({
+
+            createdAt: 1,
+
+          })
+
+          .populate(
+            "sender",
+            "name role"
+          )
+
+          .populate(
+            "receiver",
+            "name role"
+          );
+
+
+      // ====================================
+      // MARK AS READ
+      // ====================================
+      await Message.updateMany(
+
+        {
+
+          sender: userId,
+
+          receiver: myId,
+
+          isRead: false,
+
+        },
+
+        {
+
+          $set: {
+
+            isRead: true,
+
+            seenAt:
+              new Date(),
+
           },
 
-          lastMessage: { $first: "$message" },
-          lastMessageTime: { $first: "$createdAt" },
+        }
 
-          unreadCount: {
-            $sum: {
-              $cond: [
+      );
+
+
+      // ====================================
+      // RESPONSE
+      // ====================================
+      return res.status(200).json({
+
+        success: true,
+
+        messages,
+
+      });
+
+    }
+
+    catch (error) {
+
+      console.log(
+        "GET CONVERSATION ERROR:",
+        error
+      );
+
+      res.status(500).json({
+
+        success: false,
+
+        message:
+          "Server Error",
+
+      });
+
+    }
+
+  };
+
+
+// ==========================================
+// GET CHAT LIST
+// ==========================================
+const getChatList =
+  async (req, res) => {
+
+    try {
+
+      const myId =
+        req.user._id;
+
+
+      // ====================================
+      // AGGREGATION
+      // ====================================
+      const chats =
+        await Message.aggregate([
+
+          {
+
+            $match: {
+
+              $or: [
+
                 {
-                  $and: [
-                    { $eq: ["$receiver", myId] },
-                    { $eq: ["$isRead", false] }
-                  ]
+
+                  sender:
+                    myId,
+
                 },
-                1,
-                0
-              ]
-            }
-          }
+
+                {
+
+                  receiver:
+                    myId,
+
+                },
+
+              ],
+
+            },
+
+          },
+
+          {
+
+            $sort: {
+
+              createdAt: -1,
+
+            },
+
+          },
+
+          {
+
+            $group: {
+
+              _id: {
+
+                $cond: [
+
+                  {
+
+                    $eq: [
+
+                      "$sender",
+
+                      myId,
+
+                    ],
+
+                  },
+
+                  "$receiver",
+
+                  "$sender",
+
+                ],
+
+              },
+
+              lastMessage: {
+
+                $first:
+                  "$message",
+
+              },
+
+              lastMessageTime: {
+
+                $first:
+                  "$createdAt",
+
+              },
+
+              senderName: {
+
+                $first:
+                  "$senderName",
+
+              },
+
+              receiverName: {
+
+                $first:
+                  "$receiverName",
+
+              },
+
+              unreadCount: {
+
+                $sum: {
+
+                  $cond: [
+
+                    {
+
+                      $and: [
+
+                        {
+
+                          $eq: [
+
+                            "$receiver",
+
+                            myId,
+
+                          ],
+
+                        },
+
+                        {
+
+                          $eq: [
+
+                            "$isRead",
+
+                            false,
+
+                          ],
+
+                        },
+
+                      ],
+
+                    },
+
+                    1,
+
+                    0,
+
+                  ],
+
+                },
+
+              },
+
+            },
+
+          },
+
+          {
+
+            $sort: {
+
+              lastMessageTime:
+                -1,
+
+            },
+
+          },
+
+        ]);
+
+
+      // ====================================
+      // RESPONSE
+      // ====================================
+      res.status(200).json({
+
+        success: true,
+
+        chats,
+
+      });
+
+    }
+
+    catch (error) {
+
+      console.log(
+        "CHAT LIST ERROR:",
+        error
+      );
+
+      res.status(500).json({
+
+        success: false,
+
+        message:
+          "Server Error",
+
+      });
+
+    }
+
+  };
+
+
+// ==========================================
+// MARK AS READ
+// ==========================================
+const markMessagesAsRead =
+  async (req, res) => {
+
+    try {
+
+      const senderId =
+        req.params.userId;
+
+
+      // ====================================
+      // UPDATE
+      // ====================================
+      await Message.updateMany(
+
+        {
+
+          sender:
+            senderId,
+
+          receiver:
+            req.user._id,
+
+          isRead: false,
+
+        },
+
+        {
+
+          $set: {
+
+            isRead: true,
+
+            seenAt:
+              new Date(),
+
+          },
 
         }
-      }
 
-    ]);
-
-    res.json(chats);
-
-  }
-
-  catch (error) {
-
-    console.log(error);
-
-    res.status(500).json({
-      message: "Server Error",
-    });
-
-  }
-};
+      );
 
 
+      // ====================================
+      // RESPONSE
+      // ====================================
+      res.status(200).json({
+
+        success: true,
+
+        message:
+          "Messages marked as read",
+
+      });
+
+    }
+
+    catch (error) {
+
+      console.log(
+        "MARK READ ERROR:",
+        error
+      );
+
+      res.status(500).json({
+
+        success: false,
+
+        message:
+          "Server Error",
+
+      });
+
+    }
+
+  };
+
+
+// ==========================================
 // EXPORTS
+// ==========================================
 module.exports = {
+
   sendMessage,
+
   getConversation,
+
   getChatList,
+
+  markMessagesAsRead,
+
 };

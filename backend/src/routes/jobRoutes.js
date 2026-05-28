@@ -1,21 +1,41 @@
-const express = require("express");
+const express =
+  require("express");
 
 const {
+
   createJob,
+
   getJobs,
+
+  getSingleJob,
+
+  updateJob,
+
   applyJob,
+
   getJobApplications,
+
   deleteJob,
-} = require("../controllers/jobController");
+
+} = require(
+  "../controllers/jobController"
+);
 
 const {
+
   protect,
-} = require("../middleware/authMiddleware");
 
-const router = express.Router();
+} = require(
+  "../middleware/authMiddleware"
+);
+
+const router =
+  express.Router();
 
 
+// ==========================================
 // CREATE JOB
+// ==========================================
 router.post(
   "/",
   protect,
@@ -23,7 +43,9 @@ router.post(
 );
 
 
+// ==========================================
 // GET ALL JOBS
+// ==========================================
 router.get(
   "/",
   protect,
@@ -31,7 +53,29 @@ router.get(
 );
 
 
+// ==========================================
+// GET SINGLE JOB
+// ==========================================
+router.get(
+  "/:id",
+  protect,
+  getSingleJob
+);
+
+
+// ==========================================
+// UPDATE JOB
+// ==========================================
+router.put(
+  "/:id",
+  protect,
+  updateJob
+);
+
+
+// ==========================================
 // APPLY FOR JOB
+// ==========================================
 router.post(
   "/:id/apply",
   protect,
@@ -39,7 +83,9 @@ router.post(
 );
 
 
+// ==========================================
 // GET JOB APPLICATIONS
+// ==========================================
 router.get(
   "/:id/applications",
   protect,
@@ -47,7 +93,9 @@ router.get(
 );
 
 
+// ==========================================
 // DELETE JOB
+// ==========================================
 router.delete(
   "/:id",
   protect,
@@ -55,4 +103,8 @@ router.delete(
 );
 
 
-module.exports = router;
+// ==========================================
+// EXPORT
+// ==========================================
+module.exports =
+  router;

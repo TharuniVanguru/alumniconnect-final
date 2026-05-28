@@ -20,7 +20,27 @@ import {
 import { Button }
   from "@/components/ui/button";
 
+import {
+  Badge,
+} from "@/components/ui/badge";
 
+import {
+
+  Bell,
+  MessageCircle,
+  Briefcase,
+  Calendar,
+  CheckCircle2,
+  Clock3,
+  Sparkles,
+  Loader2,
+
+} from "lucide-react";
+
+
+// =====================================
+// TYPES
+// =====================================
 interface Notification {
 
   _id: string;
@@ -40,6 +60,9 @@ interface Notification {
 }
 
 
+// =====================================
+// COMPONENT
+// =====================================
 const NotificationsPage =
   () => {
 
@@ -64,6 +87,7 @@ const NotificationsPage =
     ] = useState("");
 
 
+    // USER INFO
     const userInfo =
       JSON.parse(
         localStorage.getItem(
@@ -72,9 +96,9 @@ const NotificationsPage =
       );
 
 
-    // =========================
+    // =====================================
     // FETCH NOTIFICATIONS
-    // =========================
+    // =====================================
     const fetchNotifications =
       async () => {
 
@@ -82,19 +106,27 @@ const NotificationsPage =
 
           setLoading(true);
 
+          setError("");
+
+
           const response =
             await axios.get(
 
               "http://localhost:5000/notifications",
 
               {
+
                 headers: {
+
                   Authorization:
                     `Bearer ${userInfo.token}`,
+
                 },
+
               }
 
             );
+
 
           setNotifications(
             response.data
@@ -121,9 +153,9 @@ const NotificationsPage =
       };
 
 
-    // =========================
+    // =====================================
     // MARK AS READ
-    // =========================
+    // =====================================
     const markAsRead =
       async (
         notificationId: string
@@ -138,19 +170,26 @@ const NotificationsPage =
             {},
 
             {
+
               headers: {
+
                 Authorization:
                   `Bearer ${userInfo.token}`,
+
               },
+
             }
 
           );
 
+
           setNotifications(
+
             (
-              prevNotifications
+              prev
             ) =>
-              prevNotifications.map(
+
+              prev.map(
                 (
                   notification
                 ) =>
@@ -159,12 +198,16 @@ const NotificationsPage =
                   notificationId
 
                     ? {
+
                         ...notification,
+
                         isRead: true,
+
                       }
 
                     : notification
               )
+
           );
 
         }
@@ -178,20 +221,20 @@ const NotificationsPage =
       };
 
 
-    // =========================
+    // =====================================
     // HANDLE NOTIFICATION
-    // =========================
+    // =====================================
     const handleNotification =
       async (
         notification: Notification
       ) => {
 
-        // MARK AS READ
         await markAsRead(
           notification._id
         );
 
-        // MESSAGE
+
+        // CHAT MESSAGE
         if (
           notification.type ===
           "message"
@@ -206,9 +249,70 @@ const NotificationsPage =
       };
 
 
-    // =========================
-    // INITIAL LOAD
-    // =========================
+    // =====================================
+    // ICONS
+    // =====================================
+    const renderIcon =
+      (type: string) => {
+
+        switch (type) {
+
+          case "message":
+
+            return (
+
+              <div className="h-12 w-12 rounded-2xl bg-blue-100 flex items-center justify-center">
+
+                <MessageCircle className="h-6 w-6 text-blue-600" />
+
+              </div>
+
+            );
+
+          case "job":
+
+            return (
+
+              <div className="h-12 w-12 rounded-2xl bg-green-100 flex items-center justify-center">
+
+                <Briefcase className="h-6 w-6 text-green-600" />
+
+              </div>
+
+            );
+
+          case "event":
+
+            return (
+
+              <div className="h-12 w-12 rounded-2xl bg-orange-100 flex items-center justify-center">
+
+                <Calendar className="h-6 w-6 text-orange-600" />
+
+              </div>
+
+            );
+
+          default:
+
+            return (
+
+              <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center">
+
+                <Bell className="h-6 w-6 text-primary" />
+
+              </div>
+
+            );
+
+        }
+
+      };
+
+
+    // =====================================
+    // LOAD
+    // =====================================
     useEffect(() => {
 
       fetchNotifications();
@@ -222,23 +326,40 @@ const NotificationsPage =
 
         <Header />
 
-        <div className="p-6 max-w-5xl mx-auto">
+        <div className="max-w-6xl mx-auto p-6">
 
-          {/* TITLE */}
-          <div className="mb-6">
 
-            <h1 className="text-3xl font-bold">
+          {/* HEADER */}
+          <div className="mb-10">
 
-              Notifications
+            <div className="flex items-center gap-4">
 
-            </h1>
+              <div className="h-16 w-16 rounded-2xl bg-gradient-to-r from-primary to-purple-600 flex items-center justify-center shadow-xl">
 
-            <p className="text-muted-foreground">
+                <Bell className="h-8 w-8 text-white" />
 
-              Stay updated with guidance requests,
-              mentorship updates, chats & more
+              </div>
 
-            </p>
+
+              <div>
+
+                <h1 className="text-4xl font-bold">
+
+                  Notifications
+
+                </h1>
+
+
+                <p className="text-muted-foreground text-lg">
+
+                  Stay updated with chats, mentorship requests,
+                  jobs, events, and guidance updates.
+
+                </p>
+
+              </div>
+
+            </div>
 
           </div>
 
@@ -246,7 +367,7 @@ const NotificationsPage =
           {/* ERROR */}
           {error && (
 
-            <div className="bg-red-100 text-red-600 p-3 rounded-lg mb-5">
+            <div className="bg-red-100 border border-red-300 text-red-600 p-4 rounded-2xl mb-6">
 
               {error}
 
@@ -258,25 +379,39 @@ const NotificationsPage =
           {/* LOADING */}
           {loading ? (
 
-            <p className="text-muted-foreground">
+            <div className="text-center py-20">
 
-              Loading notifications...
-
-            </p>
-
-          ) : notifications.length === 0 ? (
-
-            <div className="text-center mt-20">
+              <Loader2 className="h-10 w-10 animate-spin text-primary mx-auto mb-4" />
 
               <h2 className="text-2xl font-bold mb-2">
 
-                No Notifications
+                Loading Notifications...
 
               </h2>
 
               <p className="text-muted-foreground">
 
-                Your notifications will appear here
+                Please wait while we fetch updates
+
+              </p>
+
+            </div>
+
+          ) : notifications.length === 0 ? (
+
+            <div className="text-center py-24">
+
+              <Sparkles className="h-14 w-14 mx-auto text-primary mb-5" />
+
+              <h2 className="text-3xl font-bold mb-3">
+
+                No Notifications Yet
+
+              </h2>
+
+              <p className="text-muted-foreground text-lg">
+
+                Notifications will appear here when you receive updates
 
               </p>
 
@@ -284,7 +419,7 @@ const NotificationsPage =
 
           ) : (
 
-            <div className="space-y-5">
+            <div className="space-y-6">
 
               {notifications.map(
                 (
@@ -295,61 +430,115 @@ const NotificationsPage =
                     key={
                       notification._id
                     }
-                    className={`shadow-lg rounded-2xl border-l-4 ${
+                    className={`border-0 rounded-3xl shadow-xl transition-all duration-300 hover:scale-[1.01] ${
                       notification.isRead
 
-                        ? "border-gray-300 opacity-80"
+                        ? "opacity-80"
 
-                        : "border-primary"
+                        : "ring-2 ring-primary/20"
                     }`}
                   >
 
                     <CardContent className="p-6">
 
-                      {/* HEADER */}
+
+                      {/* TOP */}
                       <div className="flex items-start justify-between gap-4">
 
-                        <div>
 
-                          <h2 className="text-xl font-bold mb-2">
+                        {/* LEFT */}
+                        <div className="flex items-start gap-4 flex-1">
 
-                            {
-                              notification.title
-                            }
+                          {renderIcon(
+                            notification.type
+                          )}
 
-                          </h2>
 
-                          <p className="text-muted-foreground">
+                          <div className="flex-1">
 
-                            {
-                              notification.message
-                            }
+                            <div className="flex items-center gap-3 mb-2">
 
-                          </p>
+                              <h2 className="text-xl font-bold">
+
+                                {
+                                  notification.title
+                                }
+
+                              </h2>
+
+
+                              {!notification.isRead && (
+
+                                <Badge className="bg-primary">
+
+                                  New
+
+                                </Badge>
+
+                              )}
+
+                            </div>
+
+
+                            <p className="text-muted-foreground leading-7">
+
+                              {
+                                notification.message
+                              }
+
+                            </p>
+
+                          </div>
 
                         </div>
 
 
-                        {!notification.isRead && (
+                        {/* STATUS */}
+                        <div>
 
-                          <div className="h-3 w-3 rounded-full bg-primary mt-2" />
+                          {notification.isRead ? (
 
-                        )}
+                            <Badge
+                              variant="secondary"
+                              className="gap-1"
+                            >
+
+                              <CheckCircle2 className="h-3 w-3" />
+
+                              Read
+
+                            </Badge>
+
+                          ) : (
+
+                            <Badge className="bg-yellow-500 gap-1">
+
+                              <Clock3 className="h-3 w-3" />
+
+                              Unread
+
+                            </Badge>
+
+                          )}
+
+                        </div>
 
                       </div>
 
 
                       {/* FOOTER */}
-                      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mt-5">
+                      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mt-6">
 
+
+                        {/* INFO */}
                         <div>
 
                           <p className="text-sm text-muted-foreground">
 
-                            Type:
+                            Notification Type:
                             {" "}
 
-                            <span className="font-medium capitalize">
+                            <span className="font-semibold capitalize">
 
                               {
                                 notification.type
@@ -371,21 +560,43 @@ const NotificationsPage =
                         </div>
 
 
-                        {!notification.isRead && (
+                        {/* BUTTON */}
+                        <div>
 
-                          <Button
-                            onClick={() =>
-                              handleNotification(
-                                notification
-                              )
-                            }
-                          >
+                          {!notification.isRead ? (
 
-                            Open
+                            <Button
+                              className="rounded-xl"
+                              onClick={() =>
+                                handleNotification(
+                                  notification
+                                )
+                              }
+                            >
 
-                          </Button>
+                              Open Notification
 
-                        )}
+                            </Button>
+
+                          ) : (
+
+                            <Button
+                              variant="outline"
+                              className="rounded-xl"
+                              onClick={() =>
+                                handleNotification(
+                                  notification
+                                )
+                              }
+                            >
+
+                              View Again
+
+                            </Button>
+
+                          )}
+
+                        </div>
 
                       </div>
 

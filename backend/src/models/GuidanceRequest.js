@@ -2,17 +2,17 @@ const mongoose =
   require("mongoose");
 
 
-// ======================================
+// ==========================================
 // GUIDANCE REQUEST SCHEMA
-// ======================================
+// ==========================================
 const guidanceRequestSchema =
   new mongoose.Schema(
 
     {
 
-      // =========================
+      // ====================================
       // STUDENT
-      // =========================
+      // ====================================
       studentId: {
 
         type:
@@ -21,6 +21,8 @@ const guidanceRequestSchema =
         ref: "User",
 
         required: true,
+
+        index: true,
 
       },
 
@@ -35,9 +37,9 @@ const guidanceRequestSchema =
       },
 
 
-      // =========================
+      // ====================================
       // ALUMNI
-      // =========================
+      // ====================================
       alumniId: {
 
         type:
@@ -46,6 +48,8 @@ const guidanceRequestSchema =
         ref: "User",
 
         required: true,
+
+        index: true,
 
       },
 
@@ -60,9 +64,9 @@ const guidanceRequestSchema =
       },
 
 
-      // =========================
+      // ====================================
       // GUIDANCE DETAILS
-      // =========================
+      // ====================================
       domain: {
 
         type: String,
@@ -70,6 +74,8 @@ const guidanceRequestSchema =
         required: true,
 
         trim: true,
+
+        index: true,
 
       },
 
@@ -91,54 +97,81 @@ const guidanceRequestSchema =
 
         trim: true,
 
+        maxlength: 3000,
+
       },
 
 
-      // =========================
-      // URGENCY
-      // =========================
+      // ====================================
+      // PRIORITY / URGENCY
+      // ====================================
       urgency: {
 
         type: String,
 
         enum: [
+
           "Low",
+
           "Medium",
+
           "High",
+
         ],
 
         default: "Medium",
 
       },
 
+      priorityScore: {
 
-      // =========================
+        type: Number,
+
+        default: 0,
+
+      },
+
+
+      // ====================================
       // STATUS
-      // =========================
+      // ====================================
       status: {
 
         type: String,
 
         enum: [
+
           "Pending",
+
           "Accepted",
+
           "Rejected",
+
+          "Scheduled",
+
           "Completed",
+
+          "Cancelled",
+
         ],
 
         default: "Pending",
 
+        index: true,
+
       },
 
 
-      // =========================
+      // ====================================
       // MEETING DETAILS
-      // =========================
+      // ====================================
       meetingLink: {
 
         type: String,
 
         default: "",
+
+        trim: true,
 
       },
 
@@ -148,11 +181,51 @@ const guidanceRequestSchema =
 
       },
 
+      duration: {
 
-      // =========================
-      // FEEDBACK
-      // =========================
-      feedback: {
+        type: Number,
+
+        default: 30,
+
+      },
+
+      reminderSent: {
+
+        type: Boolean,
+
+        default: false,
+
+      },
+
+
+      // ====================================
+      // RESOURCES
+      // ====================================
+      resources: [
+
+        {
+
+          title: String,
+
+          link: String,
+
+        },
+
+      ],
+
+
+      // ====================================
+      // NOTES
+      // ====================================
+      mentorNotes: {
+
+        type: String,
+
+        default: "",
+
+      },
+
+      studentNotes: {
 
         type: String,
 
@@ -161,9 +234,23 @@ const guidanceRequestSchema =
       },
 
 
-      // =========================
+      // ====================================
+      // FEEDBACK
+      // ====================================
+      feedback: {
+
+        type: String,
+
+        default: "",
+
+        maxlength: 1000,
+
+      },
+
+
+      // ====================================
       // RATING
-      // =========================
+      // ====================================
       rating: {
 
         type: Number,
@@ -171,6 +258,28 @@ const guidanceRequestSchema =
         min: 1,
 
         max: 5,
+
+      },
+
+
+      // ====================================
+      // COMPLETION
+      // ====================================
+      completedAt: {
+
+        type: Date,
+
+      },
+
+
+      // ====================================
+      // CANCELLATION
+      // ====================================
+      cancellationReason: {
+
+        type: String,
+
+        default: "",
 
       },
 
@@ -185,9 +294,23 @@ const guidanceRequestSchema =
   );
 
 
-// ======================================
+// ==========================================
+// INDEXES
+// ==========================================
+guidanceRequestSchema.index({
+
+  studentId: 1,
+
+  alumniId: 1,
+
+  status: 1,
+
+});
+
+
+// ==========================================
 // MODEL
-// ======================================
+// ==========================================
 const GuidanceRequest =
   mongoose.model(
 
@@ -198,8 +321,8 @@ const GuidanceRequest =
   );
 
 
-// ======================================
+// ==========================================
 // EXPORT
-// ======================================
+// ==========================================
 module.exports =
   GuidanceRequest;

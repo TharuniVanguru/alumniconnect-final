@@ -1,5 +1,7 @@
 import { Header } from '@/components/layout/Header';
+
 import { Button } from '@/components/ui/button';
+
 import {
   Card,
   CardContent,
@@ -9,405 +11,396 @@ import {
 } from '@/components/ui/card';
 
 import { Input } from '@/components/ui/input';
+
 import { Label } from '@/components/ui/label';
+
 import { Textarea } from '@/components/ui/textarea';
+
 import { Badge } from '@/components/ui/badge';
 
 import { useAuth } from '@/contexts/AuthContext';
 
 import {
+
   User,
   Mail,
-  Phone,
-  MapPin,
-  Briefcase,
-  Building,
-  GraduationCap,
   Save,
   X,
   Plus,
   Github,
   Linkedin,
   Globe,
+  GraduationCap,
+  Briefcase,
+  Sparkles,
+
 } from 'lucide-react';
 
 import {
+
   useState,
   useEffect,
+
 } from 'react';
 
 import axios from 'axios';
 
-import { useToast } from '@/hooks/use-toast';
+import { useToast }
+  from '@/hooks/use-toast';
 
 
-export const ProfileEdit = () => {
+// =====================================
+// COMPONENT
+// =====================================
+export const ProfileEdit =
+  () => {
 
-  const { user } =
-    useAuth();
+    const { user } =
+      useAuth();
 
-  const { toast } =
-    useToast();
-
-
-  const [profile, setProfile] =
-    useState<any>({
-
-      name: '',
-      email: '',
-      branch: '',
-      year: '',
-      batch: '',
-      domain: '',
-
-      skills: [],
-
-      interests: [],
-
-      linkedinUrl: '',
-      githubUrl: '',
-      portfolioUrl: '',
-
-      bio: '',
-
-      company: '',
-      jobRole: '',
-      experience: '',
-
-    });
+    const { toast } =
+      useToast();
 
 
-  const [newSkill, setNewSkill] =
-    useState('');
+    // =====================================
+    // STATE
+    // =====================================
+    const [profile, setProfile] =
+      useState<any>({
 
-  const [
-    newInterest,
-    setNewInterest,
-  ] = useState('');
+        name: '',
+        email: '',
+        branch: '',
+        year: '',
+        batch: '',
+        domain: '',
 
-  const [loading, setLoading] =
-    useState(false);
+        skills: [],
 
+        interests: [],
 
-  const userInfo =
-    JSON.parse(
-      localStorage.getItem(
-        'userInfo'
-      ) || '{}'
-    );
+        linkedinUrl: '',
+        githubUrl: '',
+        portfolioUrl: '',
 
+        bio: '',
 
-  // =========================
-  // ADD SKILL
-  // =========================
-  const handleAddSkill = () => {
-
-    if (
-      newSkill.trim() &&
-      !profile.skills.includes(
-        newSkill.trim()
-      )
-    ) {
-
-      setProfile({
-
-        ...profile,
-
-        skills: [
-          ...profile.skills,
-          newSkill.trim(),
-        ],
+        company: '',
+        jobRole: '',
+        experience: '',
 
       });
 
-      setNewSkill('');
 
-    }
+    const [newSkill, setNewSkill] =
+      useState('');
 
-  };
+    const [
+      newInterest,
+      setNewInterest,
+    ] = useState('');
 
-
-  // =========================
-  // REMOVE SKILL
-  // =========================
-  const handleRemoveSkill =
-    (
-      skillToRemove: string
-    ) => {
-
-      setProfile({
-
-        ...profile,
-
-        skills:
-          profile.skills.filter(
-            (
-              skill: string
-            ) =>
-              skill !==
-              skillToRemove
-          ),
-
-      });
-
-    };
+    const [loading, setLoading] =
+      useState(false);
 
 
-  // =========================
-  // ADD INTEREST
-  // =========================
-  const handleAddInterest =
-    () => {
+    const userInfo =
+      JSON.parse(
+        localStorage.getItem(
+          'userInfo'
+        ) || '{}'
+      );
 
-      if (
-        newInterest.trim() &&
-        !profile.interests.includes(
-          newInterest.trim()
-        )
-      ) {
+
+    // =====================================
+    // ADD SKILL
+    // =====================================
+    const handleAddSkill =
+      () => {
+
+        if (
+          newSkill.trim() &&
+          !profile.skills.includes(
+            newSkill.trim()
+          )
+        ) {
+
+          setProfile({
+
+            ...profile,
+
+            skills: [
+
+              ...profile.skills,
+
+              newSkill.trim(),
+
+            ],
+
+          });
+
+          setNewSkill('');
+
+        }
+
+      };
+
+
+    // =====================================
+    // REMOVE SKILL
+    // =====================================
+    const handleRemoveSkill =
+      (
+        skillToRemove: string
+      ) => {
 
         setProfile({
 
           ...profile,
 
-          interests: [
-            ...profile.interests,
-            newInterest.trim(),
-          ],
+          skills:
+            profile.skills.filter(
+              (
+                skill: string
+              ) =>
+                skill !==
+                skillToRemove
+            ),
 
         });
 
-        setNewInterest('');
-
-      }
-
-    };
+      };
 
 
-  // =========================
-  // REMOVE INTEREST
-  // =========================
-  const handleRemoveInterest =
-    (
-      interestToRemove: string
-    ) => {
+    // =====================================
+    // ADD INTEREST
+    // =====================================
+    const handleAddInterest =
+      () => {
 
-      setProfile({
+        if (
+          newInterest.trim() &&
+          !profile.interests.includes(
+            newInterest.trim()
+          )
+        ) {
 
-        ...profile,
+          setProfile({
 
-        interests:
-          profile.interests.filter(
-            (
-              interest: string
-            ) =>
-              interest !==
-              interestToRemove
-          ),
+            ...profile,
 
-      });
+            interests: [
 
-    };
+              ...profile.interests,
+
+              newInterest.trim(),
+
+            ],
+
+          });
+
+          setNewInterest('');
+
+        }
+
+      };
 
 
-  // =========================
-  // FETCH PROFILE
-  // =========================
-  const fetchProfile =
-    async () => {
+    // =====================================
+    // REMOVE INTEREST
+    // =====================================
+    const handleRemoveInterest =
+      (
+        interestToRemove: string
+      ) => {
 
-      try {
+        setProfile({
 
-        const response =
-          await axios.get(
+          ...profile,
 
-            'http://localhost:5000/profile/me',
+          interests:
+            profile.interests.filter(
+              (
+                interest: string
+              ) =>
+                interest !==
+                interestToRemove
+            ),
 
-            {
+        });
 
-              headers: {
+      };
 
-                Authorization:
-                  `Bearer ${userInfo.token}`,
 
-              },
+    // =====================================
+    // FETCH PROFILE
+    // =====================================
+    const fetchProfile =
+      async () => {
 
-            }
+        try {
 
+          const response =
+            await axios.get(
+
+              'http://localhost:5000/profile/me',
+
+              {
+
+                headers: {
+
+                  Authorization:
+                    `Bearer ${userInfo.token}`,
+
+                },
+
+              }
+
+            );
+
+          setProfile(
+            response.data
           );
 
-        setProfile(
-          response.data
-        );
+        }
 
-      }
+        catch (error) {
 
-      catch (error) {
+          console.error(error);
 
-        console.error(error);
+          toast({
 
-        toast({
+            title:
+              'Unable to load profile',
 
-          title:
-            'Unable to load profile',
+            variant:
+              'destructive',
 
-          variant:
-            'destructive',
+          });
 
-        });
+        }
 
-      }
-
-    };
+      };
 
 
-  // =========================
-  // INITIAL LOAD
-  // =========================
-  useEffect(() => {
+    // =====================================
+    // INITIAL LOAD
+    // =====================================
+    useEffect(() => {
 
-    fetchProfile();
+      fetchProfile();
 
-  }, []);
+    }, []);
 
 
-  // =========================
-  // SAVE PROFILE
-  // =========================
-  const handleSaveProfile =
-    async () => {
+    // =====================================
+    // SAVE PROFILE
+    // =====================================
+    const handleSaveProfile =
+      async () => {
 
-      try {
+        try {
 
-        setLoading(true);
+          setLoading(true);
 
-        const response =
-          await axios.put(
+          const response =
+            await axios.put(
 
-            'http://localhost:5000/profile/update',
+              'http://localhost:5000/profile/update',
 
-            profile,
+              profile,
 
-            {
+              {
 
-              headers: {
+                headers: {
 
-                Authorization:
-                  `Bearer ${userInfo.token}`,
+                  Authorization:
+                    `Bearer ${userInfo.token}`,
 
-              },
+                },
 
-            }
+              }
 
+            );
+
+          setProfile(
+            response.data
           );
 
-        setProfile(
-          response.data
-        );
+          toast({
 
-        toast({
+            title:
+              'Profile Updated 🚀',
 
-          title:
-            'Profile Updated',
+            description:
+              'Your profile has been updated successfully.',
 
-          description:
-            'Your profile has been successfully updated.',
+          });
 
-        });
+        }
 
-      }
+        catch (error) {
 
-      catch (error) {
+          console.error(error);
 
-        console.error(error);
+          toast({
 
-        toast({
+            title:
+              'Unable to save profile',
 
-          title:
-            'Unable to save profile',
+            variant:
+              'destructive',
 
-          variant:
-            'destructive',
+          });
 
-        });
+        }
 
-      }
+        finally {
 
-      finally {
+          setLoading(false);
 
-        setLoading(false);
+        }
 
-      }
-
-    };
+      };
 
 
-  return (
+    // =====================================
+    // UI
+    // =====================================
+    return (
 
-    <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background">
 
-      <Header />
+        <Header />
 
-      <main className="container mx-auto px-4 py-6 max-w-4xl">
-
-        {/* TITLE */}
-        <div className="mb-8">
-
-          <h1 className="text-3xl font-bold text-foreground mb-2">
-
-            Edit Profile
-
-          </h1>
-
-          <p className="text-muted-foreground">
-
-            Update your personal information and preferences
-
-          </p>
-
-        </div>
+        <main className="container mx-auto px-4 py-8 max-w-5xl">
 
 
-        {/* PROFILE PICTURE */}
-        <Card className="shadow-soft mb-6">
+          {/* ===================================== */}
+          {/* PAGE TITLE */}
+          {/* ===================================== */}
 
-          <CardHeader>
+          <div className="mb-10">
 
-            <CardTitle>
+            <div className="flex items-center gap-4 mb-3">
 
-              Profile Picture
+              <div className="h-16 w-16 rounded-2xl bg-gradient-to-r from-primary to-purple-600 flex items-center justify-center shadow-lg">
 
-            </CardTitle>
-
-            <CardDescription>
-
-              Update your profile picture
-
-            </CardDescription>
-
-          </CardHeader>
-
-          <CardContent>
-
-            <div className="flex items-center gap-6">
-
-              <div className="h-24 w-24 rounded-full bg-gradient-primary flex items-center justify-center">
-
-                <User className="h-12 w-12 text-white" />
+                <Sparkles className="h-8 w-8 text-white" />
 
               </div>
 
-              <div className="space-y-2">
+              <div>
 
-                <Button variant="outline">
+                <h1 className="text-4xl font-bold">
 
-                  Upload Photo
+                  Edit Profile
 
-                </Button>
+                </h1>
 
-                <p className="text-xs text-muted-foreground">
+                <p className="text-muted-foreground text-lg">
 
-                  JPG, PNG or GIF. Max size 2MB.
+                  Personalize your AlumniConnect profile
 
                 </p>
 
@@ -415,105 +408,41 @@ export const ProfileEdit = () => {
 
             </div>
 
-          </CardContent>
-
-        </Card>
+          </div>
 
 
-        {/* BASIC INFO */}
-        <Card className="shadow-soft mb-6">
+          {/* ===================================== */}
+          {/* PROFILE CARD */}
+          {/* ===================================== */}
 
-          <CardHeader>
+          <Card className="shadow-2xl rounded-3xl border-0 overflow-hidden mb-8">
 
-            <CardTitle>
 
-              Basic Information
+            {/* TOP SECTION */}
+            <div className="bg-gradient-to-r from-primary to-purple-600 text-white p-8">
 
-            </CardTitle>
+              <div className="flex items-center gap-6">
 
-            <CardDescription>
+                <div className="h-28 w-28 rounded-full bg-white/20 flex items-center justify-center">
 
-              Update your personal details
-
-            </CardDescription>
-
-          </CardHeader>
-
-          <CardContent className="space-y-4">
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-
-              <div className="space-y-2">
-
-                <Label htmlFor="name">
-
-                  Full Name
-
-                </Label>
-
-                <div className="relative">
-
-                  <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-
-                  <Input
-                    id="name"
-                    placeholder="John Doe"
-                    className="pl-10"
-
-                    value={
-                      profile.name || ''
-                    }
-
-                    onChange={(e) =>
-                      setProfile({
-
-                        ...profile,
-
-                        name:
-                          e.target.value,
-
-                      })
-                    }
-                  />
+                  <User className="h-14 w-14" />
 
                 </div>
 
-              </div>
 
+                <div>
 
-              <div className="space-y-2">
+                  <h2 className="text-3xl font-bold">
 
-                <Label htmlFor="email">
+                    {profile.name || 'Your Name'}
 
-                  Email
+                  </h2>
 
-                </Label>
+                  <p className="text-white/90 mt-2">
 
-                <div className="relative">
+                    {profile.domain || 'Student / Alumni'}
 
-                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="john@example.com"
-                    className="pl-10"
-
-                    value={
-                      profile.email || ''
-                    }
-
-                    onChange={(e) =>
-                      setProfile({
-
-                        ...profile,
-
-                        email:
-                          e.target.value,
-
-                      })
-                    }
-                  />
+                  </p>
 
                 </div>
 
@@ -522,271 +451,630 @@ export const ProfileEdit = () => {
             </div>
 
 
-            <div className="space-y-2">
-
-              <Label htmlFor="bio">
-
-                Bio
-
-              </Label>
-
-              <Textarea
-                id="bio"
-                placeholder="Tell us about yourself..."
-                className="min-h-[100px]"
-
-                value={
-                  profile.bio || ''
-                }
-
-                onChange={(e) =>
-                  setProfile({
-
-                    ...profile,
-
-                    bio:
-                      e.target.value,
-
-                  })
-                }
-              />
-
-            </div>
-
-          </CardContent>
-
-        </Card>
+            <CardContent className="p-8 space-y-8">
 
 
-        {/* SKILLS */}
-        <Card className="shadow-soft mb-6">
+              {/* ===================================== */}
+              {/* BASIC INFO */}
+              {/* ===================================== */}
 
-          <CardHeader>
+              <div>
 
-            <CardTitle>
+                <h3 className="text-2xl font-bold mb-6">
 
-              Skills & Interests
+                  Basic Information
 
-            </CardTitle>
-
-            <CardDescription>
-
-              Add your technical and professional strengths
-
-            </CardDescription>
-
-          </CardHeader>
-
-          <CardContent className="space-y-4">
-
-            {/* SKILLS */}
-            <div className="flex flex-wrap gap-2">
-
-              {profile.skills?.map(
-                (
-                  skill: string
-                ) => (
-
-                  <Badge
-                    key={skill}
-                    variant="secondary"
-                    className="px-3 py-1"
-                  >
-
-                    {skill}
-
-                    <button
-                      onClick={() =>
-                        handleRemoveSkill(
-                          skill
-                        )
-                      }
-
-                      className="ml-2 hover:text-destructive"
-                    >
-
-                      <X className="h-3 w-3" />
-
-                    </button>
-
-                  </Badge>
-
-                )
-              )}
-
-            </div>
+                </h3>
 
 
-            <div className="flex gap-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
 
-              <Input
-                placeholder="Add a skill"
 
-                value={newSkill}
+                  {/* NAME */}
+                  <div className="space-y-2">
 
-                onChange={(e) =>
-                  setNewSkill(
-                    e.target.value
-                  )
-                }
+                    <Label>
 
-                onKeyDown={(e) => {
+                      Full Name
 
-                  if (
-                    e.key ===
-                    'Enter'
-                  ) {
+                    </Label>
 
-                    e.preventDefault();
+                    <div className="relative">
 
-                    handleAddSkill();
+                      <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
 
+                      <Input
+
+                        className="pl-10 h-12 rounded-xl"
+
+                        value={profile.name || ''}
+
+                        placeholder="Enter your name"
+
+                        onChange={(e) =>
+                          setProfile({
+
+                            ...profile,
+
+                            name:
+                              e.target.value,
+
+                          })
+                        }
+
+                      />
+
+                    </div>
+
+                  </div>
+
+
+                  {/* EMAIL */}
+                  <div className="space-y-2">
+
+                    <Label>
+
+                      Email
+
+                    </Label>
+
+                    <div className="relative">
+
+                      <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+
+                      <Input
+
+                        type="email"
+
+                        className="pl-10 h-12 rounded-xl"
+
+                        value={profile.email || ''}
+
+                        placeholder="Enter your email"
+
+                        onChange={(e) =>
+                          setProfile({
+
+                            ...profile,
+
+                            email:
+                              e.target.value,
+
+                          })
+                        }
+
+                      />
+
+                    </div>
+
+                  </div>
+
+
+                  {/* BRANCH */}
+                  <div className="space-y-2">
+
+                    <Label>
+
+                      Branch
+
+                    </Label>
+
+                    <div className="relative">
+
+                      <GraduationCap className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+
+                      <Input
+
+                        className="pl-10 h-12 rounded-xl"
+
+                        value={profile.branch || ''}
+
+                        placeholder="CSE / ECE / IT"
+
+                        onChange={(e) =>
+                          setProfile({
+
+                            ...profile,
+
+                            branch:
+                              e.target.value,
+
+                          })
+                        }
+
+                      />
+
+                    </div>
+
+                  </div>
+
+
+                  {/* DOMAIN */}
+                  <div className="space-y-2">
+
+                    <Label>
+
+                      Domain
+
+                    </Label>
+
+                    <div className="relative">
+
+                      <Briefcase className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+
+                      <Input
+
+                        className="pl-10 h-12 rounded-xl"
+
+                        value={profile.domain || ''}
+
+                        placeholder="Web Development / AI"
+
+                        onChange={(e) =>
+                          setProfile({
+
+                            ...profile,
+
+                            domain:
+                              e.target.value,
+
+                          })
+                        }
+
+                      />
+
+                    </div>
+
+                  </div>
+
+                </div>
+
+              </div>
+
+
+              {/* ===================================== */}
+              {/* BIO */}
+              {/* ===================================== */}
+
+              <div>
+
+                <Label className="mb-2 block">
+
+                  Bio
+
+                </Label>
+
+                <Textarea
+
+                  className="rounded-2xl min-h-[140px]"
+
+                  placeholder="Tell us about yourself..."
+
+                  value={profile.bio || ''}
+
+                  onChange={(e) =>
+                    setProfile({
+
+                      ...profile,
+
+                      bio:
+                        e.target.value,
+
+                    })
                   }
 
-                }}
-              />
+                />
 
-              <Button
-                onClick={
-                  handleAddSkill
-                }
-
-                variant="outline"
-              >
-
-                <Plus className="h-4 w-4" />
-
-              </Button>
-
-            </div>
+              </div>
 
 
-            {/* INTERESTS */}
-            <div className="flex flex-wrap gap-2">
+              {/* ===================================== */}
+              {/* SKILLS */}
+              {/* ===================================== */}
 
-              {profile.interests?.map(
-                (
-                  interest: string
-                ) => (
+              <div>
 
-                  <Badge
-                    key={interest}
+                <h3 className="text-xl font-bold mb-4">
+
+                  Skills
+
+                </h3>
+
+
+                <div className="flex flex-wrap gap-3 mb-4">
+
+                  {profile.skills?.map(
+                    (
+                      skill: string
+                    ) => (
+
+                      <Badge
+
+                        key={skill}
+
+                        className="px-4 py-2 rounded-full bg-primary/10 text-primary"
+
+                      >
+
+                        {skill}
+
+                        <button
+
+                          onClick={() =>
+                            handleRemoveSkill(
+                              skill
+                            )
+                          }
+
+                          className="ml-2"
+
+                        >
+
+                          <X className="h-3 w-3" />
+
+                        </button>
+
+                      </Badge>
+
+                    )
+                  )}
+
+                </div>
+
+
+                <div className="flex gap-3">
+
+                  <Input
+
+                    placeholder="Add skill"
+
+                    value={newSkill}
+
+                    onChange={(e) =>
+                      setNewSkill(
+                        e.target.value
+                      )
+                    }
+
+                    className="h-12 rounded-xl"
+
+                    onKeyDown={(e) => {
+
+                      if (
+                        e.key ===
+                        'Enter'
+                      ) {
+
+                        e.preventDefault();
+
+                        handleAddSkill();
+
+                      }
+
+                    }}
+
+                  />
+
+
+                  <Button
                     variant="outline"
-                    className="px-3 py-1"
+                    onClick={
+                      handleAddSkill
+                    }
                   >
 
-                    {interest}
+                    <Plus className="h-4 w-4" />
 
-                    <button
-                      onClick={() =>
-                        handleRemoveInterest(
-                          interest
-                        )
+                  </Button>
+
+                </div>
+
+              </div>
+
+
+              {/* ===================================== */}
+              {/* INTERESTS */}
+              {/* ===================================== */}
+
+              <div>
+
+                <h3 className="text-xl font-bold mb-4">
+
+                  Interests
+
+                </h3>
+
+
+                <div className="flex flex-wrap gap-3 mb-4">
+
+                  {profile.interests?.map(
+                    (
+                      interest: string
+                    ) => (
+
+                      <Badge
+
+                        key={interest}
+
+                        variant="outline"
+
+                        className="px-4 py-2 rounded-full"
+
+                      >
+
+                        {interest}
+
+                        <button
+
+                          onClick={() =>
+                            handleRemoveInterest(
+                              interest
+                            )
+                          }
+
+                          className="ml-2"
+
+                        >
+
+                          <X className="h-3 w-3" />
+
+                        </button>
+
+                      </Badge>
+
+                    )
+                  )}
+
+                </div>
+
+
+                <div className="flex gap-3">
+
+                  <Input
+
+                    placeholder="Add interest"
+
+                    value={newInterest}
+
+                    onChange={(e) =>
+                      setNewInterest(
+                        e.target.value
+                      )
+                    }
+
+                    className="h-12 rounded-xl"
+
+                    onKeyDown={(e) => {
+
+                      if (
+                        e.key ===
+                        'Enter'
+                      ) {
+
+                        e.preventDefault();
+
+                        handleAddInterest();
+
                       }
 
-                      className="ml-2 hover:text-destructive"
-                    >
+                    }}
 
-                      <X className="h-3 w-3" />
-
-                    </button>
-
-                  </Badge>
-
-                )
-              )}
-
-            </div>
+                  />
 
 
-            <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={
+                      handleAddInterest
+                    }
+                  >
 
-              <Input
-                placeholder="Add an interest"
+                    <Plus className="h-4 w-4" />
 
-                value={
-                  newInterest
-                }
+                  </Button>
 
-                onChange={(e) =>
-                  setNewInterest(
-                    e.target.value
-                  )
-                }
+                </div>
 
-                onKeyDown={(e) => {
+              </div>
 
-                  if (
-                    e.key ===
-                    'Enter'
-                  ) {
 
-                    e.preventDefault();
+              {/* ===================================== */}
+              {/* SOCIAL LINKS */}
+              {/* ===================================== */}
 
-                    handleAddInterest();
+              <div>
 
+                <h3 className="text-xl font-bold mb-5">
+
+                  Social Links
+
+                </h3>
+
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+
+
+                  {/* LINKEDIN */}
+                  <div className="space-y-2">
+
+                    <Label>
+
+                      LinkedIn
+
+                    </Label>
+
+                    <div className="relative">
+
+                      <Linkedin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+
+                      <Input
+
+                        className="pl-10 h-12 rounded-xl"
+
+                        placeholder="LinkedIn URL"
+
+                        value={
+                          profile.linkedinUrl || ''
+                        }
+
+                        onChange={(e) =>
+                          setProfile({
+
+                            ...profile,
+
+                            linkedinUrl:
+                              e.target.value,
+
+                          })
+                        }
+
+                      />
+
+                    </div>
+
+                  </div>
+
+
+                  {/* GITHUB */}
+                  <div className="space-y-2">
+
+                    <Label>
+
+                      GitHub
+
+                    </Label>
+
+                    <div className="relative">
+
+                      <Github className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+
+                      <Input
+
+                        className="pl-10 h-12 rounded-xl"
+
+                        placeholder="GitHub URL"
+
+                        value={
+                          profile.githubUrl || ''
+                        }
+
+                        onChange={(e) =>
+                          setProfile({
+
+                            ...profile,
+
+                            githubUrl:
+                              e.target.value,
+
+                          })
+                        }
+
+                      />
+
+                    </div>
+
+                  </div>
+
+
+                  {/* PORTFOLIO */}
+                  <div className="space-y-2">
+
+                    <Label>
+
+                      Portfolio
+
+                    </Label>
+
+                    <div className="relative">
+
+                      <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+
+                      <Input
+
+                        className="pl-10 h-12 rounded-xl"
+
+                        placeholder="Portfolio URL"
+
+                        value={
+                          profile.portfolioUrl || ''
+                        }
+
+                        onChange={(e) =>
+                          setProfile({
+
+                            ...profile,
+
+                            portfolioUrl:
+                              e.target.value,
+
+                          })
+                        }
+
+                      />
+
+                    </div>
+
+                  </div>
+
+                </div>
+
+              </div>
+
+
+              {/* ===================================== */}
+              {/* BUTTONS */}
+              {/* ===================================== */}
+
+              <div className="flex justify-end gap-4 pt-5">
+
+
+                <Button
+
+                  variant="outline"
+
+                  onClick={
+                    fetchProfile
                   }
 
-                }}
-              />
+                  className="rounded-xl"
 
-              <Button
-                onClick={
-                  handleAddInterest
-                }
+                >
 
-                variant="outline"
-              >
+                  Cancel
 
-                Add Interest
-
-              </Button>
-
-            </div>
-
-          </CardContent>
-
-        </Card>
+                </Button>
 
 
-        {/* ACTION BUTTONS */}
-        <div className="flex gap-4 justify-end">
+                <Button
 
-          <Button
-            variant="outline"
+                  className="rounded-xl"
 
-            onClick={
-              fetchProfile
-            }
-          >
+                  onClick={
+                    handleSaveProfile
+                  }
 
-            Cancel
+                  disabled={loading}
 
-          </Button>
+                >
 
+                  <Save className="mr-2 h-4 w-4" />
 
-          <Button
-            onClick={
-              handleSaveProfile
-            }
+                  {loading
+                    ? 'Saving...'
+                    : 'Save Changes'}
 
-            disabled={loading}
-          >
+                </Button>
 
-            <Save className="mr-2 h-4 w-4" />
+              </div>
 
-            {loading
-              ? 'Saving...'
-              : 'Save Changes'}
+            </CardContent>
 
-          </Button>
+          </Card>
 
-        </div>
+        </main>
 
-      </main>
+      </div>
 
-    </div>
+    );
 
-  );
-
-};
+  };

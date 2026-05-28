@@ -8,57 +8,66 @@ const User =
   require("../models/User");
 
 
-// ======================================
+// ==========================================
 // SEND MENTORSHIP REQUEST
-// POST /mentorship/request
-// ACCESS: STUDENT
-// ======================================
+// ==========================================
 const sendMentorshipRequest =
   async (req, res) => {
 
     try {
 
-      // =========================
+      // ====================================
       // ONLY STUDENTS
-      // =========================
+      // ====================================
       if (
         req.user.role !== "student"
       ) {
 
         return res.status(403).json({
+
+          success: false,
+
           message:
             "Only students can request mentorship",
+
         });
 
       }
 
 
-      // =========================
+      // ====================================
       // BODY DATA
-      // =========================
+      // ====================================
       const {
+
         alumniId,
         message,
         domain,
+        priority,
+
       } = req.body;
 
 
-      // =========================
+      // ====================================
       // VALIDATION
-      // =========================
+      // ====================================
       if (!alumniId) {
 
         return res.status(400).json({
+
+          success: false,
+
           message:
             "Alumni ID is required",
+
         });
 
       }
 
 
-      // =========================
+      // ====================================
       // FIND ALUMNI
-      // =========================
+      // ====================================
       const alumni =
         await User.findById(
           alumniId
@@ -67,31 +76,39 @@ const sendMentorshipRequest =
       if (!alumni) {
 
         return res.status(404).json({
+
+          success: false,
+
           message:
             "Alumni not found",
+
         });
 
       }
 
 
-      // =========================
+      // ====================================
       // CHECK ROLE
-      // =========================
+      // ====================================
       if (
         alumni.role !== "alumni"
       ) {
 
         return res.status(400).json({
+
+          success: false,
+
           message:
             "Selected user is not alumni",
+
         });
 
       }
 
 
-      // =========================
-      // CHECK DUPLICATE REQUEST
-      // =========================
+      // ====================================
+      // DUPLICATE CHECK
+      // ====================================
       const existingRequest =
         await Mentorship.findOne({
 
@@ -109,16 +126,20 @@ const sendMentorshipRequest =
       if (existingRequest) {
 
         return res.status(400).json({
+
+          success: false,
+
           message:
             "Mentorship request already sent",
+
         });
 
       }
 
 
-      // =========================
+      // ====================================
       // CREATE REQUEST
-      // =========================
+      // ====================================
       const mentorship =
         await Mentorship.create({
 
@@ -140,15 +161,18 @@ const sendMentorshipRequest =
           domain:
             domain || "",
 
+          priority:
+            priority || "Medium",
+
           status:
             "Pending",
 
         });
 
 
-      // =========================
+      // ====================================
       // CREATE NOTIFICATION
-      // =========================
+      // ====================================
       await Notification.create({
 
         recipient:
@@ -166,16 +190,21 @@ const sendMentorshipRequest =
         type:
           "Mentorship",
 
+        priority:
+          priority || "Medium",
+
         relatedId:
           mentorship._id,
 
       });
 
 
-      // =========================
+      // ====================================
       // RESPONSE
-      // =========================
+      // ====================================
       res.status(201).json({
+
+        success: true,
 
         message:
           "Mentorship request sent successfully",
@@ -194,8 +223,12 @@ const sendMentorshipRequest =
       );
 
       res.status(500).json({
+
+        success: false,
+
         message:
           "Server Error",
+
       });
 
     }
@@ -203,11 +236,9 @@ const sendMentorshipRequest =
   };
 
 
-// ======================================
-// GET MENTORSHIP REQUESTS
-// GET /mentorship
-// ACCESS: PRIVATE
-// ======================================
+// ==========================================
+// GET ALL MENTORSHIP REQUESTS
+// ==========================================
 const getMentorshipRequests =
   async (req, res) => {
 
@@ -216,9 +247,9 @@ const getMentorshipRequests =
       let mentorships = [];
 
 
-      // =========================
-      // STUDENT REQUESTS
-      // =========================
+      // ====================================
+      // STUDENT
+      // ====================================
       if (
         req.user.role === "student"
       ) {
@@ -238,9 +269,9 @@ const getMentorshipRequests =
       }
 
 
-      // =========================
-      // ALUMNI REQUESTS
-      // =========================
+      // ====================================
+      // ALUMNI
+      // ====================================
       else if (
         req.user.role === "alumni"
       ) {
@@ -260,9 +291,9 @@ const getMentorshipRequests =
       }
 
 
-      // =========================
+      // ====================================
       // ADMIN
-      // =========================
+      // ====================================
       else {
 
         mentorships =
@@ -275,9 +306,62 @@ const getMentorshipRequests =
       }
 
 
-      res.status(200).json(
-        mentorships
-      );
+      // ====================================
+      // ANALYTICS
+      // ====================================
+      const analytics = {
+
+        total:
+          mentorships.length,
+
+        pending:
+          mentorships.filter(
+
+            (m) =>
+              m.status ===
+              "Pending"
+
+          ).length,
+
+        accepted:
+          mentorships.filter(
+
+            (m) =>
+              m.status ===
+              "Accepted"
+
+          ).length,
+
+        completed:
+          mentorships.filter(
+
+            (m) =>
+              m.status ===
+              "Completed"
+
+          ).length,
+
+        rejected:
+          mentorships.filter(
+
+            (m) =>
+              m.status ===
+              "Rejected"
+
+          ).length,
+
+      };
+
+
+      res.status(200).json({
+
+        success: true,
+
+        analytics,
+
+        mentorships,
+
+      });
 
     }
 
@@ -289,8 +373,12 @@ const getMentorshipRequests =
       );
 
       res.status(500).json({
+
+        success: false,
+
         message:
           "Server Error",
+
       });
 
     }
@@ -298,11 +386,96 @@ const getMentorshipRequests =
   };
 
 
-// ======================================
+// ==========================================
+// GET SINGLE MENTORSHIP
+// ==========================================
+const getSingleMentorship =
+  async (req, res) => {
+
+    try {
+
+      const mentorship =
+        await Mentorship.findById(
+          req.params.id
+        );
+
+      if (!mentorship) {
+
+        return res.status(404).json({
+
+          success: false,
+
+          message:
+            "Mentorship not found",
+
+        });
+
+      }
+
+
+      // ====================================
+      // ACCESS CONTROL
+      // ====================================
+      const isOwner =
+
+        mentorship.student.toString() ===
+          req.user._id.toString()
+
+        ||
+
+        mentorship.alumni.toString() ===
+          req.user._id.toString()
+
+        ||
+
+        req.user.role === "admin";
+
+
+      if (!isOwner) {
+
+        return res.status(403).json({
+
+          success: false,
+
+          message:
+            "Not authorized",
+
+        });
+
+      }
+
+
+      res.status(200).json({
+
+        success: true,
+
+        mentorship,
+
+      });
+
+    }
+
+    catch (error) {
+
+      console.log(error);
+
+      res.status(500).json({
+
+        success: false,
+
+        message:
+          "Server Error",
+
+      });
+
+    }
+
+  };
+
+
+// ==========================================
 // UPDATE MENTORSHIP STATUS
-// PUT /mentorship/:id/status
-// ACCESS: ALUMNI / ADMIN
-// ======================================
+// ==========================================
 const updateMentorshipStatus =
   async (req, res) => {
 
@@ -313,23 +486,23 @@ const updateMentorshipStatus =
           req.params.id
         );
 
-
-      // =========================
-      // CHECK REQUEST
-      // =========================
       if (!mentorship) {
 
         return res.status(404).json({
+
+          success: false,
+
           message:
             "Mentorship request not found",
+
         });
 
       }
 
 
-      // =========================
+      // ====================================
       // AUTHORIZATION
-      // =========================
+      // ====================================
       if (
 
         mentorship.alumni.toString() !==
@@ -342,16 +515,20 @@ const updateMentorshipStatus =
       ) {
 
         return res.status(403).json({
+
+          success: false,
+
           message:
             "Not authorized",
+
         });
 
       }
 
 
-      // =========================
-      // UPDATE DATA
-      // =========================
+      // ====================================
+      // UPDATE FIELDS
+      // ====================================
       mentorship.status =
         req.body.status ||
         mentorship.status;
@@ -364,82 +541,108 @@ const updateMentorshipStatus =
         req.body.meetingLink ||
         mentorship.meetingLink;
 
+      mentorship.sessionNotes =
+        req.body.sessionNotes ||
+        mentorship.sessionNotes;
 
-      // =========================
+
+      // ====================================
+      // COMPLETED
+      // ====================================
+      if (
+        req.body.status ===
+        "Completed"
+      ) {
+
+        mentorship.completedAt =
+          new Date();
+
+      }
+
+
+      // ====================================
       // SAVE
-      // =========================
+      // ====================================
       const updatedMentorship =
         await mentorship.save();
 
 
-      // =========================
-      // ACCEPT NOTIFICATION
-      // =========================
+      // ====================================
+      // NOTIFICATION
+      // ====================================
+      let title =
+        "Mentorship Updated";
+
+      let message =
+        `${req.user.name} updated mentorship status`;
+
+
       if (
-        req.body.status === "Accepted"
+        req.body.status ===
+        "Accepted"
       ) {
 
-        await Notification.create({
+        title =
+          "Mentorship Accepted";
 
-          recipient:
-            mentorship.student,
-
-          sender:
-            req.user._id,
-
-          title:
-            "Mentorship Accepted",
-
-          message:
-            `${req.user.name} accepted your mentorship request`,
-
-          type:
-            "Mentorship",
-
-          relatedId:
-            mentorship._id,
-
-        });
+        message =
+          `${req.user.name} accepted your mentorship request`;
 
       }
 
 
-      // =========================
-      // REJECT NOTIFICATION
-      // =========================
       if (
-        req.body.status === "Rejected"
+        req.body.status ===
+        "Rejected"
       ) {
 
-        await Notification.create({
+        title =
+          "Mentorship Rejected";
 
-          recipient:
-            mentorship.student,
-
-          sender:
-            req.user._id,
-
-          title:
-            "Mentorship Rejected",
-
-          message:
-            `${req.user.name} rejected your mentorship request`,
-
-          type:
-            "Mentorship",
-
-          relatedId:
-            mentorship._id,
-
-        });
+        message =
+          `${req.user.name} rejected your mentorship request`;
 
       }
 
 
-      // =========================
-      // RESPONSE
-      // =========================
+      if (
+        req.body.status ===
+        "Completed"
+      ) {
+
+        title =
+          "Mentorship Completed";
+
+        message =
+          `${req.user.name} marked mentorship as completed`;
+
+      }
+
+
+      await Notification.create({
+
+        recipient:
+          mentorship.student,
+
+        sender:
+          req.user._id,
+
+        title,
+
+        message,
+
+        type:
+          "Mentorship",
+
+        relatedId:
+          mentorship._id,
+
+      });
+
+
       res.status(200).json({
+
+        success: true,
 
         message:
           "Mentorship updated successfully",
@@ -459,8 +662,12 @@ const updateMentorshipStatus =
       );
 
       res.status(500).json({
+
+        success: false,
+
         message:
           "Server Error",
+
       });
 
     }
@@ -468,15 +675,312 @@ const updateMentorshipStatus =
   };
 
 
-// ======================================
+// ==========================================
+// SUBMIT FEEDBACK
+// ==========================================
+const submitMentorshipFeedback =
+  async (req, res) => {
+
+    try {
+
+      const mentorship =
+        await Mentorship.findById(
+          req.params.id
+        );
+
+      if (!mentorship) {
+
+        return res.status(404).json({
+
+          success: false,
+
+          message:
+            "Mentorship not found",
+
+        });
+
+      }
+
+
+      // ====================================
+      // ONLY STUDENT
+      // ====================================
+      if (
+
+        mentorship.student.toString() !==
+
+        req.user._id.toString()
+
+      ) {
+
+        return res.status(403).json({
+
+          success: false,
+
+          message:
+            "Not authorized",
+
+        });
+
+      }
+
+
+      mentorship.feedback =
+        req.body.feedback || "";
+
+      mentorship.rating =
+        req.body.rating || 0;
+
+
+      await mentorship.save();
+
+
+      res.status(200).json({
+
+        success: true,
+
+        message:
+          "Feedback submitted successfully",
+
+        mentorship,
+
+      });
+
+    }
+
+    catch (error) {
+
+      console.log(
+        "Feedback Error:",
+        error
+      );
+
+      res.status(500).json({
+
+        success: false,
+
+        message:
+          "Server Error",
+
+      });
+
+    }
+
+  };
+
+
+// ==========================================
+// DELETE MENTORSHIP REQUEST
+// ==========================================
+const deleteMentorshipRequest =
+  async (req, res) => {
+
+    try {
+
+      const mentorship =
+        await Mentorship.findById(
+          req.params.id
+        );
+
+      if (!mentorship) {
+
+        return res.status(404).json({
+
+          success: false,
+
+          message:
+            "Mentorship not found",
+
+        });
+
+      }
+
+
+      // ====================================
+      // OWNER OR ADMIN
+      // ====================================
+      if (
+
+        mentorship.student.toString() !==
+          req.user._id.toString()
+
+        &&
+
+        req.user.role !== "admin"
+
+      ) {
+
+        return res.status(403).json({
+
+          success: false,
+
+          message:
+            "Not authorized",
+
+        });
+
+      }
+
+
+      await mentorship.deleteOne();
+
+
+      res.status(200).json({
+
+        success: true,
+
+        message:
+          "Mentorship request deleted successfully",
+
+      });
+
+    }
+
+    catch (error) {
+
+      console.log(error);
+
+      res.status(500).json({
+
+        success: false,
+
+        message:
+          "Server Error",
+
+      });
+
+    }
+
+  };
+
+
+// ==========================================
+// GET MENTORSHIP STATS
+// ==========================================
+const getMentorshipStats =
+  async (req, res) => {
+
+    try {
+
+      const mentorships =
+        await Mentorship.find({
+
+          alumni:
+            req.user._id,
+
+        });
+
+
+      const stats = {
+
+        totalSessions:
+          mentorships.length,
+
+        completedSessions:
+          mentorships.filter(
+
+            (m) =>
+              m.status ===
+              "Completed"
+
+          ).length,
+
+        pendingSessions:
+          mentorships.filter(
+
+            (m) =>
+              m.status ===
+              "Pending"
+
+          ).length,
+
+        acceptedSessions:
+          mentorships.filter(
+
+            (m) =>
+              m.status ===
+              "Accepted"
+
+          ).length,
+
+        averageRating: 0,
+
+      };
+
+
+      const ratings =
+        mentorships
+          .filter(
+            (m) => m.rating
+          )
+          .map(
+            (m) => m.rating
+          );
+
+
+      if (ratings.length > 0) {
+
+        stats.averageRating =
+
+          (
+            ratings.reduce(
+
+              (a, b) => a + b,
+
+              0
+
+            ) / ratings.length
+
+          ).toFixed(1);
+
+      }
+
+
+      res.status(200).json({
+
+        success: true,
+
+        stats,
+
+      });
+
+    }
+
+    catch (error) {
+
+      console.log(error);
+
+      res.status(500).json({
+
+        success: false,
+
+        message:
+          "Server Error",
+
+      });
+
+    }
+
+  };
+
+
+// ==========================================
 // EXPORTS
-// ======================================
+// ==========================================
 module.exports = {
 
   sendMentorshipRequest,
 
   getMentorshipRequests,
 
+  getSingleMentorship,
+
   updateMentorshipStatus,
+
+  submitMentorshipFeedback,
+
+  deleteMentorshipRequest,
+
+  getMentorshipStats,
 
 };

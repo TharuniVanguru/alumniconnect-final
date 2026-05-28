@@ -1,10 +1,26 @@
-import { Header } from '@/components/layout/Header';
-import { StatsCard } from '@/components/common/StatsCard';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Header } from "@/components/layout/Header";
+
+import { StatsCard }
+  from "@/components/common/StatsCard";
+
+import { Button }
+  from "@/components/ui/button";
 
 import {
+
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+
+} from "@/components/ui/card";
+
+import { Badge }
+  from "@/components/ui/badge";
+
+import {
+
   Users,
   Briefcase,
   Calendar,
@@ -12,149 +28,321 @@ import {
   Shield,
   TrendingUp,
   AlertCircle,
-  CheckCircle,
   Clock,
   UserCheck,
   GraduationCap,
-  BarChart3
-} from 'lucide-react';
+  BarChart3,
 
-import { Link } from 'react-router-dom';
+} from "lucide-react";
 
+import { Link }
+  from "react-router-dom";
+
+
+// ==========================================
+// COMPONENT
+// ==========================================
 export const AdminDashboard = () => {
 
-  // GET LOGGED IN USER
-  const userInfo =
-    localStorage.getItem("userInfo");
+  // ========================================
+  // SAFE USER PARSE
+  // ========================================
+  let user = null;
 
-  const user =
-    userInfo
-      ? JSON.parse(userInfo)
-      : null;
+  try {
 
-  // MOCK DATA
+    const userInfo =
+      localStorage.getItem(
+        "userInfo"
+      );
+
+    user =
+      userInfo
+        ? JSON.parse(userInfo)
+        : null;
+
+  }
+
+  catch (error) {
+
+    console.log(
+      "USER PARSE ERROR:",
+      error
+    );
+
+  }
+
+
+  // ========================================
+  // MOCK STATS
+  // ========================================
   const platformStats = {
+
     totalAlumni: 1248,
+
     totalStudents: 3420,
+
     activeJobs: 156,
+
     upcomingEvents: 24,
+
     totalContributions: 8650,
+
     monthlyGrowth: 12.5,
+
   };
 
+
+  // ========================================
+  // RECENT ACTIVITY
+  // ========================================
   const recentActivity = [
+
     {
-      id: '1',
-      type: 'user_registration',
-      description: 'New alumni registration: Dr. Sarah Johnson',
-      timestamp: '2 hours ago',
-      status: 'pending',
+
+      id: "1",
+
+      type: "user_registration",
+
+      description:
+        "New alumni registration: Dr. Sarah Johnson",
+
+      timestamp:
+        "2 hours ago",
+
+      status:
+        "pending",
+
     },
 
     {
-      id: '2',
-      type: 'job_posted',
-      description: 'New job posted: Senior Developer at TechCorp',
-      timestamp: '5 hours ago',
-      status: 'approved',
+
+      id: "2",
+
+      type: "job_posted",
+
+      description:
+        "New job posted: Senior Developer at TechCorp",
+
+      timestamp:
+        "5 hours ago",
+
+      status:
+        "approved",
+
     },
 
     {
-      id: '3',
-      type: 'event_created',
-      description: 'Event created: AI Workshop by Prof. Williams',
-      timestamp: '1 day ago',
-      status: 'approved',
+
+      id: "3",
+
+      type: "event_created",
+
+      description:
+        "Event created: AI Workshop by Prof. Williams",
+
+      timestamp:
+        "1 day ago",
+
+      status:
+        "approved",
+
     },
+
   ];
 
+
+  // ========================================
+  // TOP CONTRIBUTORS
+  // ========================================
   const topContributors = [
+
     {
-      id: '1',
-      name: 'Dr. Michael Chen',
-      role: 'alumni',
-      score: 1250,
-      activity: 'Posted 5 jobs, organized 3 events',
+
+      id: "1",
+
+      name:
+        "Dr. Michael Chen",
+
+      role:
+        "alumni",
+
+      score:
+        1250,
+
+      activity:
+        "Posted 5 jobs, organized 3 events",
+
     },
 
     {
-      id: '2',
-      name: 'Sarah Williams',
-      role: 'alumni',
-      score: 980,
-      activity: 'Mentored 15 students',
+
+      id: "2",
+
+      name:
+        "Sarah Williams",
+
+      role:
+        "alumni",
+
+      score:
+        980,
+
+      activity:
+        "Mentored 15 students",
+
     },
 
     {
-      id: '3',
-      name: 'Alex Kumar',
-      role: 'student',
-      score: 320,
-      activity: 'Active in events',
+
+      id: "3",
+
+      name:
+        "Alex Kumar",
+
+      role:
+        "student",
+
+      score:
+        320,
+
+      activity:
+        "Active in events",
+
     },
+
   ];
 
+
+  // ========================================
+  // PENDING APPROVALS
+  // ========================================
   const pendingApprovals = [
+
     {
-      id: '1',
-      type: 'job',
-      title: 'Frontend Developer Position',
-      submittedBy: 'TechStart Inc.',
+
+      id: "1",
+
+      type:
+        "job",
+
+      title:
+        "Frontend Developer Position",
+
+      submittedBy:
+        "TechStart Inc.",
+
     },
 
     {
-      id: '2',
-      type: 'event',
-      title: 'Blockchain Workshop',
-      submittedBy: 'Dr. Priya Patel',
+
+      id: "2",
+
+      type:
+        "event",
+
+      title:
+        "Blockchain Workshop",
+
+      submittedBy:
+        "Dr. Priya Patel",
+
     },
+
   ];
 
-  const getActivityIcon = (type: string) => {
+
+  // ========================================
+  // ACTIVITY ICON
+  // ========================================
+  const getActivityIcon = (
+    type: string
+  ) => {
 
     switch (type) {
 
-      case 'user_registration':
-        return <UserCheck className="h-4 w-4" />;
+      case "user_registration":
 
-      case 'job_posted':
-        return <Briefcase className="h-4 w-4" />;
+        return (
+          <UserCheck className="h-4 w-4" />
+        );
 
-      case 'event_created':
-        return <Calendar className="h-4 w-4" />;
+      case "job_posted":
+
+        return (
+          <Briefcase className="h-4 w-4" />
+        );
+
+      case "event_created":
+
+        return (
+          <Calendar className="h-4 w-4" />
+        );
 
       default:
-        return <AlertCircle className="h-4 w-4" />;
+
+        return (
+          <AlertCircle className="h-4 w-4" />
+        );
+
     }
+
   };
 
-  const getStatusBadge = (status: string) => {
+
+  // ========================================
+  // STATUS BADGE
+  // ========================================
+  const getStatusBadge = (
+    status: string
+  ) => {
 
     switch (status) {
 
-      case 'approved':
+      case "approved":
+
         return (
+
           <Badge variant="default">
+
             Approved
+
           </Badge>
+
         );
 
-      case 'pending':
+      case "pending":
+
         return (
+
           <Badge variant="secondary">
+
             Pending
+
           </Badge>
+
         );
 
       default:
+
         return (
+
           <Badge variant="secondary">
+
             Unknown
+
           </Badge>
+
         );
+
     }
+
   };
 
+
+  // ========================================
+  // UI
+  // ========================================
   return (
 
     <div className="min-h-screen bg-background">
@@ -163,7 +351,10 @@ export const AdminDashboard = () => {
 
       <main className="container mx-auto px-4 py-6">
 
-        {/* WELCOME SECTION */}
+        {/* ================================= */}
+        {/* WELCOME */}
+        {/* ================================= */}
+
         <div className="mb-8">
 
           <div className="flex items-center justify-between">
@@ -202,7 +393,11 @@ export const AdminDashboard = () => {
 
         </div>
 
+
+        {/* ================================= */}
         {/* STATS */}
+        {/* ================================= */}
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6 mb-8">
 
           <StatsCard
@@ -212,8 +407,8 @@ export const AdminDashboard = () => {
             icon={GraduationCap}
             trend={{
               value: 8,
-              label: 'this month',
-              isPositive: true
+              label: "this month",
+              isPositive: true,
             }}
           />
 
@@ -224,8 +419,8 @@ export const AdminDashboard = () => {
             icon={Users}
             trend={{
               value: 15,
-              label: 'this month',
-              isPositive: true
+              label: "this month",
+              isPositive: true,
             }}
           />
 
@@ -260,7 +455,11 @@ export const AdminDashboard = () => {
 
         </div>
 
+
+        {/* ================================= */}
         {/* QUICK LINKS */}
+        {/* ================================= */}
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
 
           <Link to="/admin/users">
@@ -293,6 +492,7 @@ export const AdminDashboard = () => {
 
           </Link>
 
+
           <Link to="/admin/analytics">
 
             <Card className="shadow-soft hover:shadow-medium transition-all cursor-pointer h-full bg-gradient-card">
@@ -323,6 +523,7 @@ export const AdminDashboard = () => {
 
           </Link>
 
+
           <Link to="/admin/leaderboard">
 
             <Card className="shadow-soft hover:shadow-medium transition-all cursor-pointer h-full bg-gradient-card">
@@ -352,6 +553,7 @@ export const AdminDashboard = () => {
             </Card>
 
           </Link>
+
 
           <Link to="/admin/notifications">
 
@@ -385,216 +587,16 @@ export const AdminDashboard = () => {
 
         </div>
 
-        {/* MAIN SECTION */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-          {/* RECENT ACTIVITY */}
-          <div className="lg:col-span-2">
-
-            <Card className="shadow-soft">
-
-              <CardHeader>
-
-                <CardTitle className="flex items-center space-x-2">
-
-                  <BarChart3 className="h-5 w-5" />
-
-                  <span>
-
-                    Recent Platform Activity
-
-                  </span>
-
-                </CardTitle>
-
-                <CardDescription>
-
-                  Latest actions across the platform
-
-                </CardDescription>
-
-              </CardHeader>
-
-              <CardContent className="space-y-4">
-
-                {recentActivity.map((activity) => (
-
-                  <div
-                    key={activity.id}
-                    className="flex items-center justify-between p-4 rounded-lg border bg-gradient-card"
-                  >
-
-                    <div className="flex items-center space-x-3">
-
-                      <div className="p-2 rounded-lg bg-primary/10">
-
-                        {getActivityIcon(activity.type)}
-
-                      </div>
-
-                      <div>
-
-                        <p className="font-medium text-sm">
-
-                          {activity.description}
-
-                        </p>
-
-                        <p className="text-xs text-muted-foreground">
-
-                          {activity.timestamp}
-
-                        </p>
-
-                      </div>
-
-                    </div>
-
-                    {getStatusBadge(activity.status)}
-
-                  </div>
-
-                ))}
-
-              </CardContent>
-
-            </Card>
-
-          </div>
-
-          {/* SIDE SECTION */}
-          <div className="space-y-6">
-
-            {/* TOP CONTRIBUTORS */}
-            <Card className="shadow-soft">
-
-              <CardHeader>
-
-                <CardTitle>
-
-                  Top Contributors
-
-                </CardTitle>
-
-              </CardHeader>
-
-              <CardContent className="space-y-3">
-
-                {topContributors.map((contributor) => (
-
-                  <div
-                    key={contributor.id}
-                    className="p-3 rounded-lg border bg-muted/30"
-                  >
-
-                    <h4 className="font-medium text-sm">
-
-                      {contributor.name}
-
-                    </h4>
-
-                    <p className="text-xs text-muted-foreground">
-
-                      {contributor.activity}
-
-                    </p>
-
-                    <div className="flex items-center space-x-1 mt-2">
-
-                      <Trophy className="h-3 w-3 text-accent" />
-
-                      <span className="text-xs font-medium">
-
-                        {contributor.score} pts
-
-                      </span>
-
-                    </div>
-
-                  </div>
-
-                ))}
-
-              </CardContent>
-
-            </Card>
-
-            {/* PENDING APPROVALS */}
-            <Card className="shadow-soft">
-
-              <CardHeader>
-
-                <CardTitle className="flex items-center space-x-2">
-
-                  <Clock className="h-5 w-5" />
-
-                  <span>
-
-                    Pending Approvals
-
-                  </span>
-
-                </CardTitle>
-
-              </CardHeader>
-
-              <CardContent className="space-y-3">
-
-                {pendingApprovals.map((item) => (
-
-                  <div
-                    key={item.id}
-                    className="p-3 rounded-lg border bg-warning/10"
-                  >
-
-                    <h4 className="font-medium text-sm">
-
-                      {item.title}
-
-                    </h4>
-
-                    <p className="text-xs text-muted-foreground">
-
-                      by {item.submittedBy}
-
-                    </p>
-
-                    <div className="flex space-x-2 mt-3">
-
-                      <Button
-                        size="sm"
-                        variant="default"
-                      >
-
-                        Approve
-
-                      </Button>
-
-                      <Button
-                        size="sm"
-                        variant="destructive"
-                      >
-
-                        Reject
-
-                      </Button>
-
-                    </div>
-
-                  </div>
-
-                ))}
-
-              </CardContent>
-
-            </Card>
-
-          </div>
-
-        </div>
-
       </main>
 
     </div>
+
   );
+
 };
+
+
+// ==========================================
+// EXPORT
+// ==========================================
+export default AdminDashboard;

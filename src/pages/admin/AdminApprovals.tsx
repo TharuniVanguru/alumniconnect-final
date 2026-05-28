@@ -1,53 +1,535 @@
-import { useEffect, useState } from "react";
-import axios from "axios";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
+import {
 
-const AdminApprovals: React.FC = () => {
-  const [users, setUsers] = useState<any[]>([]);
-  const { toast } = useToast();
+  useEffect,
 
-  const fetch = async () => {
-    try {
-      const userInfo = JSON.parse(localStorage.getItem("userInfo") || "{}");
-      const res = await axios.get("http://localhost:5000/admin/users", { headers: { Authorization: `Bearer ${userInfo.token}` } });
-      setUsers(res.data || []);
-    } catch (err) { console.error(err); }
-  };
+  useState,
 
-  const toggle = async (id: string, isActive: boolean) => {
-    try {
-      const userInfo = JSON.parse(localStorage.getItem("userInfo") || "{}");
-      await axios.post("http://localhost:5000/admin/block", { userId: id, isActive }, { headers: { Authorization: `Bearer ${userInfo.token}` } });
-      toast({ title: isActive ? "User unblocked" : "User blocked" });
-      fetch();
-    } catch (err: any) { console.error(err); toast({ title: "Action failed", variant: "destructive" }); }
-  };
+} from "react";
 
-  useEffect(() => { fetch(); }, []);
+import api
+  from "@/utils/api";
 
-  return (
-    <div className="p-6">
-      <h1 className="text-3xl font-bold mb-6">User Approvals</h1>
-      <div className="grid gap-4">
-        {users.map((u) => (
-          <Card key={u._id}>
-            <CardHeader>
-              <CardTitle>{u.name} • {u.role}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p>{u.email}</p>
-              <div className="mt-3">
-                {!u.isActive && <Button onClick={() => toggle(u._id, true)}>Approve</Button>}
-                {u.isActive && <Button variant="destructive" onClick={() => toggle(u._id, false)}>Block</Button>}
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+import {
+
+  Card,
+
+  CardContent,
+
+  CardHeader,
+
+  CardTitle,
+
+} from "@/components/ui/card";
+
+import {
+
+  Button,
+
+} from "@/components/ui/button";
+
+import {
+
+  Badge,
+
+} from "@/components/ui/badge";
+
+import {
+
+  Loader2,
+
+  Shield,
+
+  User,
+
+  GraduationCap,
+
+} from "lucide-react";
+
+import {
+
+  useToast,
+
+} from "@/hooks/use-toast";
+
+
+// ==========================================
+// USER TYPE
+// ==========================================
+interface AdminUser {
+
+  _id: string;
+
+  name: string;
+
+  email: string;
+
+  role: string;
+
+  isActive: boolean;
+
+  isVerified?: boolean;
+
+  createdAt?: string;
+
+}
+
+
+// ==========================================
+// COMPONENT
+// ==========================================
+const AdminApprovals:
+React.FC = () => {
+
+  // ========================================
+  // STATES
+  // ========================================
+  const [users, setUsers] =
+    useState<AdminUser[]>([]);
+
+  const [loading, setLoading] =
+    useState(true);
+
+  const [actionLoading, setActionLoading] =
+    useState<string | null>(null);
+
+
+  // ========================================
+  // TOAST
+  // ========================================
+  const { toast } =
+    useToast();
+
+
+  // ========================================
+  // FETCH USERS
+  // ========================================
+  const fetchUsers =
+    async () => {
+
+      try {
+
+        setLoading(true);
+
+        const response =
+          await api.get(
+            "/admin/users"
+          );
+
+        setUsers(
+          response.data || []
+        );
+
+      }
+
+      catch (error) {
+
+        console.log(
+          "FETCH USERS ERROR:",
+          error
+        );
+
+        toast({
+
+          title:
+            "Failed to load users",
+
+          description:
+            "Please try again",
+
+          variant:
+            "destructive",
+
+        });
+
+      }
+
+      finally {
+
+        setLoading(false);
+
+      }
+
+    };
+
+
+  // ========================================
+  // TOGGLE USER
+  // ========================================
+  const toggleUserStatus =
+    async (
+
+      userId: string,
+
+      currentStatus: boolean
+
+    ) => {
+
+      try {
+
+        setActionLoading(
+          userId
+        );
+
+        await api.post(
+
+          "/admin/block",
+
+          {
+
+            userId,
+
+            isActive:
+              !currentStatus,
+
+          }
+
+        );
+
+
+        toast({
+
+          title:
+            currentStatus
+              ? "User Blocked"
+              : "User Approved",
+
+          description:
+            currentStatus
+
+              ? "User access removed"
+
+              : "User access granted",
+
+        });
+
+
+        // ====================================
+        // UPDATE UI
+        // ====================================
+        setUsers((prev) =>
+
+          prev.map((user) =>
+
+            user._id === userId
+
+              ? {
+
+                  ...user,
+
+                  isActive:
+                    !currentStatus,
+
+                }
+
+              : user
+
+          )
+
+        );
+
+      }
+
+      catch (error) {
+
+        console.log(
+          "TOGGLE USER ERROR:",
+          error
+        );
+
+        toast({
+
+          title:
+            "Action Failed",
+
+          description:
+            "Please try again",
+
+          variant:
+            "destructive",
+
+        });
+
+      }
+
+      finally {
+
+        setActionLoading(
+          null
+        );
+
+      }
+
+    };
+
+
+  // ========================================
+  // FETCH ON LOAD
+  // ========================================
+  useEffect(() => {
+
+    fetchUsers();
+
+  }, []);
+
+
+  // ========================================
+  // ROLE ICON
+  // ========================================
+  const getRoleIcon =
+    (role: string) => {
+
+      switch (role) {
+
+        case "admin":
+
+          return (
+
+            <Shield className="h-4 w-4" />
+
+          );
+
+        case "alumni":
+
+          return (
+
+            <GraduationCap className="h-4 w-4" />
+
+          );
+
+        default:
+
+          return (
+
+            <User className="h-4 w-4" />
+
+          );
+
+      }
+
+    };
+
+
+  // ========================================
+  // LOADING SCREEN
+  // ========================================
+  if (loading) {
+
+    return (
+
+      <div className="min-h-screen flex items-center justify-center">
+
+        <div className="flex items-center gap-3">
+
+          <Loader2 className="h-6 w-6 animate-spin text-primary" />
+
+          <span className="text-lg font-medium">
+
+            Loading users...
+
+          </span>
+
+        </div>
+
       </div>
+
+    );
+
+  }
+
+
+  // ========================================
+  // UI
+  // ========================================
+  return (
+
+    <div className="p-4 md:p-6">
+
+      {/* HEADER */}
+      <div className="mb-6">
+
+        <h1 className="text-3xl font-bold">
+
+          User Approvals
+
+        </h1>
+
+        <p className="text-muted-foreground mt-1">
+
+          Manage alumni, students and admins
+
+        </p>
+
+      </div>
+
+
+      {/* EMPTY */}
+      {users.length === 0 && (
+
+        <Card>
+
+          <CardContent className="py-10 text-center">
+
+            <p className="text-muted-foreground">
+
+              No users found
+
+            </p>
+
+          </CardContent>
+
+        </Card>
+
+      )}
+
+
+      {/* USERS */}
+      <div className="grid gap-4">
+
+        {users.map((user) => (
+
+          <Card
+            key={user._id}
+            className="shadow-sm"
+          >
+
+            <CardHeader>
+
+              <div className="flex items-center justify-between">
+
+                <div>
+
+                  <CardTitle className="flex items-center gap-2">
+
+                    {getRoleIcon(
+                      user.role
+                    )}
+
+                    {user.name}
+
+                  </CardTitle>
+
+                  <p className="text-sm text-muted-foreground mt-1">
+
+                    {user.email}
+
+                  </p>
+
+                </div>
+
+
+                {/* STATUS */}
+                <Badge
+
+                  variant={
+                    user.isActive
+
+                      ? "default"
+
+                      : "destructive"
+                  }
+
+                >
+
+                  {user.isActive
+
+                    ? "Active"
+
+                    : "Blocked"}
+
+                </Badge>
+
+              </div>
+
+            </CardHeader>
+
+
+            <CardContent>
+
+              <div className="flex items-center justify-between">
+
+                {/* ROLE */}
+                <div>
+
+                  <p className="text-sm text-muted-foreground">
+
+                    Role
+
+                  </p>
+
+                  <p className="font-medium capitalize">
+
+                    {user.role}
+
+                  </p>
+
+                </div>
+
+
+                {/* ACTION */}
+                <Button
+
+                  disabled={
+                    actionLoading ===
+                    user._id
+                  }
+
+                  variant={
+                    user.isActive
+
+                      ? "destructive"
+
+                      : "default"
+                  }
+
+                  onClick={() =>
+
+                    toggleUserStatus(
+
+                      user._id,
+
+                      user.isActive
+
+                    )
+
+                  }
+
+                >
+
+                  {actionLoading ===
+                  user._id ? (
+
+                    <Loader2 className="h-4 w-4 animate-spin" />
+
+                  ) : user.isActive ? (
+
+                    "Block User"
+
+                  ) : (
+
+                    "Approve User"
+
+                  )}
+
+                </Button>
+
+              </div>
+
+            </CardContent>
+
+          </Card>
+
+        ))}
+
+      </div>
+
     </div>
+
   );
+
 };
 
+
+// ==========================================
+// EXPORT
+// ==========================================
 export default AdminApprovals;

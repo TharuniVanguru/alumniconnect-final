@@ -28,6 +28,9 @@ import {
   Textarea,
 } from "@/components/ui/textarea";
 
+import { Input }
+  from "@/components/ui/input";
+
 import {
   Loader2,
   MessageCircle,
@@ -35,7 +38,15 @@ import {
   CheckCircle2,
   XCircle,
   Star,
+  Calendar,
+  Video,
+  Search,
+  Sparkles,
 } from "lucide-react";
+
+import {
+  useToast,
+} from "@/hooks/use-toast";
 
 
 // =====================================
@@ -81,9 +92,19 @@ const MyGuidanceRequestsPage =
     const navigate =
       useNavigate();
 
+    const { toast } =
+      useToast();
+
     const [
       requests,
       setRequests,
+    ] = useState<
+      GuidanceRequest[]
+    >([]);
+
+    const [
+      filteredRequests,
+      setFilteredRequests,
     ] = useState<
       GuidanceRequest[]
     >([]);
@@ -98,16 +119,29 @@ const MyGuidanceRequestsPage =
       setError,
     ] = useState("");
 
+    const [
+      feedbacks,
+      setFeedbacks,
+    ] = useState<
+      Record<string, string>
+    >({});
 
     const [
-      feedback,
-      setFeedback,
+      ratings,
+      setRatings,
+    ] = useState<
+      Record<string, number>
+    >({});
+
+    const [
+      search,
+      setSearch,
     ] = useState("");
 
     const [
-      rating,
-      setRating,
-    ] = useState(5);
+      statusFilter,
+      setStatusFilter,
+    ] = useState("All");
 
 
     const userInfo =
@@ -150,6 +184,10 @@ const MyGuidanceRequestsPage =
             response.data
           );
 
+          setFilteredRequests(
+            response.data
+          );
+
         }
 
         catch (error) {
@@ -172,6 +210,68 @@ const MyGuidanceRequestsPage =
 
 
     // =====================================
+    // FILTER REQUESTS
+    // =====================================
+    useEffect(() => {
+
+      let filtered =
+        requests.filter(
+
+          (req) => {
+
+            const matchesSearch =
+
+              req.topic
+                .toLowerCase()
+                .includes(
+                  search.toLowerCase()
+                ) ||
+
+              req.alumniName
+                .toLowerCase()
+                .includes(
+                  search.toLowerCase()
+                ) ||
+
+              req.domain
+                .toLowerCase()
+                .includes(
+                  search.toLowerCase()
+                );
+
+
+            const matchesStatus =
+
+              statusFilter ===
+                "All" ||
+
+              req.status ===
+                statusFilter;
+
+
+            return (
+              matchesSearch &&
+              matchesStatus
+            );
+
+          }
+
+        );
+
+      setFilteredRequests(
+        filtered
+      );
+
+    }, [
+
+      search,
+      statusFilter,
+      requests,
+
+    ]);
+
+
+    // =====================================
     // SUBMIT FEEDBACK
     // =====================================
     const submitFeedback =
@@ -190,9 +290,15 @@ const MyGuidanceRequestsPage =
               status:
                 "Completed",
 
-              feedback,
+              feedback:
+                feedbacks[
+                  requestId
+                ],
 
-              rating,
+              rating:
+                ratings[
+                  requestId
+                ] || 5,
 
             },
 
@@ -228,9 +334,15 @@ const MyGuidanceRequestsPage =
 
                         ...req,
 
-                        feedback,
+                        feedback:
+                          feedbacks[
+                            requestId
+                          ],
 
-                        rating,
+                        rating:
+                          ratings[
+                            requestId
+                          ],
 
                         status:
                           "Completed",
@@ -243,13 +355,15 @@ const MyGuidanceRequestsPage =
           );
 
 
-          setFeedback("");
+          toast({
 
-          setRating(5);
+            title:
+              "Feedback Submitted ⭐",
 
-          alert(
-            "Feedback submitted successfully"
-          );
+            description:
+              "Thank you for sharing your experience",
+
+          });
 
         }
 
@@ -257,9 +371,18 @@ const MyGuidanceRequestsPage =
 
           console.log(error);
 
-          alert(
-            "Failed to submit feedback"
-          );
+          toast({
+
+            title:
+              "Submission Failed",
+
+            description:
+              "Unable to submit feedback",
+
+            variant:
+              "destructive",
+
+          });
 
         }
 
@@ -357,27 +480,104 @@ const MyGuidanceRequestsPage =
 
         <div className="max-w-7xl mx-auto p-6">
 
-          {/* TITLE */}
+          {/* HERO */}
+          <div className="rounded-3xl bg-gradient-to-r from-primary to-purple-600 text-white p-8 shadow-2xl mb-8">
 
-          <div className="mb-8">
+            <div className="flex items-center gap-4">
 
-            <h1 className="text-4xl font-bold">
+              <div className="h-16 w-16 rounded-2xl bg-white/20 flex items-center justify-center">
 
-              My Guidance Requests
+                <Sparkles className="h-8 w-8" />
 
-            </h1>
+              </div>
 
-            <p className="text-muted-foreground mt-2">
+              <div>
 
-              Track mentorship and guidance requests
+                <h1 className="text-4xl font-bold">
 
-            </p>
+                  My Guidance Requests
+
+                </h1>
+
+                <p className="text-white/90 mt-2">
+
+                  Track mentorship requests, meetings, chats, and feedback
+
+                </p>
+
+              </div>
+
+            </div>
+
+          </div>
+
+
+          {/* SEARCH + FILTER */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+
+            <div className="md:col-span-3 relative">
+
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+
+              <Input
+
+                placeholder="Search by topic, alumni, or domain"
+
+                className="pl-10 h-12 rounded-2xl"
+
+                value={search}
+
+                onChange={(e) =>
+                  setSearch(
+                    e.target.value
+                  )
+                }
+
+              />
+
+            </div>
+
+
+            <select
+
+              className="h-12 rounded-2xl border px-4 bg-background"
+
+              value={statusFilter}
+
+              onChange={(e) =>
+                setStatusFilter(
+                  e.target.value
+                )
+              }
+
+            >
+
+              <option>
+                All
+              </option>
+
+              <option>
+                Pending
+              </option>
+
+              <option>
+                Accepted
+              </option>
+
+              <option>
+                Rejected
+              </option>
+
+              <option>
+                Completed
+              </option>
+
+            </select>
 
           </div>
 
 
           {/* ERROR */}
-
           {error && (
 
             <div className="bg-red-100 text-red-600 p-4 rounded-xl mb-5">
@@ -390,26 +590,31 @@ const MyGuidanceRequestsPage =
 
 
           {/* LOADING */}
-
           {loading ? (
 
-            <div className="flex items-center justify-center py-20">
+            <div className="flex items-center justify-center py-24">
 
-              <Loader2 className="h-10 w-10 animate-spin text-primary" />
+              <Loader2 className="h-12 w-12 animate-spin text-primary" />
 
             </div>
 
-          ) : requests.length === 0 ? (
+          ) : filteredRequests.length === 0 ? (
 
-            <Card className="shadow-xl rounded-2xl">
+            <Card className="shadow-xl rounded-3xl">
 
-              <CardContent className="py-20 text-center">
+              <CardContent className="py-24 text-center">
 
                 <h2 className="text-3xl font-bold mb-3">
 
-                  No Requests Sent
+                  No Requests Found
 
                 </h2>
+
+                <p className="text-muted-foreground">
+
+                  Your mentorship requests will appear here
+
+                </p>
 
               </CardContent>
 
@@ -419,19 +624,18 @@ const MyGuidanceRequestsPage =
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-              {requests.map(
+              {filteredRequests.map(
                 (request) => (
 
                   <Card
                     key={request._id}
-                    className="shadow-xl rounded-3xl border-0"
+                    className="shadow-2xl rounded-3xl border-0 overflow-hidden hover:scale-[1.01] transition-all duration-300"
                   >
 
-                    <CardContent className="p-6">
+                    {/* TOP */}
+                    <div className="bg-gradient-to-r from-primary to-purple-600 text-white p-6">
 
-                      {/* TOP */}
-
-                      <div className="flex items-start justify-between gap-4 mb-5">
+                      <div className="flex items-start justify-between gap-4">
 
                         <div>
 
@@ -441,9 +645,9 @@ const MyGuidanceRequestsPage =
 
                           </h2>
 
-                          <p className="text-muted-foreground">
+                          <p className="text-white/90 mt-1">
 
-                            Alumni:
+                            Mentor:
                             {" "}
                             {request.alumniName}
 
@@ -457,166 +661,183 @@ const MyGuidanceRequestsPage =
 
                       </div>
 
+                    </div>
 
-                      {/* CONTENT */}
 
-                      <div className="space-y-4">
+                    {/* BODY */}
+                    <CardContent className="p-6 space-y-5">
 
-                        <div>
+                      {/* DOMAIN */}
+                      <div>
 
-                          <span className="font-semibold">
+                        <p className="font-semibold">
 
-                            Domain:
+                          Domain
 
-                          </span>
+                        </p>
 
-                          <p className="text-muted-foreground mt-1">
+                        <p className="text-muted-foreground mt-1">
 
-                            {request.domain}
+                          {request.domain}
 
-                          </p>
-
-                        </div>
-
-
-                        <div>
-
-                          <span className="font-semibold">
-
-                            Description:
-
-                          </span>
-
-                          <p className="text-muted-foreground mt-1">
-
-                            {request.description}
-
-                          </p>
-
-                        </div>
-
-
-                        {/* MEETING LINK */}
-
-                        {request.meetingLink && (
-
-                          <div>
-
-                            <span className="font-semibold">
-
-                              Meeting Link:
-
-                            </span>
-
-                            <a
-                              href={request.meetingLink}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="block text-blue-600 underline mt-1"
-                            >
-
-                              Join Meeting
-
-                            </a>
-
-                          </div>
-
-                        )}
-
-
-                        {/* DATE */}
-
-                        {request.scheduledDate && (
-
-                          <div>
-
-                            <span className="font-semibold">
-
-                              Scheduled Date:
-
-                            </span>
-
-                            <p className="text-muted-foreground mt-1">
-
-                              {
-
-                                new Date(
-                                  request.scheduledDate
-                                ).toLocaleString()
-
-                              }
-
-                            </p>
-
-                          </div>
-
-                        )}
-
-
-                        {/* FEEDBACK DISPLAY */}
-
-                        {request.feedback && (
-
-                          <div>
-
-                            <span className="font-semibold">
-
-                              Feedback:
-
-                            </span>
-
-                            <p className="text-muted-foreground mt-1">
-
-                              {request.feedback}
-
-                            </p>
-
-                          </div>
-
-                        )}
-
-
-                        {/* RATING DISPLAY */}
-
-                        {request.rating && (
-
-                          <div className="flex items-center gap-2">
-
-                            <span className="font-semibold">
-
-                              Rating:
-
-                            </span>
-
-                            <div className="flex">
-
-                              {
-
-                                [...Array(request.rating)].map(
-                                  (_, i) => (
-
-                                    <Star
-                                      key={i}
-                                      className="h-4 w-4 fill-yellow-400 text-yellow-400"
-                                    />
-
-                                  )
-                                )
-
-                              }
-
-                            </div>
-
-                          </div>
-
-                        )}
+                        </p>
 
                       </div>
 
 
-                      {/* BUTTONS */}
+                      {/* DESCRIPTION */}
+                      <div>
 
-                      <div className="mt-6 flex flex-wrap gap-3">
+                        <p className="font-semibold">
+
+                          Description
+
+                        </p>
+
+                        <p className="text-muted-foreground mt-1 leading-7">
+
+                          {request.description}
+
+                        </p>
+
+                      </div>
+
+
+                      {/* URGENCY */}
+                      <div className="flex items-center gap-2">
+
+                        <Badge variant="outline">
+
+                          {request.urgency} Priority
+
+                        </Badge>
+
+                      </div>
+
+
+                      {/* MEETING */}
+                      {request.meetingLink && (
+
+                        <div>
+
+                          <p className="font-semibold flex items-center gap-2 mb-2">
+
+                            <Video className="h-4 w-4" />
+
+                            Meeting Link
+
+                          </p>
+
+                          <a
+
+                            href={request.meetingLink}
+
+                            target="_blank"
+
+                            rel="noreferrer"
+
+                            className="text-blue-600 underline"
+
+                          >
+
+                            Join Meeting
+
+                          </a>
+
+                        </div>
+
+                      )}
+
+
+                      {/* DATE */}
+                      {request.scheduledDate && (
+
+                        <div>
+
+                          <p className="font-semibold flex items-center gap-2 mb-2">
+
+                            <Calendar className="h-4 w-4" />
+
+                            Scheduled Date
+
+                          </p>
+
+                          <p className="text-muted-foreground">
+
+                            {
+
+                              new Date(
+                                request.scheduledDate
+                              ).toLocaleString()
+
+                            }
+
+                          </p>
+
+                        </div>
+
+                      )}
+
+
+                      {/* FEEDBACK */}
+                      {request.feedback && (
+
+                        <div>
+
+                          <p className="font-semibold">
+
+                            Your Feedback
+
+                          </p>
+
+                          <p className="text-muted-foreground mt-1">
+
+                            {request.feedback}
+
+                          </p>
+
+                        </div>
+
+                      )}
+
+
+                      {/* RATING */}
+                      {request.rating && (
+
+                        <div className="flex items-center gap-2">
+
+                          <span className="font-semibold">
+
+                            Rating:
+
+                          </span>
+
+                          <div className="flex">
+
+                            {
+
+                              [...Array(request.rating)].map(
+                                (_, i) => (
+
+                                  <Star
+                                    key={i}
+                                    className="h-4 w-4 fill-yellow-400 text-yellow-400"
+                                  />
+
+                                )
+                              )
+
+                            }
+
+                          </div>
+
+                        </div>
+
+                      )}
+
+
+                      {/* ACTIONS */}
+                      <div className="pt-4 flex flex-wrap gap-3">
 
                         {request.status ===
                           "Accepted" && (
@@ -624,15 +845,17 @@ const MyGuidanceRequestsPage =
                           <>
 
                             <Button
+
                               variant="outline"
 
-                              onClick={() => {
+                              onClick={() =>
 
                                 navigate(
                                   `/student/chat/${request.alumniId}`
-                                );
+                                )
 
-                              }}
+                              }
+
                             >
 
                               <MessageCircle className="h-4 w-4 mr-2" />
@@ -642,78 +865,104 @@ const MyGuidanceRequestsPage =
                             </Button>
 
 
-                            {/* FEEDBACK SECTION */}
+                            {/* FEEDBACK FORM */}
+                            {!request.feedback && (
 
-                            <div className="w-full mt-4 space-y-3">
+                              <div className="w-full mt-5 space-y-3">
 
-                              <Textarea
+                                <Textarea
 
-                                placeholder="Write your feedback"
+                                  placeholder="Write your feedback"
 
-                                value={feedback}
+                                  value={
+                                    feedbacks[
+                                      request._id
+                                    ] || ""
+                                  }
 
-                                onChange={(e) =>
-                                  setFeedback(
-                                    e.target.value
-                                  )
-                                }
+                                  onChange={(e) =>
 
-                              />
+                                    setFeedbacks({
+
+                                      ...feedbacks,
+
+                                      [request._id]:
+                                        e.target.value,
+
+                                    })
+
+                                  }
+
+                                />
 
 
-                              <select
+                                <select
 
-                                value={rating}
+                                  value={
+                                    ratings[
+                                      request._id
+                                    ] || 5
+                                  }
 
-                                onChange={(e) =>
-                                  setRating(
-                                    Number(
-                                      e.target.value
+                                  onChange={(e) =>
+
+                                    setRatings({
+
+                                      ...ratings,
+
+                                      [request._id]:
+                                        Number(
+                                          e.target.value
+                                        ),
+
+                                    })
+
+                                  }
+
+                                  className="border rounded-xl p-3 w-full bg-background"
+
+                                >
+
+                                  <option value={5}>
+                                    ⭐⭐⭐⭐⭐
+                                  </option>
+
+                                  <option value={4}>
+                                    ⭐⭐⭐⭐
+                                  </option>
+
+                                  <option value={3}>
+                                    ⭐⭐⭐
+                                  </option>
+
+                                  <option value={2}>
+                                    ⭐⭐
+                                  </option>
+
+                                  <option value={1}>
+                                    ⭐
+                                  </option>
+
+                                </select>
+
+
+                                <Button
+
+                                  onClick={() =>
+                                    submitFeedback(
+                                      request._id
                                     )
-                                  )
-                                }
+                                  }
 
-                                className="border rounded-lg p-2 w-full"
-                              >
+                                >
 
-                                <option value={5}>
-                                  5 Stars
-                                </option>
+                                  Submit Feedback
 
-                                <option value={4}>
-                                  4 Stars
-                                </option>
+                                </Button>
 
-                                <option value={3}>
-                                  3 Stars
-                                </option>
+                              </div>
 
-                                <option value={2}>
-                                  2 Stars
-                                </option>
-
-                                <option value={1}>
-                                  1 Star
-                                </option>
-
-                              </select>
-
-
-                              <Button
-
-                                onClick={() =>
-                                  submitFeedback(
-                                    request._id
-                                  )
-                                }
-
-                              >
-
-                                Submit Feedback
-
-                              </Button>
-
-                            </div>
+                            )}
 
                           </>
 

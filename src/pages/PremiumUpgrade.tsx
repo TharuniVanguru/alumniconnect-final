@@ -1,226 +1,682 @@
 import { Header } from '@/components/layout/Header';
+
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle
+} from '@/components/ui/card';
+
 import { Badge } from '@/components/ui/badge';
-import { 
-  Crown, 
-  Check, 
+
+import {
+
+  Crown,
+  Check,
   Zap,
   TrendingUp,
   Users,
   Briefcase,
   BarChart3,
-  Star
+  Star,
+  Sparkles,
+  Rocket,
+  ShieldCheck,
+
 } from 'lucide-react';
-import { toast } from '@/hooks/use-toast';
 
-export const PremiumUpgrade = () => {
-  const handleUpgrade = (plan: string) => {
-    toast({
-      title: "Upgrade Initiated",
-      description: `Your ${plan} plan upgrade is being processed. You'll receive a confirmation email shortly.`,
-    });
-  };
+import { toast }
+  from '@/hooks/use-toast';
 
-  const freePlanFeatures = [
-    'Basic alumni directory access',
-    'Attend up to 3 events per month',
-    'Post 1 job per month',
-    'Basic analytics',
-    'Community forums access',
-  ];
 
-  const premiumFeatures = [
-    'Unlimited job postings',
-    'Advanced analytics dashboard',
-    'Priority support',
-    'Featured profile in directory',
-    'Unlimited event participation',
-    'Direct messaging with all members',
-    'Early access to new features',
-    'Startup hub visibility',
-    'Contribution leaderboard highlight',
-  ];
+// =====================================
+// COMPONENT
+// =====================================
+export const PremiumUpgrade =
+  () => {
 
-  const enterpriseFeatures = [
-    'All Premium features',
-    'Custom branding options',
-    'Dedicated account manager',
-    'API access',
-    'Bulk operations',
-    'Advanced reporting',
-    'Priority review for posts',
-    'Custom integrations',
-    'White-label options',
-  ];
+    // =====================================
+    // HANDLE UPGRADE
+    // =====================================
+    const handleUpgrade =
+      (plan: string) => {
 
-  return (
-    <div className="min-h-screen bg-background">
-      <Header />
-      
-      <main className="container mx-auto px-4 py-6">
-        {/* Header */}
-        <div className="text-center mb-12">
-          <Badge className="mb-4 bg-gradient-accent text-white px-4 py-2">
-            <Crown className="h-4 w-4 mr-2" />
-            Upgrade Your Experience
-          </Badge>
-          <h1 className="text-4xl font-bold text-foreground mb-4">
-            Choose Your <span className="bg-gradient-hero bg-clip-text text-transparent">Premium Plan</span>
-          </h1>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Unlock powerful features and maximize your impact on the AlumniConnect platform
-          </p>
-        </div>
+        toast({
 
-        {/* Pricing Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-          {/* Free Plan */}
-          <Card className="shadow-soft relative">
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                Free
-                <Badge variant="secondary">Current</Badge>
-              </CardTitle>
-              <CardDescription>Perfect for getting started</CardDescription>
-              <div className="mt-4">
-                <span className="text-4xl font-bold">₹0</span>
-                <span className="text-muted-foreground">/month</span>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <ul className="space-y-3">
-                {freePlanFeatures.map((feature, index) => (
-                  <li key={index} className="flex items-start space-x-2">
-                    <Check className="h-5 w-5 text-success mt-0.5 flex-shrink-0" />
-                    <span className="text-sm">{feature}</span>
-                  </li>
-                ))}
-              </ul>
-              <Button variant="outline" className="w-full" disabled>
-                Current Plan
-              </Button>
-            </CardContent>
-          </Card>
+          title:
+            "Upgrade Initiated 🚀",
 
-          {/* Premium Plan */}
-          <Card className="shadow-strong border-2 border-primary relative">
-            <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-              <Badge className="bg-gradient-primary text-white px-6 py-2">
-                <Star className="h-4 w-4 mr-1" />
-                Most Popular
-              </Badge>
-            </div>
-            <CardHeader className="pt-8">
-              <CardTitle className="flex items-center space-x-2 text-primary">
-                <Zap className="h-6 w-6" />
-                <span>Premium</span>
-              </CardTitle>
-              <CardDescription>For active contributors</CardDescription>
-              <div className="mt-4">
-                <span className="text-4xl font-bold">₹999</span>
-                <span className="text-muted-foreground">/month</span>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <ul className="space-y-3">
-                {premiumFeatures.map((feature, index) => (
-                  <li key={index} className="flex items-start space-x-2">
-                    <Check className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                    <span className="text-sm">{feature}</span>
-                  </li>
-                ))}
-              </ul>
-              <Button 
-                variant="hero" 
-                className="w-full"
-                onClick={() => handleUpgrade('Premium')}
-              >
-                Upgrade to Premium
-              </Button>
-            </CardContent>
-          </Card>
+          description:
+            `Your ${plan} upgrade request has been submitted successfully.`,
 
-          {/* Enterprise Plan */}
-          <Card className="shadow-soft relative bg-gradient-card">
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Crown className="h-6 w-6 text-accent" />
-                <span>Enterprise</span>
-              </CardTitle>
-              <CardDescription>For organizations & institutes</CardDescription>
-              <div className="mt-4">
-                <span className="text-4xl font-bold">Custom</span>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <ul className="space-y-3">
-                {enterpriseFeatures.map((feature, index) => (
-                  <li key={index} className="flex items-start space-x-2">
-                    <Check className="h-5 w-5 text-accent mt-0.5 flex-shrink-0" />
-                    <span className="text-sm">{feature}</span>
-                  </li>
-                ))}
-              </ul>
-              <Button 
-                variant="accent" 
-                className="w-full"
-                onClick={() => handleUpgrade('Enterprise')}
-              >
-                Contact Sales
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
+        });
 
-        {/* Feature Comparison */}
-        <div className="mt-16 max-w-4xl mx-auto">
-          <h2 className="text-2xl font-bold text-center mb-8">Why Upgrade?</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card className="shadow-soft">
-              <CardHeader>
-                <div className="w-12 h-12 rounded-lg bg-gradient-primary flex items-center justify-center mb-2">
-                  <TrendingUp className="h-6 w-6 text-white" />
-                </div>
-                <CardTitle className="text-lg">Maximize Impact</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  Reach more students, post unlimited opportunities, and climb the contribution leaderboard
-                </p>
-              </CardContent>
-            </Card>
+      };
 
-            <Card className="shadow-soft">
-              <CardHeader>
-                <div className="w-12 h-12 rounded-lg bg-gradient-accent flex items-center justify-center mb-2">
-                  <Users className="h-6 w-6 text-white" />
-                </div>
-                <CardTitle className="text-lg">Better Connections</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  Direct messaging, priority visibility, and exclusive networking opportunities
-                </p>
-              </CardContent>
-            </Card>
 
-            <Card className="shadow-soft">
-              <CardHeader>
-                <div className="w-12 h-12 rounded-lg bg-gradient-hero flex items-center justify-center mb-2">
-                  <BarChart3 className="h-6 w-6 text-white" />
-                </div>
-                <CardTitle className="text-lg">Advanced Analytics</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  Track your impact with detailed insights and comprehensive reporting tools
-                </p>
-              </CardContent>
-            </Card>
+    // =====================================
+    // FREE PLAN FEATURES
+    // =====================================
+    const freePlanFeatures = [
+
+      'Basic alumni directory access',
+
+      'Attend limited events',
+
+      'Apply for jobs & internships',
+
+      'Basic mentorship support',
+
+      'Community chat access',
+
+      'AI recommendations',
+
+    ];
+
+
+    // =====================================
+    // PREMIUM FEATURES
+    // =====================================
+    const premiumFeatures = [
+
+      'Unlimited mentorship requests',
+
+      'Advanced AI alumni matching',
+
+      'Priority alumni responses',
+
+      'Unlimited job applications',
+
+      'Resume & interview guidance',
+
+      'Premium networking access',
+
+      'Exclusive startup opportunities',
+
+      'Direct messaging with alumni',
+
+      'Profile boost in searches',
+
+      'Advanced analytics dashboard',
+
+    ];
+
+
+    // =====================================
+    // ENTERPRISE FEATURES
+    // =====================================
+    const enterpriseFeatures = [
+
+      'All Premium features',
+
+      'Institute-level analytics',
+
+      'Admin management dashboard',
+
+      'Custom branding support',
+
+      'API integrations',
+
+      'Dedicated support team',
+
+      'Bulk student onboarding',
+
+      'Advanced reports & insights',
+
+      'Custom event management',
+
+      'Priority feature access',
+
+    ];
+
+
+    return (
+
+      <div className="min-h-screen bg-background">
+
+        <Header />
+
+        <main className="container mx-auto px-4 py-10">
+
+
+          {/* ===================================== */}
+          {/* HEADER */}
+          {/* ===================================== */}
+
+          <div className="text-center mb-16">
+
+            <Badge className="mb-5 bg-gradient-to-r from-primary to-purple-600 text-white px-5 py-2 text-sm rounded-full">
+
+              <Sparkles className="h-4 w-4 mr-2" />
+
+              Unlock Premium AlumniConnect Experience
+
+            </Badge>
+
+
+            <h1 className="text-5xl font-bold mb-5">
+
+              Upgrade Your
+              {" "}
+
+              <span className="bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
+
+                AlumniConnect
+
+              </span>
+
+            </h1>
+
+
+            <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
+
+              Supercharge your networking, mentorship,
+              career growth, and alumni engagement with
+              powerful premium features designed for
+              students, alumni, and institutions.
+
+            </p>
+
           </div>
-        </div>
-      </main>
-    </div>
-  );
-};
+
+
+          {/* ===================================== */}
+          {/* PRICING CARDS */}
+          {/* ===================================== */}
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-7xl mx-auto">
+
+
+            {/* ===================================== */}
+            {/* FREE PLAN */}
+            {/* ===================================== */}
+
+            <Card className="rounded-3xl shadow-xl border-0">
+
+              <CardHeader>
+
+                <div className="flex items-center justify-between">
+
+                  <CardTitle className="text-2xl">
+
+                    Free Plan
+
+                  </CardTitle>
+
+                  <Badge variant="secondary">
+
+                    Active
+
+                  </Badge>
+
+                </div>
+
+
+                <CardDescription>
+
+                  Best for beginners exploring AlumniConnect
+
+                </CardDescription>
+
+
+                <div className="mt-6">
+
+                  <span className="text-5xl font-bold">
+
+                    ₹0
+
+                  </span>
+
+                  <span className="text-muted-foreground">
+
+                    /month
+
+                  </span>
+
+                </div>
+
+              </CardHeader>
+
+
+              <CardContent className="space-y-5">
+
+                <ul className="space-y-4">
+
+                  {freePlanFeatures.map(
+                    (feature, index) => (
+
+                      <li
+                        key={index}
+                        className="flex items-start gap-3"
+                      >
+
+                        <Check className="h-5 w-5 text-green-600 mt-0.5" />
+
+                        <span className="text-sm">
+
+                          {feature}
+
+                        </span>
+
+                      </li>
+
+                    )
+                  )}
+
+                </ul>
+
+
+                <Button
+                  className="w-full"
+                  variant="outline"
+                  disabled
+                >
+
+                  Current Plan
+
+                </Button>
+
+              </CardContent>
+
+            </Card>
+
+
+            {/* ===================================== */}
+            {/* PREMIUM PLAN */}
+            {/* ===================================== */}
+
+            <Card className="rounded-3xl shadow-2xl border-2 border-primary relative overflow-hidden">
+
+
+              {/* POPULAR TAG */}
+              <div className="absolute top-0 right-0 bg-gradient-to-r from-primary to-purple-600 text-white px-5 py-2 rounded-bl-2xl text-sm font-semibold">
+
+                Most Popular
+
+              </div>
+
+
+              <CardHeader className="pt-10">
+
+                <div className="flex items-center gap-3 mb-2">
+
+                  <div className="h-12 w-12 rounded-xl bg-gradient-to-r from-primary to-purple-600 flex items-center justify-center">
+
+                    <Zap className="h-6 w-6 text-white" />
+
+                  </div>
+
+                  <CardTitle className="text-3xl">
+
+                    Premium
+
+                  </CardTitle>
+
+                </div>
+
+
+                <CardDescription>
+
+                  Perfect for active students & alumni mentors
+
+                </CardDescription>
+
+
+                <div className="mt-6">
+
+                  <span className="text-5xl font-bold text-primary">
+
+                    ₹499
+
+                  </span>
+
+                  <span className="text-muted-foreground">
+
+                    /month
+
+                  </span>
+
+                </div>
+
+              </CardHeader>
+
+
+              <CardContent className="space-y-5">
+
+                <ul className="space-y-4">
+
+                  {premiumFeatures.map(
+                    (feature, index) => (
+
+                      <li
+                        key={index}
+                        className="flex items-start gap-3"
+                      >
+
+                        <Check className="h-5 w-5 text-primary mt-0.5" />
+
+                        <span className="text-sm font-medium">
+
+                          {feature}
+
+                        </span>
+
+                      </li>
+
+                    )
+                  )}
+
+                </ul>
+
+
+                <Button
+
+                  className="w-full h-12 text-lg rounded-xl"
+
+                  onClick={() =>
+                    handleUpgrade(
+                      "Premium"
+                    )
+                  }
+
+                >
+
+                  <Rocket className="h-5 w-5 mr-2" />
+
+                  Upgrade Now
+
+                </Button>
+
+              </CardContent>
+
+            </Card>
+
+
+            {/* ===================================== */}
+            {/* ENTERPRISE PLAN */}
+            {/* ===================================== */}
+
+            <Card className="rounded-3xl shadow-xl border-0 bg-gradient-to-br from-slate-900 to-slate-800 text-white">
+
+              <CardHeader>
+
+                <div className="flex items-center gap-3 mb-2">
+
+                  <div className="h-12 w-12 rounded-xl bg-white/20 flex items-center justify-center">
+
+                    <Crown className="h-6 w-6 text-yellow-400" />
+
+                  </div>
+
+                  <CardTitle className="text-3xl">
+
+                    Enterprise
+
+                  </CardTitle>
+
+                </div>
+
+
+                <CardDescription className="text-slate-300">
+
+                  Built for colleges & organizations
+
+                </CardDescription>
+
+
+                <div className="mt-6">
+
+                  <span className="text-5xl font-bold">
+
+                    Custom
+
+                  </span>
+
+                </div>
+
+              </CardHeader>
+
+
+              <CardContent className="space-y-5">
+
+                <ul className="space-y-4">
+
+                  {enterpriseFeatures.map(
+                    (feature, index) => (
+
+                      <li
+                        key={index}
+                        className="flex items-start gap-3"
+                      >
+
+                        <ShieldCheck className="h-5 w-5 text-green-400 mt-0.5" />
+
+                        <span className="text-sm">
+
+                          {feature}
+
+                        </span>
+
+                      </li>
+
+                    )
+                  )}
+
+                </ul>
+
+
+                <Button
+
+                  className="w-full h-12 rounded-xl bg-white text-black hover:bg-slate-200"
+
+                  onClick={() =>
+                    handleUpgrade(
+                      "Enterprise"
+                    )
+                  }
+
+                >
+
+                  Contact Team
+
+                </Button>
+
+              </CardContent>
+
+            </Card>
+
+          </div>
+
+
+          {/* ===================================== */}
+          {/* WHY UPGRADE */}
+          {/* ===================================== */}
+
+          <div className="mt-24">
+
+            <div className="text-center mb-12">
+
+              <h2 className="text-4xl font-bold mb-4">
+
+                Why Upgrade?
+
+              </h2>
+
+              <p className="text-muted-foreground text-lg">
+
+                Experience the full power of AlumniConnect
+
+              </p>
+
+            </div>
+
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+
+
+              {/* CARD 1 */}
+              <Card className="rounded-3xl shadow-lg border-0">
+
+                <CardHeader>
+
+                  <div className="h-14 w-14 rounded-2xl bg-gradient-to-r from-primary to-purple-600 flex items-center justify-center mb-4">
+
+                    <TrendingUp className="h-7 w-7 text-white" />
+
+                  </div>
+
+
+                  <CardTitle>
+
+                    Career Growth
+
+                  </CardTitle>
+
+                </CardHeader>
+
+
+                <CardContent>
+
+                  <p className="text-muted-foreground">
+
+                    Get exclusive job opportunities,
+                    mentorship sessions, startup projects,
+                    and premium networking support.
+
+                  </p>
+
+                </CardContent>
+
+              </Card>
+
+
+              {/* CARD 2 */}
+              <Card className="rounded-3xl shadow-lg border-0">
+
+                <CardHeader>
+
+                  <div className="h-14 w-14 rounded-2xl bg-gradient-to-r from-pink-500 to-purple-500 flex items-center justify-center mb-4">
+
+                    <Users className="h-7 w-7 text-white" />
+
+                  </div>
+
+
+                  <CardTitle>
+
+                    Better Networking
+
+                  </CardTitle>
+
+                </CardHeader>
+
+
+                <CardContent>
+
+                  <p className="text-muted-foreground">
+
+                    Connect directly with top alumni,
+                    industry experts, recruiters,
+                    founders, and mentors.
+
+                  </p>
+
+                </CardContent>
+
+              </Card>
+
+
+              {/* CARD 3 */}
+              <Card className="rounded-3xl shadow-lg border-0">
+
+                <CardHeader>
+
+                  <div className="h-14 w-14 rounded-2xl bg-gradient-to-r from-orange-500 to-yellow-500 flex items-center justify-center mb-4">
+
+                    <BarChart3 className="h-7 w-7 text-white" />
+
+                  </div>
+
+
+                  <CardTitle>
+
+                    Smart Insights
+
+                  </CardTitle>
+
+                </CardHeader>
+
+
+                <CardContent>
+
+                  <p className="text-muted-foreground">
+
+                    Track applications, mentorship progress,
+                    AI recommendation scores, engagement,
+                    and growth analytics.
+
+                  </p>
+
+                </CardContent>
+
+              </Card>
+
+            </div>
+
+          </div>
+
+
+          {/* ===================================== */}
+          {/* FINAL CTA */}
+          {/* ===================================== */}
+
+          <div className="mt-24 text-center bg-gradient-to-r from-primary to-purple-600 rounded-3xl p-14 text-white shadow-2xl">
+
+            <h2 className="text-4xl font-bold mb-4">
+
+              Ready to Unlock Premium?
+
+            </h2>
+
+
+            <p className="text-lg text-white/90 max-w-2xl mx-auto mb-8">
+
+              Join AlumniConnect Premium today and
+              accelerate your career, mentorship,
+              and networking journey like never before.
+
+            </p>
+
+
+            <Button
+
+              size="lg"
+
+              className="bg-white text-primary hover:bg-slate-100 text-lg px-10 py-6 rounded-2xl"
+
+              onClick={() =>
+                handleUpgrade(
+                  "Premium"
+                )
+              }
+
+            >
+
+              <Sparkles className="h-5 w-5 mr-2" />
+
+              Get Premium Access
+
+            </Button>
+
+          </div>
+
+        </main>
+
+      </div>
+
+    );
+
+  };

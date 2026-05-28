@@ -1,304 +1,518 @@
-const mongoose = require("mongoose");
-
-const userSchema = new mongoose.Schema(
-
-  {
-
-    // =========================
-    // BASIC INFO
-    // =========================
-    identifier: {
-
-      type: String,
-
-      required: true,
-
-      unique: true,
-
-      trim: true,
-
-    },
-
-    name: {
-
-      type: String,
-
-      required: true,
-
-      trim: true,
-
-    },
-
-    email: {
-
-      type: String,
-
-      required: true,
-
-      unique: true,
-
-      trim: true,
-
-      lowercase: true,
-
-    },
-
-    phone: {
-
-      type: String,
-
-      default: "",
-
-    },
-
-    password: {
-
-      type: String,
-
-      required: true,
-
-    },
+const mongoose =
+  require("mongoose");
 
 
-    // =========================
-    // ROLE
-    // =========================
-    role: {
+// ==========================================
+// USER SCHEMA
+// ==========================================
+const userSchema =
+  new mongoose.Schema(
 
-      type: String,
+    {
 
-      enum: [
+      // ====================================
+      // BASIC INFO
+      // ====================================
+      identifier: {
 
-        "student",
+        type: String,
 
-        "alumni",
+        required: true,
 
-        "faculty",
+        unique: true,
 
-        "admin",
+        trim: true,
+
+        index: true,
+
+      },
+
+      name: {
+
+        type: String,
+
+        required: true,
+
+        trim: true,
+
+        minlength: 2,
+
+        maxlength: 100,
+
+      },
+
+      email: {
+
+        type: String,
+
+        required: true,
+
+        unique: true,
+
+        trim: true,
+
+        lowercase: true,
+
+        index: true,
+
+      },
+
+      phone: {
+
+        type: String,
+
+        default: "",
+
+        trim: true,
+
+      },
+
+      password: {
+
+        type: String,
+
+        required: true,
+
+        minlength: 6,
+
+        select: false,
+
+      },
+
+
+      // ====================================
+      // ROLE
+      // ====================================
+      role: {
+
+        type: String,
+
+        enum: [
+
+          "student",
+          "alumni",
+          "faculty",
+          "admin",
+
+        ],
+
+        default: "student",
+
+        index: true,
+
+      },
+
+
+      // ====================================
+      // ACCOUNT STATUS
+      // ====================================
+      isActive: {
+
+        type: Boolean,
+
+        default: true,
+
+      },
+
+      isVerified: {
+
+        type: Boolean,
+
+        default: false,
+
+      },
+
+      isOnline: {
+
+        type: Boolean,
+
+        default: false,
+
+      },
+
+      isFirstLogin: {
+
+        type: Boolean,
+
+        default: true,
+
+      },
+
+
+      // ====================================
+      // LOGIN SECURITY
+      // ====================================
+      loginAttempts: {
+
+        type: Number,
+
+        default: 0,
+
+      },
+
+      lockUntil: {
+
+        type: Date,
+
+        default: null,
+
+      },
+
+
+      // ====================================
+      // PROFILE INFO
+      // ====================================
+      branch: {
+
+        type: String,
+
+        default: "",
+
+        trim: true,
+
+        index: true,
+
+      },
+
+      batch: {
+
+        type: String,
+
+        default: "",
+
+        trim: true,
+
+        index: true,
+
+      },
+
+      collegeName: {
+
+        type: String,
+
+        default: "",
+
+        trim: true,
+
+      },
+
+      domain: {
+
+        type: String,
+
+        default: "",
+
+        trim: true,
+
+        index: true,
+
+      },
+
+      company: {
+
+        type: String,
+
+        default: "",
+
+        trim: true,
+
+        index: true,
+
+      },
+
+      jobRole: {
+
+        type: String,
+
+        default: "",
+
+        trim: true,
+
+      },
+
+      experience: {
+
+        type: Number,
+
+        default: 0,
+
+        min: 0,
+
+      },
+
+      bio: {
+
+        type: String,
+
+        default: "",
+
+        maxlength: 1000,
+
+      },
+
+
+      // ====================================
+      // SKILLS & INTERESTS
+      // ====================================
+      skills: [
+
+        {
+
+          type: String,
+
+          trim: true,
+
+        },
 
       ],
 
-      default: "student",
+      interests: [
+
+        {
+
+          type: String,
+
+          trim: true,
+
+        },
+
+      ],
+
+
+      // ====================================
+      // SOCIAL LINKS
+      // ====================================
+      linkedinUrl: {
+
+        type: String,
+
+        default: "",
+
+        trim: true,
+
+      },
+
+      githubUrl: {
+
+        type: String,
+
+        default: "",
+
+        trim: true,
+
+      },
+
+      portfolioUrl: {
+
+        type: String,
+
+        default: "",
+
+        trim: true,
+
+      },
+
+
+      // ====================================
+      // PROFILE IMAGE
+      // ====================================
+      profileImage: {
+
+        type: String,
+
+        default: "",
+
+      },
+
+
+      // ====================================
+      // RESUME
+      // ====================================
+      resumeUrl: {
+
+        type: String,
+
+        default: "",
+
+      },
+
+
+      // ====================================
+      // MENTORSHIP
+      // ====================================
+      mentorshipAvailable: {
+
+        type: Boolean,
+
+        default: true,
+
+      },
+
+      mentorshipCount: {
+
+        type: Number,
+
+        default: 0,
+
+      },
+
+
+      // ====================================
+      // TRUST & RATINGS
+      // ====================================
+      trustScore: {
+
+        type: Number,
+
+        default: 40,
+
+        min: 0,
+
+        max: 100,
+
+      },
+
+      averageRating: {
+
+        type: Number,
+
+        default: 0,
+
+      },
+
+      totalRatings: {
+
+        type: Number,
+
+        default: 0,
+
+      },
+
+
+      // ====================================
+      // PROFILE STRENGTH
+      // ====================================
+      profileStrength: {
+
+        type: String,
+
+        enum: [
+
+          "Beginner",
+          "Intermediate",
+          "Strong",
+          "Excellent",
+
+        ],
+
+        default: "Beginner",
+
+      },
+
+
+      // ====================================
+      // ACTIVITY
+      // ====================================
+      lastProfileUpdate: {
+
+        type: Date,
+
+        default: Date.now,
+
+      },
+
+      lastActive: {
+
+        type: Date,
+
+        default: Date.now,
+
+      },
 
     },
 
+    {
 
-    // =========================
-    // ACCOUNT STATUS
-    // =========================
-    isActive: {
+      timestamps: true,
 
-      type: Boolean,
+    }
 
-      default: true,
+  );
 
-    },
 
-    isVerified: {
+// ==========================================
+// TEXT SEARCH INDEX
+// ==========================================
+userSchema.index({
 
-      type: Boolean,
+  name: "text",
 
-      default: true,
+  domain: "text",
 
-    },
+  company: "text",
 
-    isOnline: {
+  jobRole: "text",
 
-      type: Boolean,
+  bio: "text",
 
-      default: false,
+});
 
-    },
 
-    isFirstLogin: {
+// ==========================================
+// COMPOUND INDEXES
+// ==========================================
+userSchema.index({
 
-      type: Boolean,
+  role: 1,
+  domain: 1,
 
-      default: true,
+});
 
-    },
+userSchema.index({
 
+  skills: 1,
 
-    // =========================
-    // PROFILE INFO
-    // =========================
-    branch: {
+});
 
-      type: String,
 
-      default: "",
+// ==========================================
+// VIRTUAL
+// ==========================================
+userSchema.virtual(
+  "isLocked"
+).get(function () {
 
-    },
+  return !!(
 
-    batch: {
+    this.lockUntil &&
 
-      type: String,
+    this.lockUntil > Date.now()
 
-      default: "",
+  );
 
-    },
+});
 
-    collegeName: {
 
-      type: String,
+// ==========================================
+// REMOVE PASSWORD IN RESPONSE
+// ==========================================
+userSchema.methods.toJSON =
+  function () {
 
-      default: "",
+    const user =
+      this.toObject();
 
-    },
+    delete user.password;
 
-    domain: {
+    return user;
 
-      type: String,
+  };
 
-      default: "",
 
-    },
-
-    companyName: {
-
-      type: String,
-
-      default: "",
-
-    },
-
-    experience: {
-
-      type: Number,
-
-      default: 0,
-
-    },
-
-    bio: {
-
-      type: String,
-
-      default: "",
-
-    },
-
-
-    // =========================
-    // SKILLS & INTERESTS
-    // =========================
-    skills: {
-
-      type: [String],
-
-      default: [],
-
-    },
-
-    interests: {
-
-      type: [String],
-
-      default: [],
-
-    },
-
-
-    // =========================
-    // SOCIAL LINKS
-    // =========================
-    linkedinUrl: {
-
-      type: String,
-
-      default: "",
-
-    },
-
-    githubUrl: {
-
-      type: String,
-
-      default: "",
-
-    },
-
-    portfolioUrl: {
-
-      type: String,
-
-      default: "",
-
-    },
-
-
-    // =========================
-    // PROFILE IMAGE
-    // =========================
-    profileImage: {
-
-      type: String,
-
-      default: "",
-
-    },
-
-
-    // =========================
-    // TRUST & RATINGS
-    // =========================
-    trustScore: {
-
-      type: Number,
-
-      default: 40,
-
-    },
-
-    averageRating: {
-
-      type: Number,
-
-      default: 0,
-
-    },
-
-    totalRatings: {
-
-      type: Number,
-
-      default: 0,
-
-    },
-
-    mentorshipCount: {
-
-      type: Number,
-
-      default: 0,
-
-    },
-
-
-    // =========================
-    // LAST PROFILE UPDATE
-    // =========================
-    lastProfileUpdate: {
-
-      type: Date,
-
-      default: Date.now,
-
-    },
-
-  },
-
-  {
-
-    timestamps: true,
-
-  }
-
-);
-
-module.exports =
-
+// ==========================================
+// MODEL
+// ==========================================
+const User =
   mongoose.model(
 
     "User",
@@ -306,3 +520,10 @@ module.exports =
     userSchema
 
   );
+
+
+// ==========================================
+// EXPORT
+// ==========================================
+module.exports =
+  User;

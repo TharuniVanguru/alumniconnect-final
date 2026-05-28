@@ -1,28 +1,154 @@
-const mongoose = require("mongoose");
+const mongoose =
+  require("mongoose");
 
-const otpRequestSchema = new mongoose.Schema(
+
+// ==========================================
+// OTP REQUEST SCHEMA
+// ==========================================
+const otpRequestSchema =
+  new mongoose.Schema(
+
+    {
+
+      // ====================================
+      // USER IDENTIFIER
+      // ====================================
+      identifier: {
+
+        type: String,
+
+        required: true,
+
+        unique: true,
+
+        trim: true,
+
+        index: true,
+
+      },
+
+
+      // ====================================
+      // OTP
+      // ====================================
+      otp: {
+
+        type: String,
+
+        required: true,
+
+        minlength: 6,
+
+        maxlength: 6,
+
+      },
+
+
+      // ====================================
+      // OTP EXPIRY
+      // ====================================
+      expiresAt: {
+
+        type: Date,
+
+        required: true,
+
+      },
+
+
+      // ====================================
+      // ATTEMPTS
+      // ====================================
+      attempts: {
+
+        type: Number,
+
+        default: 0,
+
+        min: 0,
+
+        max: 5,
+
+      },
+
+
+      // ====================================
+      // RESEND COUNT
+      // ====================================
+      resendCount: {
+
+        type: Number,
+
+        default: 0,
+
+      },
+
+
+      // ====================================
+      // DEVICE INFO (OPTIONAL)
+      // ====================================
+      ipAddress: {
+
+        type: String,
+
+        default: "",
+
+      },
+
+      userAgent: {
+
+        type: String,
+
+        default: "",
+
+      },
+
+    },
+
+    {
+
+      timestamps: true,
+
+    }
+
+  );
+
+
+// ==========================================
+// AUTO DELETE EXPIRED OTP
+// ==========================================
+otpRequestSchema.index(
+
   {
-    identifier: {
-      type: String,
-      required: true,
-      unique: true,
-    },
-    otp: {
-      type: String,
-      required: true,
-    },
-    expiresAt: {
-      type: Date,
-      required: true,
-    },
-    attempts: {
-      type: Number,
-      default: 0,
-    },
+
+    expiresAt: 1,
+
   },
+
   {
-    timestamps: true,
+
+    expireAfterSeconds: 0,
+
   }
+
 );
 
-module.exports = mongoose.model("OtpRequest", otpRequestSchema);
+
+// ==========================================
+// MODEL
+// ==========================================
+const OtpRequest =
+  mongoose.model(
+
+    "OtpRequest",
+
+    otpRequestSchema
+
+  );
+
+
+// ==========================================
+// EXPORT
+// ==========================================
+module.exports =
+  OtpRequest;
