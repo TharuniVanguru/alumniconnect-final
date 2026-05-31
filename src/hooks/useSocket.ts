@@ -1,5 +1,7 @@
 import {
   useEffect,
+  useRef,
+  useState,
 } from "react";
 
 import {
@@ -9,6 +11,10 @@ import {
   disconnectSocket,
 
   getSocket,
+
+  listenEvent,
+
+  removeEvent,
 
 } from "@/socket";
 
@@ -29,9 +35,66 @@ const useSocket = () => {
 
     user,
 
+    token,
+
     isAuthenticated,
 
   } = useAuth();
+
+
+  // ========================================
+  // STATES
+  // ========================================
+  const [
+
+    onlineUsers,
+
+    setOnlineUsers,
+
+  ] = useState<string[]>([]);
+
+
+  const [
+
+    typingUsers,
+
+    setTypingUsers,
+
+  ] = useState<any[]>([]);
+
+
+  const [
+
+    latestMessage,
+
+    setLatestMessage,
+
+  ] = useState<any>(null);
+
+
+  const [
+
+    latestNotification,
+
+    setLatestNotification,
+
+  ] = useState<any>(null);
+
+
+  const [
+
+    socketConnected,
+
+    setSocketConnected,
+
+  ] = useState<boolean>(false);
+
+
+  // ========================================
+  // SOCKET REF
+  // ========================================
+  const initialized =
+    useRef(false);
 
 
   // ========================================
@@ -40,7 +103,7 @@ const useSocket = () => {
   useEffect(() => {
 
     // ======================================
-    // NOT LOGGED IN
+    // VALIDATION
     // ======================================
     if (
 
@@ -48,13 +111,27 @@ const useSocket = () => {
 
       !user ||
 
-      !user._id
+      !user._id ||
+
+      !token
 
     ) {
 
       return;
 
     }
+
+
+    // ======================================
+    // AVOID DUPLICATE INIT
+    // ======================================
+    if (initialized.current) {
+
+      return;
+
+    }
+
+    initialized.current = true;
 
 
     // ======================================
@@ -67,13 +144,224 @@ const useSocket = () => {
 
 
     // ======================================
-    // USER ONLINE
+    // SOCKET CONNECT
     // ======================================
-    socket.emit(
+    socket.on(
 
-      "userOnline",
+      "connect",
 
-      user._id
+      () => {
+
+        console.log(
+          "🟢 SOCKET ACTIVE"
+        );
+
+        setSocketConnected(
+          true
+        );
+
+      }
+
+    );
+
+
+    // ======================================
+    // SOCKET DISCONNECT
+    // ======================================
+    socket.on(
+
+      "disconnect",
+
+      () => {
+
+        console.log(
+          "🔴 SOCKET DISCONNECTED"
+        );
+
+        setSocketConnected(
+          false
+        );
+
+      }
+
+    );
+
+
+    // ======================================
+    // ONLINE USERS
+    // ======================================
+    listenEvent(
+
+      "onlineUsers",
+
+      (users: string[]) => {
+
+        console.log(
+          "🟢 ONLINE USERS:",
+          users
+        );
+
+        setOnlineUsers(
+          users
+        );
+
+      }
+
+    );
+
+
+    // ======================================
+    // RECEIVE MESSAGE
+    // ======================================
+    listenEvent(
+
+      "receiveMessage",
+
+      (message) => {
+
+        console.log(
+          "📩 NEW MESSAGE:",
+          message
+        );
+
+        setLatestMessage(
+          message
+        );
+
+      }
+
+    );
+
+
+    // ======================================
+    // RECEIVE NOTIFICATION
+    // ======================================
+    listenEvent(
+
+      "receiveNotification",
+
+      (notification) => {
+
+        console.log(
+          "🔔 NEW NOTIFICATION:",
+          notification
+        );
+
+        setLatestNotification(
+          notification
+        );
+
+      }
+
+    );
+
+
+    // ======================================
+    // USER TYPING
+    // ======================================
+    listenEvent(
+
+      "userTyping",
+
+      (data) => {
+
+        console.log(
+          "⌨️ USER TYPING:",
+          data
+        );
+
+        setTypingUsers(
+          (prev) => {
+
+            const exists =
+              prev.find(
+                (u) =>
+                  u.userId ===
+                  data.userId
+              );
+
+            if (exists)
+              return prev;
+
+            return [
+              ...prev,
+              data,
+            ];
+
+          }
+
+        );
+
+      }
+
+    );
+
+
+    // ======================================
+    // USER STOP TYPING
+    // ======================================
+    listenEvent(
+
+      "userStopTyping",
+
+      (data) => {
+
+        console.log(
+          "🛑 USER STOPPED TYPING:",
+          data
+        );
+
+        setTypingUsers(
+          (prev) =>
+
+            prev.filter(
+              (u) =>
+
+                u.userId !==
+                data.userId
+            )
+
+        );
+
+      }
+
+    );
+
+
+    // ======================================
+    // MESSAGE DELIVERED
+    // ======================================
+    listenEvent(
+
+      "messageDelivered",
+
+      (data) => {
+
+        console.log(
+          "✅ MESSAGE DELIVERED:",
+          data
+        );
+
+      }
+
+    );
+
+
+    // ======================================
+    // MESSAGE SEEN
+    // ======================================
+    listenEvent(
+
+      "messageSeen",
+
+      (data) => {
+
+        console.log(
+          "👀 MESSAGE SEEN:",
+          data
+        );
+
+      }
 
     );
 
@@ -83,22 +371,38 @@ const useSocket = () => {
     // ======================================
     return () => {
 
-      const activeSocket =
-        getSocket();
+      removeEvent(
+        "onlineUsers"
+      );
 
-      if (activeSocket) {
+      removeEvent(
+        "receiveMessage"
+      );
 
-        activeSocket.emit(
+      removeEvent(
+        "receiveNotification"
+      );
 
-          "userOffline",
+      removeEvent(
+        "userTyping"
+      );
 
-          user._id
+      removeEvent(
+        "userStopTyping"
+      );
 
-        );
+      removeEvent(
+        "messageDelivered"
+      );
 
-      }
+      removeEvent(
+        "messageSeen"
+      );
 
       disconnectSocket();
+
+      initialized.current =
+        false;
 
     };
 
@@ -108,13 +412,30 @@ const useSocket = () => {
 
     user?._id,
 
+    token,
+
   ]);
 
 
   // ========================================
-  // RETURN SOCKET
+  // RETURN
   // ========================================
-  return getSocket();
+  return {
+
+    socket:
+      getSocket(),
+
+    socketConnected,
+
+    onlineUsers,
+
+    typingUsers,
+
+    latestMessage,
+
+    latestNotification,
+
+  };
 
 };
 

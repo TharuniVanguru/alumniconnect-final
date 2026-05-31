@@ -3,8 +3,7 @@ import {
   useState,
 } from "react";
 
-import axios from "axios";
-
+import api, { apiGet, apiPost, apiPut, apiPatch, apiDelete } from "@/utils/api";
 import {
   useNavigate,
 } from "react-router-dom";
@@ -116,9 +115,9 @@ const SearchUsersPage =
           setError("");
 
           const response =
-            await axios.get(
+            await api.get(
 
-              `http://localhost:5000/users/search?q=${search}`,
+              `/users/search?q=${search}`,
 
               {
 
@@ -171,9 +170,9 @@ const SearchUsersPage =
           setError("");
 
           const response =
-            await axios.get(
+            await api.get(
 
-              `http://localhost:5000/users/filter?domain=${domain}`,
+              `/users/filter?domain=${domain}`,
 
               {
 

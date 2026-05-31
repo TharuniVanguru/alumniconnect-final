@@ -6,7 +6,7 @@ const mongoose =
 // MESSAGE SCHEMA
 // ==========================================
 const messageSchema =
-  mongoose.Schema(
+  new mongoose.Schema(
 
     {
 
@@ -45,26 +45,6 @@ const messageSchema =
 
 
       // ====================================
-      // USER NAMES
-      // ====================================
-      senderName: {
-
-        type: String,
-
-        trim: true,
-
-      },
-
-      receiverName: {
-
-        type: String,
-
-        trim: true,
-
-      },
-
-
-      // ====================================
       // MESSAGE CONTENT
       // ====================================
       message: {
@@ -75,7 +55,7 @@ const messageSchema =
 
         trim: true,
 
-        maxlength: 5000,
+        maxlength: 3000,
 
       },
 
@@ -107,7 +87,7 @@ const messageSchema =
 
 
       // ====================================
-      // FILE ATTACHMENT
+      // ATTACHMENT
       // ====================================
       attachment: {
 
@@ -119,7 +99,7 @@ const messageSchema =
 
 
       // ====================================
-      // MESSAGE STATUS
+      // READ STATUS
       // ====================================
       isRead: {
 
@@ -127,9 +107,15 @@ const messageSchema =
 
         default: false,
 
+        index: true,
+
       },
 
-      delivered: {
+
+      // ====================================
+      // DELIVERED STATUS
+      // ====================================
+      isDelivered: {
 
         type: Boolean,
 
@@ -137,21 +123,27 @@ const messageSchema =
 
       },
 
+
+      // ====================================
+      // SEEN TIME
+      // ====================================
       seenAt: {
 
         type: Date,
 
+        default: null,
+
       },
 
 
       // ====================================
-      // EDITED MESSAGE
+      // DELIVERED TIME
       // ====================================
-      isEdited: {
+      deliveredAt: {
 
-        type: Boolean,
+        type: Date,
 
-        default: false,
+        default: null,
 
       },
 
@@ -159,15 +151,7 @@ const messageSchema =
       // ====================================
       // SOFT DELETE
       // ====================================
-      deletedForSender: {
-
-        type: Boolean,
-
-        default: false,
-
-      },
-
-      deletedForReceiver: {
+      isDeleted: {
 
         type: Boolean,
 
@@ -177,26 +161,16 @@ const messageSchema =
 
 
       // ====================================
-      // REACTIONS
+      // DELETE FOR USERS
       // ====================================
-      reactions: [
+      deletedFor: [
 
         {
 
-          userId: {
+          type:
+            mongoose.Schema.Types.ObjectId,
 
-            type:
-              mongoose.Schema.Types.ObjectId,
-
-            ref: "User",
-
-          },
-
-          emoji: {
-
-            type: String,
-
-          },
+          ref: "User",
 
         },
 
@@ -221,6 +195,54 @@ messageSchema.index({
   sender: 1,
 
   receiver: 1,
+
+  createdAt: -1,
+
+});
+
+
+// ==========================================
+// REVERSE CHAT INDEX
+// ==========================================
+messageSchema.index({
+
+  receiver: 1,
+
+  sender: 1,
+
+  createdAt: -1,
+
+});
+
+
+// ==========================================
+// UNREAD INDEX
+// ==========================================
+messageSchema.index({
+
+  receiver: 1,
+
+  isRead: 1,
+
+});
+
+
+// ==========================================
+// DELIVERY INDEX
+// ==========================================
+messageSchema.index({
+
+  receiver: 1,
+
+  isDelivered: 1,
+
+});
+
+
+// ==========================================
+// CREATED TIME INDEX
+// ==========================================
+messageSchema.index({
 
   createdAt: -1,
 

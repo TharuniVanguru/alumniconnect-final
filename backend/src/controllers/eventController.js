@@ -1,10 +1,9 @@
-const Event = require("../models/Event");
+const Event =
+  require("../models/Event");
 
 
 // ==========================================
 // CREATE EVENT
-// @route POST /events
-// @access Alumni/Admin
 // ==========================================
 const createEvent =
   async (req, res) => {
@@ -27,7 +26,32 @@ const createEvent =
       } = req.body;
 
 
-      // ONLY ALUMNI OR ADMIN
+      // ====================================
+      // VALIDATION
+      // ====================================
+      if (
+
+        !title ||
+        !description ||
+        !date
+
+      ) {
+
+        return res.status(400).json({
+
+          success: false,
+
+          message:
+            "Please fill required fields",
+
+        });
+
+      }
+
+
+      // ====================================
+      // ONLY ALUMNI / ADMIN
+      // ====================================
       if (
 
         req.user.role !== "alumni"
@@ -40,6 +64,8 @@ const createEvent =
 
         return res.status(403).json({
 
+          success: false,
+
           message:
             "Only alumni/admin can create events",
 
@@ -48,6 +74,9 @@ const createEvent =
       }
 
 
+      // ====================================
+      // CREATE EVENT
+      // ====================================
       const event =
         await Event.create({
 
@@ -80,17 +109,32 @@ const createEvent =
         });
 
 
-      res.status(201).json(
-        event
-      );
+      // ====================================
+      // RESPONSE
+      // ====================================
+      res.status(201).json({
+
+        success: true,
+
+        message:
+          "Event created successfully",
+
+        event,
+
+      });
 
     }
 
     catch (error) {
 
-      console.log(error);
+      console.log(
+        "CREATE EVENT ERROR:",
+        error
+      );
 
       res.status(500).json({
+
+        success: false,
 
         message:
           "Server Error",
@@ -104,8 +148,6 @@ const createEvent =
 
 // ==========================================
 // GET ALL EVENTS
-// @route GET /events
-// @access Private
 // ==========================================
 const getEvents =
   async (req, res) => {
@@ -119,32 +161,44 @@ const getEvents =
 
         })
 
-        .populate(
+          .populate(
 
-          "organizer",
+            "organizer",
 
-          "name role"
+            "name role"
 
-        )
+          )
 
-        .sort({
+          .sort({
 
-          date: 1,
+            date: 1,
 
-        });
+          });
 
 
-      res.status(200).json(
-        events
-      );
+      res.status(200).json({
+
+        success: true,
+
+        total:
+          events.length,
+
+        events,
+
+      });
 
     }
 
     catch (error) {
 
-      console.log(error);
+      console.log(
+        "GET EVENTS ERROR:",
+        error
+      );
 
       res.status(500).json({
+
+        success: false,
 
         message:
           "Server Error",
@@ -158,8 +212,6 @@ const getEvents =
 
 // ==========================================
 // GET SINGLE EVENT
-// @route GET /events/:id
-// @access Private
 // ==========================================
 const getSingleEvent =
   async (req, res) => {
@@ -175,7 +227,7 @@ const getSingleEvent =
 
           "organizer",
 
-          "name role"
+          "name role email"
 
         );
 
@@ -183,6 +235,8 @@ const getSingleEvent =
       if (!event) {
 
         return res.status(404).json({
+
+          success: false,
 
           message:
             "Event not found",
@@ -192,17 +246,26 @@ const getSingleEvent =
       }
 
 
-      res.status(200).json(
-        event
-      );
+      res.status(200).json({
+
+        success: true,
+
+        event,
+
+      });
 
     }
 
     catch (error) {
 
-      console.log(error);
+      console.log(
+        "GET SINGLE EVENT ERROR:",
+        error
+      );
 
       res.status(500).json({
+
+        success: false,
 
         message:
           "Server Error",
@@ -216,8 +279,6 @@ const getSingleEvent =
 
 // ==========================================
 // UPDATE EVENT
-// @route PUT /events/:id
-// @access Organizer/Admin
 // ==========================================
 const updateEvent =
   async (req, res) => {
@@ -234,6 +295,8 @@ const updateEvent =
 
         return res.status(404).json({
 
+          success: false,
+
           message:
             "Event not found",
 
@@ -242,10 +305,13 @@ const updateEvent =
       }
 
 
-      // ONLY ORGANIZER OR ADMIN
+      // ====================================
+      // OWNER OR ADMIN
+      // ====================================
       if (
 
         event.organizer.toString() !==
+
           req.user._id.toString()
 
         &&
@@ -256,6 +322,8 @@ const updateEvent =
 
         return res.status(403).json({
 
+          success: false,
+
           message:
             "Not authorized",
 
@@ -264,62 +332,46 @@ const updateEvent =
       }
 
 
-      event.title =
-        req.body.title ||
-        event.title;
+      // ====================================
+      // UPDATE FIELDS
+      // ====================================
+      Object.assign(
 
-      event.description =
-        req.body.description ||
-        event.description;
+        event,
 
-      event.type =
-        req.body.type ||
-        event.type;
+        req.body
 
-      event.date =
-        req.body.date ||
-        event.date;
-
-      event.time =
-        req.body.time ||
-        event.time;
-
-      event.location =
-        req.body.location ||
-        event.location;
-
-      event.mode =
-        req.body.mode ||
-        event.mode;
-
-      event.meetingLink =
-        req.body.meetingLink ||
-        event.meetingLink;
-
-      event.maxAttendees =
-        req.body.maxAttendees ||
-        event.maxAttendees;
-
-      event.tags =
-        req.body.tags ||
-        event.tags;
+      );
 
 
       const updatedEvent =
         await event.save();
 
 
-      res.status(200).json(
-        updatedEvent
-      );
+      res.status(200).json({
+
+        success: true,
+
+        message:
+          "Event updated successfully",
+
+        event:
+          updatedEvent,
+
+      });
 
     }
 
     catch (error) {
 
-      console.log(error);
+      console.log(
+        "UPDATE EVENT ERROR:",
+        error
+      );
 
       res.status(500).json({
+
+        success: false,
 
         message:
           "Server Error",
@@ -333,8 +385,6 @@ const updateEvent =
 
 // ==========================================
 // DELETE EVENT
-// @route DELETE /events/:id
-// @access Organizer/Admin
 // ==========================================
 const deleteEvent =
   async (req, res) => {
@@ -351,6 +401,8 @@ const deleteEvent =
 
         return res.status(404).json({
 
+          success: false,
+
           message:
             "Event not found",
 
@@ -359,10 +411,13 @@ const deleteEvent =
       }
 
 
-      // ONLY ORGANIZER OR ADMIN
+      // ====================================
+      // OWNER OR ADMIN
+      // ====================================
       if (
 
         event.organizer.toString() !==
+
           req.user._id.toString()
 
         &&
@@ -372,6 +427,8 @@ const deleteEvent =
       ) {
 
         return res.status(403).json({
+
+          success: false,
 
           message:
             "Not authorized",
@@ -386,6 +443,8 @@ const deleteEvent =
 
       res.status(200).json({
 
+        success: true,
+
         message:
           "Event deleted successfully",
 
@@ -395,9 +454,14 @@ const deleteEvent =
 
     catch (error) {
 
-      console.log(error);
+      console.log(
+        "DELETE EVENT ERROR:",
+        error
+      );
 
       res.status(500).json({
+
+        success: false,
 
         message:
           "Server Error",
@@ -410,21 +474,23 @@ const deleteEvent =
 
 
 // ==========================================
-// REGISTER FOR EVENT
-// @route POST /events/:id/register
-// @access Student
+// REGISTER EVENT
 // ==========================================
 const registerEvent =
   async (req, res) => {
 
     try {
 
-      // ONLY STUDENTS
+      // ====================================
+      // ONLY STUDENT
+      // ====================================
       if (
         req.user.role !== "student"
       ) {
 
         return res.status(403).json({
+
+          success: false,
 
           message:
             "Only students can register",
@@ -444,6 +510,8 @@ const registerEvent =
 
         return res.status(404).json({
 
+          success: false,
+
           message:
             "Event not found",
 
@@ -452,7 +520,53 @@ const registerEvent =
       }
 
 
-      // CHECK ALREADY REGISTERED
+      // ====================================
+      // EVENT ACTIVE CHECK
+      // ====================================
+      if (!event.isActive) {
+
+        return res.status(400).json({
+
+          success: false,
+
+          message:
+            "Event inactive",
+
+        });
+
+      }
+
+
+      // ====================================
+      // DEADLINE CHECK
+      // ====================================
+      if (
+
+        event.registrationDeadline &&
+
+        new Date() >
+
+        new Date(
+          event.registrationDeadline
+        )
+
+      ) {
+
+        return res.status(400).json({
+
+          success: false,
+
+          message:
+            "Registration closed",
+
+        });
+
+      }
+
+
+      // ====================================
+      // ALREADY REGISTERED
+      // ====================================
       const alreadyRegistered =
         event.attendees.find(
 
@@ -471,6 +585,8 @@ const registerEvent =
 
         return res.status(400).json({
 
+          success: false,
+
           message:
             "Already registered",
 
@@ -479,15 +595,21 @@ const registerEvent =
       }
 
 
-      // CHECK LIMIT
+      // ====================================
+      // MAX LIMIT
+      // ====================================
       if (
 
-        event.attendees.length >=
-        event.maxAttendees
+        event.maxAttendees &&
+
+  event.attendees.length >=
+  event.maxAttendees
 
       ) {
 
         return res.status(400).json({
+
+          success: false,
 
           message:
             "Event full",
@@ -497,7 +619,9 @@ const registerEvent =
       }
 
 
-      // REGISTER STUDENT
+      // ====================================
+      // REGISTER
+      // ====================================
       event.attendees.push({
 
         student:
@@ -517,6 +641,8 @@ const registerEvent =
 
       res.status(200).json({
 
+        success: true,
+
         message:
           "Registered successfully",
 
@@ -526,9 +652,14 @@ const registerEvent =
 
     catch (error) {
 
-      console.log(error);
+      console.log(
+        "REGISTER EVENT ERROR:",
+        error
+      );
 
       res.status(500).json({
+
+        success: false,
 
         message:
           "Server Error",
@@ -542,8 +673,6 @@ const registerEvent =
 
 // ==========================================
 // GET EVENT ATTENDEES
-// @route GET /events/:id/attendees
-// @access Organizer/Admin
 // ==========================================
 const getEventAttendees =
   async (req, res) => {
@@ -568,6 +697,8 @@ const getEventAttendees =
 
         return res.status(404).json({
 
+          success: false,
+
           message:
             "Event not found",
 
@@ -576,10 +707,13 @@ const getEventAttendees =
       }
 
 
-      // ONLY ORGANIZER OR ADMIN
+      // ====================================
+      // OWNER OR ADMIN
+      // ====================================
       if (
 
         event.organizer.toString() !==
+
           req.user._id.toString()
 
         &&
@@ -590,6 +724,8 @@ const getEventAttendees =
 
         return res.status(403).json({
 
+          success: false,
+
           message:
             "Not authorized",
 
@@ -598,17 +734,30 @@ const getEventAttendees =
       }
 
 
-      res.status(200).json(
-        event.attendees
-      );
+      res.status(200).json({
+
+        success: true,
+
+        total:
+          event.attendees.length,
+
+        attendees:
+          event.attendees,
+
+      });
 
     }
 
     catch (error) {
 
-      console.log(error);
+      console.log(
+        "GET ATTENDEES ERROR:",
+        error
+      );
 
       res.status(500).json({
+
+        success: false,
 
         message:
           "Server Error",

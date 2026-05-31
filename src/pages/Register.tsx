@@ -2,6 +2,8 @@ import { useState } from "react";
 
 import { useNavigate, Link } from "react-router-dom";
 
+import { motion } from "framer-motion";
+
 import { Button } from "@/components/ui/button";
 
 import { Input } from "@/components/ui/input";
@@ -13,7 +15,6 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardHeader,
   CardTitle,
 
 } from "@/components/ui/card";
@@ -35,26 +36,44 @@ import {
   Mail,
   Lock,
   IdCard,
+  Loader2,
+  ArrowRight,
+  ShieldCheck,
 
 } from "lucide-react";
 
+import { apiPost } from "@/utils/api";
 import { useToast } from "@/hooks/use-toast";
 
 import { UserRole } from "@/types/user";
 
+
+// =====================================
+// COMPONENT
+// =====================================
 const Register = () => {
 
-  const navigate = useNavigate();
+  const navigate =
+    useNavigate();
 
-  const { toast } = useToast();
+  const { toast } =
+    useToast();
 
-  const [name, setName] = useState("");
 
-  const [email, setEmail] = useState("");
+  // =====================================
+  // STATES
+  // =====================================
+  const [name, setName] =
+    useState("");
 
-  const [identifier, setIdentifier] = useState("");
+  const [email, setEmail] =
+    useState("");
 
-  const [password, setPassword] = useState("");
+  const [identifier, setIdentifier] =
+    useState("");
+
+  const [password, setPassword] =
+    useState("");
 
   const [role, setRole] =
     useState<UserRole>("student");
@@ -63,7 +82,9 @@ const Register = () => {
     useState(false);
 
 
+  // =====================================
   // ROLE ICONS
+  // =====================================
   const roleIcons = {
 
     student:
@@ -78,462 +99,633 @@ const Register = () => {
   };
 
 
-  // =========================
+  // =====================================
   // REGISTER
-  // =========================
-  const handleRegister = async (
-    e: React.FormEvent
-  ) => {
+  // =====================================
+  const handleRegister =
+    async (
+      e: React.FormEvent
+    ) => {
 
-    e.preventDefault();
+      e.preventDefault();
 
-    try {
+      try {
 
-      setIsLoading(true);
+        setIsLoading(true);
 
-      const response = await fetch(
 
-        "http://localhost:5000/auth/register",
+        // =================================
+        // API CALL
+        // =================================
+        const response =
+          await apiPost(
 
-        {
+            "/auth/register",
 
-          method: "POST",
+            {
 
-          headers: {
+              name:
+                name.trim(),
 
-            "Content-Type":
-              "application/json",
+              email:
+                email.trim(),
 
-          },
+              identifier:
+                identifier.trim(),
 
-          body: JSON.stringify({
+              password:
+                password.trim(),
 
-            name,
-            email,
-            identifier,
-            password,
-            role,
+              role,
 
-          }),
+            }
+
+          );
+
+
+        // =================================
+        // RESPONSE DATA
+        // =================================
+        const data =
+          response;
+
+
+        // =================================
+        // ERROR
+        // =================================
+        if (!data) {
+
+          toast({
+
+            title:
+              "Registration Failed",
+
+            description:
+              "Something went wrong",
+
+            variant:
+              "destructive",
+
+          });
+
+          return;
 
         }
 
-      );
 
-      const data =
-        await response.json();
+        // =================================
+        // STORE TOKEN
+        // =================================
+        if (data.token) {
+
+          localStorage.setItem(
+
+            "token",
+
+            data.token
+
+          );
+
+        }
 
 
-      // ERROR
-      if (!response.ok) {
+        // =================================
+        // STORE USER
+        // =================================
+        localStorage.setItem(
+
+          "userInfo",
+
+          JSON.stringify(
+
+            data.user || data
+
+          )
+
+        );
+
+
+        // =================================
+        // SUCCESS TOAST
+        // =================================
+        toast({
+
+          title:
+            "Registration Successful 🎉",
+
+          description:
+            `Welcome ${data.user?.name || name} to AlumniConnect`,
+
+        });
+
+
+        // =================================
+        // NAVIGATE
+        // =================================
+        navigate(
+
+          `/${data.user?.role || role}/dashboard`
+
+        );
+
+      }
+
+      catch (error) {
+
+        console.log(
+          "REGISTER ERROR:",
+          error
+        );
 
         toast({
 
           title:
-            "Registration Failed",
+            "Server Error",
 
           description:
-
-            data.message ||
-
-            "Something went wrong",
+            "Backend connection failed",
 
           variant:
             "destructive",
 
         });
 
-        return;
+      }
+
+      finally {
+
+        setIsLoading(false);
 
       }
 
-
-      // STORE USER
-      localStorage.setItem(
-
-        "userInfo",
-
-        JSON.stringify(data)
-
-      );
+    };
 
 
-      // SUCCESS
-      toast({
-
-        title:
-          "Registration Successful 🎉",
-
-        description:
-          `Welcome ${data.name} to AlumniConnect`,
-
-      });
-
-
-      // NAVIGATE
-      navigate(
-        `/${data.role}/dashboard`
-      );
-
-    }
-
-    catch (error) {
-
-      toast({
-
-        title:
-          "Server Error",
-
-        description:
-          "Backend connection failed",
-
-        variant:
-          "destructive",
-
-      });
-
-    }
-
-    finally {
-
-      setIsLoading(false);
-
-    }
-
-  };
-
-
+  // =====================================
+  // UI
+  // =====================================
   return (
 
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-violet-100 via-background to-blue-100 p-4">
+    <div className="min-h-screen relative overflow-hidden bg-background flex items-center justify-center px-4 py-10">
 
-      {/* BACKGROUND BLUR */}
+
+      {/* ===================================== */}
+      {/* BACKGROUND */}
+      {/* ===================================== */}
+
       <div className="absolute inset-0 overflow-hidden">
 
-        <div className="absolute top-10 left-10 h-72 w-72 bg-purple-400/20 rounded-full blur-3xl" />
+        <div className="absolute -top-20 -left-20 h-96 w-96 bg-purple-500/20 rounded-full blur-3xl" />
 
-        <div className="absolute bottom-10 right-10 h-72 w-72 bg-blue-400/20 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 right-0 h-[500px] w-[500px] bg-blue-500/20 rounded-full blur-3xl" />
+
+        <div className="absolute top-1/2 left-1/2 h-[400px] w-[400px] bg-primary/10 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2" />
 
       </div>
 
 
-      <Card className="relative w-full max-w-md border-0 shadow-2xl rounded-3xl overflow-hidden bg-background/90 backdrop-blur">
+      {/* ===================================== */}
+      {/* CARD */}
+      {/* ===================================== */}
 
-        {/* TOP HEADER */}
-        <div className="bg-gradient-to-r from-violet-600 to-indigo-600 text-white p-8 text-center">
+      <motion.div
 
-          <div className="flex justify-center mb-4">
+        initial={{
+          opacity: 0,
+          y: 40,
+        }}
 
-            <div className="h-16 w-16 rounded-2xl bg-white/20 flex items-center justify-center">
+        animate={{
+          opacity: 1,
+          y: 0,
+        }}
 
-              <Sparkles className="h-8 w-8" />
+        transition={{
+          duration: 0.5,
+        }}
+
+        className="relative z-10 w-full max-w-md"
+
+      >
+
+        <Card className="overflow-hidden rounded-[32px] border-0 shadow-2xl bg-background/90 backdrop-blur-xl">
+
+
+          {/* ===================================== */}
+          {/* TOP */}
+          {/* ===================================== */}
+
+          <div className="relative overflow-hidden bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 text-white p-10">
+
+            <div className="absolute inset-0 bg-black/10" />
+
+
+            <div className="relative text-center">
+
+              <div className="flex justify-center mb-6">
+
+                <div className="h-20 w-20 rounded-3xl bg-white/20 border border-white/20 flex items-center justify-center shadow-2xl">
+
+                  <Sparkles className="h-10 w-10 text-yellow-300" />
+
+                </div>
+
+              </div>
+
+
+              <CardTitle className="text-4xl font-bold mb-3">
+
+                AlumniConnect
+
+              </CardTitle>
+
+
+              <CardDescription className="text-white/90 text-base leading-7">
+
+                Build connections with alumni,
+                mentors, recruiters, and students.
+
+              </CardDescription>
 
             </div>
 
           </div>
 
-          <CardTitle className="text-3xl font-bold">
 
-            AlumniConnect
-
-          </CardTitle>
-
-          <CardDescription className="text-white/90 text-base mt-2">
-
-            Create your account and start building connections
-
-          </CardDescription>
-
-        </div>
-
-
-        <CardContent className="p-8">
-
-          {/* ROLE SELECT */}
-          <Tabs
-
-            value={role}
-
-            onValueChange={(value) =>
-              setRole(value as UserRole)
-            }
-
-            className="w-full"
-
-          >
-
-            <TabsList className="grid w-full grid-cols-3 rounded-2xl h-12">
-
-              <TabsTrigger
-                value="student"
-                className="rounded-xl"
-              >
-
-                <div className="flex items-center gap-2">
-
-                  {roleIcons.student}
-
-                  <span>
-
-                    Student
-
-                  </span>
-
-                </div>
-
-              </TabsTrigger>
-
-
-              <TabsTrigger
-                value="alumni"
-                className="rounded-xl"
-              >
-
-                <div className="flex items-center gap-2">
-
-                  {roleIcons.alumni}
-
-                  <span>
-
-                    Alumni
-
-                  </span>
-
-                </div>
-
-              </TabsTrigger>
-
-
-              <TabsTrigger
-                value="admin"
-                className="rounded-xl"
-              >
-
-                <div className="flex items-center gap-2">
-
-                  {roleIcons.admin}
-
-                  <span>
-
-                    Admin
-
-                  </span>
-
-                </div>
-
-              </TabsTrigger>
-
-            </TabsList>
-
-          </Tabs>
-
-
+          {/* ===================================== */}
           {/* FORM */}
-          <form
-            onSubmit={handleRegister}
-            className="space-y-5 mt-8"
-          >
+          {/* ===================================== */}
 
-            {/* NAME */}
-            <div className="space-y-2">
+          <CardContent className="p-8">
 
-              <Label>
 
-                Full Name
+            {/* ROLE */}
+
+            <div className="mb-8">
+
+              <Label className="mb-3 block">
+
+                Select Role
 
               </Label>
 
-              <div className="relative">
 
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Tabs
 
-                <Input
+                value={role}
 
-                  type="text"
+                onValueChange={(value) =>
 
-                  placeholder="Enter your name"
+                  setRole(
+                    value as UserRole
+                  )
 
-                  value={name}
+                }
 
-                  onChange={(e) =>
-                    setName(e.target.value)
-                  }
+                className="w-full"
 
-                  className="pl-10 h-12 rounded-xl"
+              >
 
-                  required
+                <TabsList className="grid w-full grid-cols-3 h-14 rounded-2xl p-1 bg-muted/60">
 
-                />
 
-              </div>
+                  <TabsTrigger
+                    value="student"
+                    className="rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm"
+                  >
+
+                    <div className="flex flex-col items-center gap-1">
+
+                      {roleIcons.student}
+
+                      <span className="text-xs">
+
+                        Student
+
+                      </span>
+
+                    </div>
+
+                  </TabsTrigger>
+
+
+                  <TabsTrigger
+                    value="alumni"
+                    className="rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm"
+                  >
+
+                    <div className="flex flex-col items-center gap-1">
+
+                      {roleIcons.alumni}
+
+                      <span className="text-xs">
+
+                        Alumni
+
+                      </span>
+
+                    </div>
+
+                  </TabsTrigger>
+
+
+                  <TabsTrigger
+                    value="admin"
+                    className="rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm"
+                  >
+
+                    <div className="flex flex-col items-center gap-1">
+
+                      {roleIcons.admin}
+
+                      <span className="text-xs">
+
+                        Admin
+
+                      </span>
+
+                    </div>
+
+                  </TabsTrigger>
+
+                </TabsList>
+
+              </Tabs>
 
             </div>
 
 
-            {/* EMAIL */}
-            <div className="space-y-2">
+            {/* FORM */}
 
-              <Label>
-
-                Email Address
-
-              </Label>
-
-              <div className="relative">
-
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-
-                <Input
-
-                  type="email"
-
-                  placeholder="Enter your email"
-
-                  value={email}
-
-                  onChange={(e) =>
-                    setEmail(e.target.value)
-                  }
-
-                  className="pl-10 h-12 rounded-xl"
-
-                  required
-
-                />
-
-              </div>
-
-            </div>
-
-
-            {/* IDENTIFIER */}
-            <div className="space-y-2">
-
-              <Label>
-
-                Identifier
-
-              </Label>
-
-              <div className="relative">
-
-                <IdCard className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-
-                <Input
-
-                  type="text"
-
-                  placeholder="Student ID / Alumni ID"
-
-                  value={identifier}
-
-                  onChange={(e) =>
-                    setIdentifier(
-                      e.target.value
-                    )
-                  }
-
-                  className="pl-10 h-12 rounded-xl"
-
-                  required
-
-                />
-
-              </div>
-
-            </div>
-
-
-            {/* PASSWORD */}
-            <div className="space-y-2">
-
-              <Label>
-
-                Password
-
-              </Label>
-
-              <div className="relative">
-
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-
-                <Input
-
-                  type="password"
-
-                  placeholder="Enter password"
-
-                  value={password}
-
-                  onChange={(e) =>
-                    setPassword(
-                      e.target.value
-                    )
-                  }
-
-                  className="pl-10 h-12 rounded-xl"
-
-                  required
-
-                />
-
-              </div>
-
-            </div>
-
-
-            {/* BUTTON */}
-            <Button
-
-              type="submit"
-
-              className="w-full h-12 rounded-xl text-lg font-semibold bg-gradient-to-r from-violet-600 to-indigo-600 hover:opacity-90"
-
-              disabled={isLoading}
-
+            <form
+              onSubmit={handleRegister}
+              className="space-y-5"
             >
 
-              {isLoading
 
-                ? "Creating Account..."
+              {/* NAME */}
 
-                : "Create Account"}
+              <div className="space-y-2">
 
-            </Button>
+                <Label>
 
-          </form>
+                  Full Name
+
+                </Label>
+
+                <div className="relative">
+
+                  <User className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+
+                  <Input
+
+                    type="text"
+
+                    placeholder="Enter your full name"
+
+                    value={name}
+
+                    onChange={(e) =>
+                      setName(
+                        e.target.value
+                      )
+                    }
+
+                    className="pl-11 h-12 rounded-2xl"
+
+                    required
+
+                  />
+
+                </div>
+
+              </div>
 
 
-          {/* LOGIN */}
-          <p className="text-center text-sm text-muted-foreground mt-6">
+              {/* EMAIL */}
 
-            Already have an account?
+              <div className="space-y-2">
 
-            <Link
+                <Label>
 
-              to="/login"
+                  Email Address
 
-              className="ml-1 font-semibold text-primary hover:underline"
+                </Label>
 
-            >
+                <div className="relative">
 
-              Login
+                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
 
-            </Link>
+                  <Input
 
-          </p>
+                    type="email"
+
+                    placeholder="Enter your email"
+
+                    value={email}
+
+                    onChange={(e) =>
+                      setEmail(
+                        e.target.value
+                      )
+                    }
+
+                    className="pl-11 h-12 rounded-2xl"
+
+                    required
+
+                  />
+
+                </div>
+
+              </div>
 
 
-          {/* FOOTER */}
-          <div className="mt-8 text-center text-xs text-muted-foreground">
+              {/* IDENTIFIER */}
 
-            © 2025 AlumniConnect • Developed by Tharuni
+              <div className="space-y-2">
 
-          </div>
+                <Label>
 
-        </CardContent>
+                  Identifier
 
-      </Card>
+                </Label>
+
+                <div className="relative">
+
+                  <IdCard className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+
+                  <Input
+
+                    type="text"
+
+                    placeholder="Student ID / Alumni ID"
+
+                    value={identifier}
+
+                    onChange={(e) =>
+
+                      setIdentifier(
+                        e.target.value
+                      )
+
+                    }
+
+                    className="pl-11 h-12 rounded-2xl"
+
+                    required
+
+                  />
+
+                </div>
+
+              </div>
+
+
+              {/* PASSWORD */}
+
+              <div className="space-y-2">
+
+                <Label>
+
+                  Password
+
+                </Label>
+
+                <div className="relative">
+
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+
+                  <Input
+
+                    type="password"
+
+                    placeholder="Enter password"
+
+                    value={password}
+
+                    onChange={(e) =>
+
+                      setPassword(
+                        e.target.value
+                      )
+
+                    }
+
+                    className="pl-11 h-12 rounded-2xl"
+
+                    required
+
+                  />
+
+                </div>
+
+              </div>
+
+
+              {/* INFO */}
+
+              <div className="rounded-2xl bg-primary/5 border border-primary/10 p-4 flex gap-3">
+
+                <ShieldCheck className="h-5 w-5 text-primary mt-0.5" />
+
+                <div>
+
+                  <h4 className="font-semibold text-sm">
+
+                    Secure Registration
+
+                  </h4>
+
+                  <p className="text-xs text-muted-foreground leading-6">
+
+                    Your data is encrypted and securely stored
+                    within AlumniConnect.
+
+                  </p>
+
+                </div>
+
+              </div>
+
+
+              {/* BUTTON */}
+
+              <Button
+
+                type="submit"
+
+                className="w-full h-12 rounded-2xl text-base font-semibold bg-gradient-to-r from-violet-600 to-indigo-600 hover:opacity-90 shadow-lg"
+
+                disabled={isLoading}
+
+              >
+
+                {
+
+                  isLoading ? (
+
+                    <>
+
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+
+                      Creating Account...
+
+                    </>
+
+                  ) : (
+
+                    <>
+
+                      Create Account
+
+                      <ArrowRight className="ml-2 h-4 w-4" />
+
+                    </>
+
+                  )
+
+                }
+
+              </Button>
+
+            </form>
+
+
+            {/* LOGIN */}
+
+            <div className="mt-8 text-center text-sm text-muted-foreground">
+
+              Already have an account?
+
+              <Link
+
+                to="/login"
+
+                className="ml-1 font-semibold text-primary hover:underline"
+
+              >
+
+                Login
+
+              </Link>
+
+            </div>
+
+
+            {/* FOOTER */}
+
+            <div className="mt-8 text-center text-xs text-muted-foreground">
+
+              © 2025 AlumniConnect • Developed by Tharuni
+
+            </div>
+
+          </CardContent>
+
+        </Card>
+
+      </motion.div>
 
     </div>
 

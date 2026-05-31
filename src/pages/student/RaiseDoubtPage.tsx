@@ -1,14 +1,8 @@
 import {
-  useEffect,
   useState,
 } from "react";
 
-import axios from "axios";
-
-import {
-  useNavigate,
-} from "react-router-dom";
-
+import api, { apiGet, apiPost, apiPut, apiPatch, apiDelete } from "@/utils/api";
 import { Header }
   from "@/components/layout/Header";
 
@@ -17,977 +11,565 @@ import {
   CardContent,
 } from "@/components/ui/card";
 
-import {
-  Badge,
-} from "@/components/ui/badge";
-
 import { Button }
   from "@/components/ui/button";
-
-import {
-  Textarea,
-} from "@/components/ui/textarea";
 
 import { Input }
   from "@/components/ui/input";
 
+import { Textarea }
+  from "@/components/ui/textarea";
+
 import {
-  Loader2,
-  MessageCircle,
-  Clock3,
-  CheckCircle2,
-  XCircle,
-  Star,
-  Calendar,
-  Video,
-  Search,
-  Sparkles,
-} from "lucide-react";
+  Badge,
+} from "@/components/ui/badge";
 
 import {
   useToast,
 } from "@/hooks/use-toast";
 
+import {
 
-// =====================================
-// INTERFACE
-// =====================================
-interface GuidanceRequest {
+  AlertCircle,
+  Brain,
+  BookOpen,
+  Code,
+  Sparkles,
+  Send,
+  Loader2,
+  CheckCircle2,
+  HelpCircle,
+  Rocket,
+  Cpu,
 
-  _id: string;
-
-  alumniId: string;
-
-  alumniName: string;
-
-  domain: string;
-
-  topic: string;
-
-  description: string;
-
-  urgency: string;
-
-  status: string;
-
-  meetingLink?: string;
-
-  scheduledDate?: string;
-
-  feedback?: string;
-
-  rating?: number;
-
-  createdAt: string;
-
-}
+} from "lucide-react";
 
 
-// =====================================
+// ==========================================
 // COMPONENT
-// =====================================
-const MyGuidanceRequestsPage =
-  () => {
+// ==========================================
+const RaiseDoubtPage = () => {
 
-    const navigate =
-      useNavigate();
-
-    const { toast } =
-      useToast();
-
-    const [
-      requests,
-      setRequests,
-    ] = useState<
-      GuidanceRequest[]
-    >([]);
-
-    const [
-      filteredRequests,
-      setFilteredRequests,
-    ] = useState<
-      GuidanceRequest[]
-    >([]);
-
-    const [
-      loading,
-      setLoading,
-    ] = useState(false);
-
-    const [
-      error,
-      setError,
-    ] = useState("");
-
-    const [
-      feedbacks,
-      setFeedbacks,
-    ] = useState<
-      Record<string, string>
-    >({});
-
-    const [
-      ratings,
-      setRatings,
-    ] = useState<
-      Record<string, number>
-    >({});
-
-    const [
-      search,
-      setSearch,
-    ] = useState("");
-
-    const [
-      statusFilter,
-      setStatusFilter,
-    ] = useState("All");
+  // ========================================
+  // TOAST
+  // ========================================
+  const { toast } =
+    useToast();
 
 
-    const userInfo =
-      JSON.parse(
-        localStorage.getItem(
-          "userInfo"
-        ) || "{}"
-      );
+  // ========================================
+  // USER INFO
+  // ========================================
+  const userInfo =
+    JSON.parse(
+
+      localStorage.getItem(
+        "userInfo"
+      ) || "{}"
+
+    );
 
 
-    // =====================================
-    // FETCH REQUESTS
-    // =====================================
-    const fetchRequests =
-      async () => {
+  // ========================================
+  // STATES
+  // ========================================
+  const [
 
-        try {
+    title,
+    setTitle,
 
-          setLoading(true);
+  ] = useState("");
 
-          const response =
-            await axios.get(
 
-              "http://localhost:5000/guidance/student",
+  const [
 
-              {
+    category,
+    setCategory,
 
-                headers: {
+  ] = useState("Programming");
 
-                  Authorization:
-                    `Bearer ${userInfo.token}`,
 
-                },
+  const [
 
-              }
+    description,
+    setDescription,
 
-            );
+  ] = useState("");
 
-          setRequests(
-            response.data
-          );
 
-          setFilteredRequests(
-            response.data
-          );
+  const [
 
-        }
+    loading,
+    setLoading,
 
-        catch (error) {
+  ] = useState(false);
 
-          console.log(error);
+
+  const [
+
+    error,
+    setError,
+
+  ] = useState("");
+
+
+  // ========================================
+  // SUBMIT DOUBT
+  // ========================================
+  const submitDoubt =
+    async () => {
+
+      try {
+
+        setError("");
+
+
+        // VALIDATION
+        if (
+
+          !title.trim() ||
+
+          !description.trim()
+
+        ) {
 
           setError(
-            "Failed to load requests"
+            "Please fill all fields."
           );
 
-        }
-
-        finally {
-
-          setLoading(false);
+          return;
 
         }
 
-      };
+
+        setLoading(true);
 
 
-    // =====================================
-    // FILTER REQUESTS
-    // =====================================
-    useEffect(() => {
+        await api.post(
 
-      let filtered =
-        requests.filter(
+          "/doubts",
 
-          (req) => {
+          {
 
-            const matchesSearch =
+            title,
 
-              req.topic
-                .toLowerCase()
-                .includes(
-                  search.toLowerCase()
-                ) ||
+            category,
 
-              req.alumniName
-                .toLowerCase()
-                .includes(
-                  search.toLowerCase()
-                ) ||
+            description,
 
-              req.domain
-                .toLowerCase()
-                .includes(
-                  search.toLowerCase()
-                );
+          },
 
+          {
 
-            const matchesStatus =
+            headers: {
 
-              statusFilter ===
-                "All" ||
+              Authorization:
+                `Bearer ${userInfo.token}`,
 
-              req.status ===
-                statusFilter;
-
-
-            return (
-              matchesSearch &&
-              matchesStatus
-            );
+            },
 
           }
 
         );
 
-      setFilteredRequests(
-        filtered
-      );
 
-    }, [
+        toast({
 
-      search,
-      statusFilter,
-      requests,
+          title:
+            "Doubt Submitted 🚀",
 
-    ]);
+          description:
+            "Your doubt has been posted successfully.",
 
+        });
 
-    // =====================================
-    // SUBMIT FEEDBACK
-    // =====================================
-    const submitFeedback =
-      async (
-        requestId: string
-      ) => {
 
-        try {
+        // RESET
+        setTitle("");
 
-          await axios.put(
+        setDescription("");
 
-            `http://localhost:5000/guidance/${requestId}`,
+        setCategory(
+          "Programming"
+        );
 
-            {
+      }
 
-              status:
-                "Completed",
+      catch (error: any) {
 
-              feedback:
-                feedbacks[
-                  requestId
-                ],
+        console.log(error);
 
-              rating:
-                ratings[
-                  requestId
-                ] || 5,
+        setError(
 
-            },
+          error.response?.data
+            ?.message ||
 
-            {
+          "Failed to submit doubt"
 
-              headers: {
+        );
 
-                Authorization:
-                  `Bearer ${userInfo.token}`,
+      }
 
-              },
+      finally {
 
-            }
+        setLoading(false);
 
-          );
+      }
 
+    };
 
-          setRequests(
 
-            (
-              prev
-            ) =>
+  // ========================================
+  // QUICK CATEGORIES
+  // ========================================
+  const categories = [
 
-              prev.map(
-                (
-                  req
-                ) =>
+    {
+      icon:
+        <Code className="h-4 w-4" />,
 
-                  req._id ===
-                  requestId
+      title:
+        "Programming",
+    },
 
-                    ? {
+    {
+      icon:
+        <Brain className="h-4 w-4" />,
 
-                        ...req,
+      title:
+        "AI / ML",
+    },
 
-                        feedback:
-                          feedbacks[
-                            requestId
-                          ],
+    {
+      icon:
+        <BookOpen className="h-4 w-4" />,
 
-                        rating:
-                          ratings[
-                            requestId
-                          ],
+      title:
+        "Career",
+    },
 
-                        status:
-                          "Completed",
+    {
+      icon:
+        <Rocket className="h-4 w-4" />,
 
-                      }
+      title:
+        "Projects",
+    },
 
-                    : req
-              )
+    {
+      icon:
+        <Cpu className="h-4 w-4" />,
 
-          );
+      title:
+        "System Design",
+    },
 
+  ];
 
-          toast({
 
-            title:
-              "Feedback Submitted ⭐",
+  // ========================================
+  // UI
+  // ========================================
+  return (
 
-            description:
-              "Thank you for sharing your experience",
+    <div className="min-h-screen bg-background">
 
-          });
+      <Header />
 
-        }
+      <div className="max-w-5xl mx-auto px-4 py-8">
 
-        catch (error) {
+        {/* ================================= */}
+        {/* HERO */}
+        {/* ================================= */}
+        <div className="mb-8">
 
-          console.log(error);
+          <div className="rounded-3xl overflow-hidden bg-gradient-to-r from-primary via-purple-600 to-pink-500 text-white shadow-2xl">
 
-          toast({
+            <div className="p-8 md:p-10">
 
-            title:
-              "Submission Failed",
+              <div className="flex items-center gap-4 mb-5">
 
-            description:
-              "Unable to submit feedback",
+                <div className="h-16 w-16 rounded-2xl bg-white/20 flex items-center justify-center">
 
-            variant:
-              "destructive",
+                  <HelpCircle className="h-8 w-8" />
 
-          });
+                </div>
 
-        }
 
-      };
+                <div>
 
+                  <h1 className="text-4xl font-bold">
 
-    // =====================================
-    // INITIAL LOAD
-    // =====================================
-    useEffect(() => {
+                    Raise a Doubt
 
-      fetchRequests();
+                  </h1>
 
-    }, []);
+                  <p className="text-white/90 mt-2">
 
+                    Ask doubts and get guidance from alumni mentors
 
-    // =====================================
-    // STATUS BADGE
-    // =====================================
-    const renderStatusBadge =
-      (status: string) => {
+                  </p>
 
-        switch (status) {
-
-          case "Accepted":
-
-            return (
-
-              <Badge className="bg-green-600 hover:bg-green-600">
-
-                <CheckCircle2 className="h-3 w-3 mr-1" />
-
-                Accepted
-
-              </Badge>
-
-            );
-
-          case "Rejected":
-
-            return (
-
-              <Badge variant="destructive">
-
-                <XCircle className="h-3 w-3 mr-1" />
-
-                Rejected
-
-              </Badge>
-
-            );
-
-          case "Completed":
-
-            return (
-
-              <Badge className="bg-blue-600 hover:bg-blue-600">
-
-                Completed
-
-              </Badge>
-
-            );
-
-          default:
-
-            return (
-
-              <Badge
-                variant="secondary"
-                className="bg-yellow-100 text-yellow-700 hover:bg-yellow-100"
-              >
-
-                <Clock3 className="h-3 w-3 mr-1" />
-
-                Pending
-
-              </Badge>
-
-            );
-
-        }
-
-      };
-
-
-    // =====================================
-    // UI
-    // =====================================
-    return (
-
-      <div className="min-h-screen bg-background">
-
-        <Header />
-
-        <div className="max-w-7xl mx-auto p-6">
-
-          {/* HERO */}
-          <div className="rounded-3xl bg-gradient-to-r from-primary to-purple-600 text-white p-8 shadow-2xl mb-8">
-
-            <div className="flex items-center gap-4">
-
-              <div className="h-16 w-16 rounded-2xl bg-white/20 flex items-center justify-center">
-
-                <Sparkles className="h-8 w-8" />
+                </div>
 
               </div>
 
-              <div>
 
-                <h1 className="text-4xl font-bold">
+              <p className="text-white/90 leading-7 max-w-3xl">
 
-                  My Guidance Requests
+                Ask questions related to coding,
+                projects, placements, internships,
+                career guidance, AI/ML, system design,
+                resume building, and more.
 
-                </h1>
-
-                <p className="text-white/90 mt-2">
-
-                  Track mentorship requests, meetings, chats, and feedback
-
-                </p>
-
-              </div>
+              </p>
 
             </div>
 
           </div>
 
+        </div>
 
-          {/* SEARCH + FILTER */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
 
-            <div className="md:col-span-3 relative">
+        {/* ================================= */}
+        {/* MAIN CARD */}
+        {/* ================================= */}
+        <Card className="rounded-3xl shadow-2xl border-0">
 
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+          <CardContent className="p-8 space-y-8">
+
+            {/* ERROR */}
+            {error && (
+
+              <div className="flex items-center gap-3 bg-red-100 text-red-700 px-5 py-4 rounded-2xl">
+
+                <AlertCircle className="h-5 w-5" />
+
+                <p className="font-medium text-sm">
+
+                  {error}
+
+                </p>
+
+              </div>
+
+            )}
+
+
+            {/* QUICK CATEGORIES */}
+            <div>
+
+              <h2 className="text-lg font-semibold mb-4">
+
+                Select Category
+
+              </h2>
+
+
+              <div className="flex flex-wrap gap-3">
+
+                {categories.map(
+                  (
+                    item,
+                    index
+                  ) => (
+
+                    <Badge
+
+                      key={index}
+
+                      variant={
+                        category ===
+                        item.title
+
+                          ? "default"
+
+                          : "outline"
+                      }
+
+                      className={`px-4 py-2 rounded-xl cursor-pointer transition-all ${
+                        category ===
+                        item.title
+
+                          ? "bg-primary text-white"
+
+                          : "hover:bg-primary hover:text-white"
+                      }`}
+
+                      onClick={() =>
+                        setCategory(
+                          item.title
+                        )
+                      }
+
+                    >
+
+                      {item.icon}
+
+                      <span className="ml-2">
+
+                        {item.title}
+
+                      </span>
+
+                    </Badge>
+
+                  )
+                )}
+
+              </div>
+
+            </div>
+
+
+            {/* TITLE */}
+            <div className="space-y-3">
+
+              <label className="text-sm font-semibold">
+
+                Doubt Title
+
+              </label>
+
 
               <Input
 
-                placeholder="Search by topic, alumni, or domain"
+                placeholder="Ex: How to crack MERN interviews?"
 
-                className="pl-10 h-12 rounded-2xl"
-
-                value={search}
+                value={title}
 
                 onChange={(e) =>
-                  setSearch(
+                  setTitle(
                     e.target.value
                   )
                 }
+
+                className="h-12 rounded-2xl"
 
               />
 
             </div>
 
 
-            <select
+            {/* DESCRIPTION */}
+            <div className="space-y-3">
 
-              className="h-12 rounded-2xl border px-4 bg-background"
+              <label className="text-sm font-semibold">
 
-              value={statusFilter}
+                Detailed Description
 
-              onChange={(e) =>
-                setStatusFilter(
-                  e.target.value
-                )
-              }
+              </label>
+
+
+              <Textarea
+
+                placeholder="Explain your doubt clearly so mentors can guide you effectively..."
+
+                value={description}
+
+                onChange={(e) =>
+                  setDescription(
+                    e.target.value
+                  )
+                }
+
+                className="min-h-[220px] rounded-2xl resize-none"
+
+              />
+
+            </div>
+
+
+            {/* INFO BOX */}
+            <div className="rounded-2xl bg-muted/40 border p-5">
+
+              <div className="flex items-start gap-3">
+
+                <CheckCircle2 className="h-5 w-5 text-green-600 mt-1" />
+
+
+                <div>
+
+                  <h3 className="font-semibold mb-2">
+
+                    Tips for Better Answers
+
+                  </h3>
+
+
+                  <ul className="space-y-1 text-sm text-muted-foreground">
+
+                    <li>
+                      • Explain your current level
+                    </li>
+
+                    <li>
+                      • Share error messages if any
+                    </li>
+
+                    <li>
+                      • Mention deadlines or goals
+                    </li>
+
+                    <li>
+                      • Ask specific questions
+                    </li>
+
+                  </ul>
+
+                </div>
+
+              </div>
+
+            </div>
+
+
+            {/* BUTTON */}
+            <Button
+
+              onClick={submitDoubt}
+
+              disabled={loading}
+
+              className="w-full h-14 rounded-2xl text-lg font-semibold shadow-lg"
 
             >
 
-              <option>
-                All
-              </option>
+              {loading ? (
 
-              <option>
-                Pending
-              </option>
+                <div className="flex items-center gap-3">
 
-              <option>
-                Accepted
-              </option>
+                  <Loader2 className="h-5 w-5 animate-spin" />
 
-              <option>
-                Rejected
-              </option>
+                  Submitting...
 
-              <option>
-                Completed
-              </option>
+                </div>
 
-            </select>
+              ) : (
 
-          </div>
+                <div className="flex items-center gap-3">
 
+                  <Send className="h-5 w-5" />
 
-          {/* ERROR */}
-          {error && (
+                  Submit Doubt
 
-            <div className="bg-red-100 text-red-600 p-4 rounded-xl mb-5">
+                </div>
 
-              {error}
-
-            </div>
-
-          )}
-
-
-          {/* LOADING */}
-          {loading ? (
-
-            <div className="flex items-center justify-center py-24">
-
-              <Loader2 className="h-12 w-12 animate-spin text-primary" />
-
-            </div>
-
-          ) : filteredRequests.length === 0 ? (
-
-            <Card className="shadow-xl rounded-3xl">
-
-              <CardContent className="py-24 text-center">
-
-                <h2 className="text-3xl font-bold mb-3">
-
-                  No Requests Found
-
-                </h2>
-
-                <p className="text-muted-foreground">
-
-                  Your mentorship requests will appear here
-
-                </p>
-
-              </CardContent>
-
-            </Card>
-
-          ) : (
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-
-              {filteredRequests.map(
-                (request) => (
-
-                  <Card
-                    key={request._id}
-                    className="shadow-2xl rounded-3xl border-0 overflow-hidden hover:scale-[1.01] transition-all duration-300"
-                  >
-
-                    {/* TOP */}
-                    <div className="bg-gradient-to-r from-primary to-purple-600 text-white p-6">
-
-                      <div className="flex items-start justify-between gap-4">
-
-                        <div>
-
-                          <h2 className="text-2xl font-bold">
-
-                            {request.topic}
-
-                          </h2>
-
-                          <p className="text-white/90 mt-1">
-
-                            Mentor:
-                            {" "}
-                            {request.alumniName}
-
-                          </p>
-
-                        </div>
-
-                        {renderStatusBadge(
-                          request.status
-                        )}
-
-                      </div>
-
-                    </div>
-
-
-                    {/* BODY */}
-                    <CardContent className="p-6 space-y-5">
-
-                      {/* DOMAIN */}
-                      <div>
-
-                        <p className="font-semibold">
-
-                          Domain
-
-                        </p>
-
-                        <p className="text-muted-foreground mt-1">
-
-                          {request.domain}
-
-                        </p>
-
-                      </div>
-
-
-                      {/* DESCRIPTION */}
-                      <div>
-
-                        <p className="font-semibold">
-
-                          Description
-
-                        </p>
-
-                        <p className="text-muted-foreground mt-1 leading-7">
-
-                          {request.description}
-
-                        </p>
-
-                      </div>
-
-
-                      {/* URGENCY */}
-                      <div className="flex items-center gap-2">
-
-                        <Badge variant="outline">
-
-                          {request.urgency} Priority
-
-                        </Badge>
-
-                      </div>
-
-
-                      {/* MEETING */}
-                      {request.meetingLink && (
-
-                        <div>
-
-                          <p className="font-semibold flex items-center gap-2 mb-2">
-
-                            <Video className="h-4 w-4" />
-
-                            Meeting Link
-
-                          </p>
-
-                          <a
-
-                            href={request.meetingLink}
-
-                            target="_blank"
-
-                            rel="noreferrer"
-
-                            className="text-blue-600 underline"
-
-                          >
-
-                            Join Meeting
-
-                          </a>
-
-                        </div>
-
-                      )}
-
-
-                      {/* DATE */}
-                      {request.scheduledDate && (
-
-                        <div>
-
-                          <p className="font-semibold flex items-center gap-2 mb-2">
-
-                            <Calendar className="h-4 w-4" />
-
-                            Scheduled Date
-
-                          </p>
-
-                          <p className="text-muted-foreground">
-
-                            {
-
-                              new Date(
-                                request.scheduledDate
-                              ).toLocaleString()
-
-                            }
-
-                          </p>
-
-                        </div>
-
-                      )}
-
-
-                      {/* FEEDBACK */}
-                      {request.feedback && (
-
-                        <div>
-
-                          <p className="font-semibold">
-
-                            Your Feedback
-
-                          </p>
-
-                          <p className="text-muted-foreground mt-1">
-
-                            {request.feedback}
-
-                          </p>
-
-                        </div>
-
-                      )}
-
-
-                      {/* RATING */}
-                      {request.rating && (
-
-                        <div className="flex items-center gap-2">
-
-                          <span className="font-semibold">
-
-                            Rating:
-
-                          </span>
-
-                          <div className="flex">
-
-                            {
-
-                              [...Array(request.rating)].map(
-                                (_, i) => (
-
-                                  <Star
-                                    key={i}
-                                    className="h-4 w-4 fill-yellow-400 text-yellow-400"
-                                  />
-
-                                )
-                              )
-
-                            }
-
-                          </div>
-
-                        </div>
-
-                      )}
-
-
-                      {/* ACTIONS */}
-                      <div className="pt-4 flex flex-wrap gap-3">
-
-                        {request.status ===
-                          "Accepted" && (
-
-                          <>
-
-                            <Button
-
-                              variant="outline"
-
-                              onClick={() =>
-
-                                navigate(
-                                  `/student/chat/${request.alumniId}`
-                                )
-
-                              }
-
-                            >
-
-                              <MessageCircle className="h-4 w-4 mr-2" />
-
-                              Open Chat
-
-                            </Button>
-
-
-                            {/* FEEDBACK FORM */}
-                            {!request.feedback && (
-
-                              <div className="w-full mt-5 space-y-3">
-
-                                <Textarea
-
-                                  placeholder="Write your feedback"
-
-                                  value={
-                                    feedbacks[
-                                      request._id
-                                    ] || ""
-                                  }
-
-                                  onChange={(e) =>
-
-                                    setFeedbacks({
-
-                                      ...feedbacks,
-
-                                      [request._id]:
-                                        e.target.value,
-
-                                    })
-
-                                  }
-
-                                />
-
-
-                                <select
-
-                                  value={
-                                    ratings[
-                                      request._id
-                                    ] || 5
-                                  }
-
-                                  onChange={(e) =>
-
-                                    setRatings({
-
-                                      ...ratings,
-
-                                      [request._id]:
-                                        Number(
-                                          e.target.value
-                                        ),
-
-                                    })
-
-                                  }
-
-                                  className="border rounded-xl p-3 w-full bg-background"
-
-                                >
-
-                                  <option value={5}>
-                                    ⭐⭐⭐⭐⭐
-                                  </option>
-
-                                  <option value={4}>
-                                    ⭐⭐⭐⭐
-                                  </option>
-
-                                  <option value={3}>
-                                    ⭐⭐⭐
-                                  </option>
-
-                                  <option value={2}>
-                                    ⭐⭐
-                                  </option>
-
-                                  <option value={1}>
-                                    ⭐
-                                  </option>
-
-                                </select>
-
-
-                                <Button
-
-                                  onClick={() =>
-                                    submitFeedback(
-                                      request._id
-                                    )
-                                  }
-
-                                >
-
-                                  Submit Feedback
-
-                                </Button>
-
-                              </div>
-
-                            )}
-
-                          </>
-
-                        )}
-
-                      </div>
-
-                    </CardContent>
-
-                  </Card>
-
-                )
               )}
 
-            </div>
+            </Button>
 
-          )}
+          </CardContent>
 
-        </div>
+        </Card>
 
       </div>
 
-    );
+    </div>
 
-  };
+  );
+
+};
 
 
-export default MyGuidanceRequestsPage;
+export default RaiseDoubtPage;

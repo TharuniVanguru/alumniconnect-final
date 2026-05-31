@@ -85,7 +85,7 @@ const searchUsers =
       // ====================================
       if (company) {
 
-        filters.companyName = {
+        filters.company = {
 
           $regex: company,
 
@@ -180,7 +180,7 @@ const searchUsers =
 
           {
 
-            companyName: {
+            company: {
 
               $regex: keyword,
 

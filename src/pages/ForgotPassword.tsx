@@ -7,6 +7,10 @@ import {
 } from "react-router-dom";
 
 import {
+  motion,
+} from "framer-motion";
+
+import {
   Button,
 } from "@/components/ui/button";
 
@@ -26,6 +30,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
+import { apiPost } from "@/utils/api";
+
 import {
   useToast,
 } from "@/hooks/use-toast";
@@ -35,15 +41,28 @@ import {
   Loader2,
   ShieldCheck,
   KeyRound,
+  ArrowLeft,
+  Sparkles,
+  LockKeyhole,
 } from "lucide-react";
 
 import {
   Header,
 } from "@/components/layout/Header";
 
+import {
+  Link,
+} from "react-router-dom";
 
+
+// ==========================================
+// COMPONENT
+// ==========================================
 const ForgotPassword = () => {
 
+  // ========================================
+  // STATES
+  // ========================================
   const [
     identifier,
     setIdentifier,
@@ -56,6 +75,9 @@ const ForgotPassword = () => {
   ] = useState(false);
 
 
+  // ========================================
+  // HOOKS
+  // ========================================
   const navigate =
     useNavigate();
 
@@ -63,9 +85,9 @@ const ForgotPassword = () => {
     useToast();
 
 
-  // =========================
+  // ========================================
   // SUBMIT
-  // =========================
+  // ========================================
   const handleSubmit =
     async (
       e: React.FormEvent
@@ -76,7 +98,7 @@ const ForgotPassword = () => {
       try {
 
         // VALIDATION
-        if (!identifier) {
+        if (!identifier.trim()) {
 
           toast({
 
@@ -99,61 +121,29 @@ const ForgotPassword = () => {
         setIsLoading(true);
 
 
+        // ====================================
         // API CALL
-        const response =
-          await fetch(
+        // ====================================
+        const data =
+          await apiPost(
 
-            "http://localhost:5000/auth/forgot-password",
+            "/auth/forgot-password",
 
             {
 
-              method: "POST",
-
-              headers: {
-
-                "Content-Type":
-                  "application/json",
-
-              },
-
-              body: JSON.stringify({
-
-                identifier,
-
-              }),
+              identifier,
 
             }
 
           );
 
 
-        const data =
-          await response.json();
+        // apiPost will throw on non-success responses
 
 
-        // ERROR
-        if (!response.ok) {
-
-          toast({
-
-            title:
-              "Request Failed",
-
-            description:
-              data.message ||
-              "Unable to send OTP",
-
-            variant:
-              "destructive",
-
-          });
-
-          return;
-
-        }
-
-
+        // ====================================
         // SUCCESS
+        // ====================================
         toast({
 
           title:
@@ -165,8 +155,11 @@ const ForgotPassword = () => {
         });
 
 
+        // ====================================
         // NAVIGATE
+        // ====================================
         navigate(
+
           "/verify-otp",
 
           {
@@ -211,141 +204,232 @@ const ForgotPassword = () => {
     };
 
 
+  // ========================================
+  // UI
+  // ========================================
   return (
 
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background overflow-hidden">
 
       <Header />
 
-      <div className="flex items-center justify-center px-4 py-10">
 
-        <Card className="w-full max-w-lg shadow-2xl rounded-3xl border-0 overflow-hidden">
+      {/* BACKGROUND EFFECTS */}
+      <div className="absolute top-10 left-10 h-40 w-40 bg-primary/10 rounded-full blur-3xl" />
+
+      <div className="absolute bottom-10 right-10 h-52 w-52 bg-purple-500/10 rounded-full blur-3xl" />
 
 
-          {/* TOP BANNER */}
-          <div className="bg-gradient-to-r from-primary to-purple-600 text-white p-8">
+      <div className="flex items-center justify-center px-4 py-10 relative z-10">
 
-            <div className="flex items-center gap-4 mb-4">
+        <motion.div
 
-              <div className="h-16 w-16 rounded-2xl bg-white/20 flex items-center justify-center">
+          initial={{
+            opacity: 0,
+            y: 20,
+          }}
 
-                <ShieldCheck className="h-8 w-8" />
+          animate={{
+            opacity: 1,
+            y: 0,
+          }}
+
+          transition={{
+            duration: 0.5,
+          }}
+
+          className="w-full max-w-lg"
+
+        >
+
+          <Card className="shadow-2xl rounded-[32px] border-0 overflow-hidden bg-background/95 backdrop-blur-xl">
+
+
+            {/* ================================= */}
+            {/* TOP HERO */}
+            {/* ================================= */}
+
+            <div className="relative bg-gradient-to-r from-primary via-purple-600 to-indigo-600 text-white p-8 overflow-hidden">
+
+
+              {/* DECORATIONS */}
+              <div className="absolute top-4 right-4 opacity-20">
+
+                <Sparkles className="h-20 w-20" />
 
               </div>
 
 
-              <div>
+              <div className="flex items-center gap-5 relative z-10">
 
-                <h1 className="text-3xl font-bold">
+                <motion.div
 
-                  Forgot Password
+                  animate={{
+                    y: [0, -6, 0],
+                  }}
 
-                </h1>
+                  transition={{
+                    repeat: Infinity,
+                    duration: 2,
+                  }}
 
-                <p className="text-white/90">
+                  className="h-20 w-20 rounded-3xl bg-white/20 backdrop-blur-md flex items-center justify-center shadow-lg"
 
-                  Reset your password securely
+                >
 
-                </p>
+                  <ShieldCheck className="h-10 w-10" />
 
-              </div>
-
-            </div>
-
-          </div>
-
-
-          {/* CONTENT */}
-          <CardHeader>
-
-            <CardTitle className="flex items-center gap-2">
-
-              <KeyRound className="h-5 w-5 text-primary" />
-
-              Password Recovery
-
-            </CardTitle>
+                </motion.div>
 
 
-            <CardDescription className="leading-7">
+                <div>
 
-              Enter your registered email or username.
-              We’ll send an OTP to verify your identity.
+                  <h1 className="text-4xl font-bold">
 
-            </CardDescription>
+                    Forgot Password
 
-          </CardHeader>
+                  </h1>
 
+                  <p className="text-white/90 mt-2 text-lg">
 
-          <CardContent>
+                    Recover your account securely
 
-            <form
-              onSubmit={handleSubmit}
-              className="space-y-6"
-            >
-
-              {/* IDENTIFIER */}
-              <div className="space-y-2">
-
-                <Label htmlFor="identifier">
-
-                  Email or Username
-
-                </Label>
-
-
-                <div className="relative">
-
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-
-                  <Input
-                    id="identifier"
-                    type="text"
-                    placeholder="Enter email or username"
-                    value={identifier}
-                    onChange={(e) =>
-                      setIdentifier(
-                        e.target.value
-                      )
-                    }
-                    className="pl-10 h-12 rounded-xl"
-                  />
+                  </p>
 
                 </div>
 
               </div>
 
+            </div>
 
-              {/* BUTTON */}
-              <Button
-                type="submit"
-                className="w-full h-12 rounded-xl text-lg font-semibold"
-                disabled={isLoading}
+
+            {/* ================================= */}
+            {/* HEADER */}
+            {/* ================================= */}
+
+            <CardHeader className="pt-8">
+
+              <CardTitle className="flex items-center gap-3 text-2xl">
+
+                <LockKeyhole className="h-6 w-6 text-primary" />
+
+                Password Recovery
+
+              </CardTitle>
+
+
+              <CardDescription className="leading-8 text-base pt-2">
+
+                Enter your registered email or username.
+                We’ll send a secure OTP verification code
+                to reset your password safely.
+
+              </CardDescription>
+
+            </CardHeader>
+
+
+            {/* ================================= */}
+            {/* FORM */}
+            {/* ================================= */}
+
+            <CardContent>
+
+              <form
+                onSubmit={handleSubmit}
+                className="space-y-6"
               >
 
-                {isLoading ? (
+                {/* EMAIL / USERNAME */}
+                <div className="space-y-3">
 
-                  <div className="flex items-center gap-2">
+                  <Label
+                    htmlFor="identifier"
+                    className="text-sm font-semibold"
+                  >
 
-                    <Loader2 className="h-5 w-5 animate-spin" />
+                    Email or Username
 
-                    Sending OTP...
+                  </Label>
+
+
+                  <div className="relative">
+
+                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+
+                    <Input
+                      id="identifier"
+                      type="text"
+                      placeholder="Enter email or username"
+                      value={identifier}
+                      onChange={(e) =>
+                        setIdentifier(
+                          e.target.value
+                        )
+                      }
+                      className="pl-12 h-14 rounded-2xl text-base"
+                    />
 
                   </div>
 
-                ) : (
+                </div>
 
-                  "Send OTP"
 
-                )}
+                {/* BUTTON */}
+                <Button
+                  type="submit"
+                  className="w-full h-14 rounded-2xl text-lg font-semibold"
+                  disabled={isLoading}
+                >
 
-              </Button>
+                  {isLoading ? (
 
-            </form>
+                    <div className="flex items-center gap-3">
 
-          </CardContent>
+                      <Loader2 className="h-5 w-5 animate-spin" />
 
-        </Card>
+                      Sending OTP...
+
+                    </div>
+
+                  ) : (
+
+                    <div className="flex items-center gap-2">
+
+                      <KeyRound className="h-5 w-5" />
+
+                      Send OTP
+
+                    </div>
+
+                  )}
+
+                </Button>
+
+
+                {/* BACK */}
+                <div className="text-center pt-2">
+
+                  <Link
+                    to="/login"
+                    className="inline-flex items-center gap-2 text-sm text-primary hover:underline"
+                  >
+
+                    <ArrowLeft className="h-4 w-4" />
+
+                    Back to Login
+
+                  </Link>
+
+                </div>
+
+              </form>
+
+            </CardContent>
+
+          </Card>
+
+        </motion.div>
 
       </div>
 
@@ -356,4 +440,7 @@ const ForgotPassword = () => {
 };
 
 
+// ==========================================
+// EXPORT
+// ==========================================
 export default ForgotPassword;

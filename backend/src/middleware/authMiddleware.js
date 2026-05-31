@@ -1,8 +1,28 @@
+// ==========================================
+// IMPORTS
+// ==========================================
 const jwt =
   require("jsonwebtoken");
 
 const User =
   require("../models/User");
+
+
+// ==========================================
+// VERIFY TOKEN HELPER
+// ==========================================
+const verifyToken =
+  (token) => {
+
+    return jwt.verify(
+
+      token,
+
+      process.env.JWT_SECRET
+
+    );
+
+  };
 
 
 // ==========================================
@@ -21,7 +41,7 @@ const protect =
 
 
       // ====================================
-      // GET TOKEN
+      // GET TOKEN FROM HEADER
       // ====================================
       if (
 
@@ -29,6 +49,7 @@ const protect =
 
         req.headers.authorization.startsWith(
           "Bearer "
+
         )
 
       ) {
@@ -42,7 +63,7 @@ const protect =
 
 
       // ====================================
-      // TOKEN CHECK
+      // TOKEN NOT FOUND
       // ====================================
       if (!token) {
 
@@ -59,16 +80,10 @@ const protect =
 
 
       // ====================================
-      // VERIFY TOKEN
+      // VERIFY JWT TOKEN
       // ====================================
       const decoded =
-        jwt.verify(
-
-          token,
-
-          process.env.JWT_SECRET
-
-        );
+        verifyToken(token);
 
 
       // ====================================
@@ -90,7 +105,7 @@ const protect =
           success: false,
 
           message:
-            "User not found",
+            "User no longer exists",
 
         });
 
@@ -98,7 +113,7 @@ const protect =
 
 
       // ====================================
-      // INACTIVE USER
+      // ACCOUNT INACTIVE
       // ====================================
       if (
         user.isActive === false
@@ -122,14 +137,23 @@ const protect =
       user.lastActive =
         new Date();
 
-      await user.save();
+      await user.save({
+
+        validateBeforeSave:
+          false,
+
+      });
 
 
       // ====================================
-      // ATTACH USER
+      // ATTACH USER TO REQUEST
       // ====================================
       req.user = user;
 
+
+      // ====================================
+      // CONTINUE
+      // ====================================
       next();
 
     }
@@ -137,8 +161,11 @@ const protect =
     catch (error) {
 
       console.log(
-        "AUTH MIDDLEWARE ERROR:",
-        error
+
+        "AUTH ERROR:",
+
+        error.message
+
       );
 
 
@@ -165,12 +192,32 @@ const protect =
       // ==================================
       // INVALID TOKEN
       // ==================================
-      return res.status(401).json({
+      if (
+        error.name ===
+        "JsonWebTokenError"
+      ) {
+
+        return res.status(401).json({
+
+          success: false,
+
+          message:
+            "Invalid token",
+
+        });
+
+      }
+
+
+      // ==================================
+      // DEFAULT ERROR
+      // ==================================
+      return res.status(500).json({
 
         success: false,
 
         message:
-          "Invalid token",
+          "Authentication failed",
 
       });
 
@@ -180,9 +227,9 @@ const protect =
 
 
 // ==========================================
-// ROLE CHECK
+// AUTHORIZE ROLES
 // ==========================================
-const roleCheck =
+const authorizeRoles =
   (...roles) => {
 
     return (
@@ -194,7 +241,7 @@ const roleCheck =
       try {
 
         // ================================
-        // NO USER
+        // USER CHECK
         // ================================
         if (!req.user) {
 
@@ -203,7 +250,7 @@ const roleCheck =
             success: false,
 
             message:
-              "Unauthorized",
+              "Unauthorized access",
 
           });
 
@@ -240,8 +287,11 @@ const roleCheck =
       catch (error) {
 
         console.log(
-          "ROLE CHECK ERROR:",
-          error
+
+          "ROLE AUTH ERROR:",
+
+          error.message
+
         );
 
         return res.status(500).json({
@@ -249,7 +299,7 @@ const roleCheck =
           success: false,
 
           message:
-            "Server Error",
+            "Authorization failed",
 
         });
 
@@ -264,16 +314,21 @@ const roleCheck =
 // ADMIN ONLY
 // ==========================================
 const adminOnly =
-  roleCheck("admin");
+  authorizeRoles(
+    "admin"
+  );
 
 
 // ==========================================
 // ALUMNI ONLY
 // ==========================================
 const alumniOnly =
-  roleCheck(
+  authorizeRoles(
+
     "alumni",
+
     "admin"
+
   );
 
 
@@ -281,7 +336,26 @@ const alumniOnly =
 // STUDENT ONLY
 // ==========================================
 const studentOnly =
-  roleCheck("student");
+  authorizeRoles(
+
+    "student",
+
+    "admin"
+
+  );
+
+
+// ==========================================
+// FACULTY ONLY
+// ==========================================
+const facultyOnly =
+  authorizeRoles(
+
+    "faculty",
+
+    "admin"
+
+  );
 
 
 // ==========================================
@@ -291,12 +365,14 @@ module.exports = {
 
   protect,
 
+  authorizeRoles,
+
   adminOnly,
 
   alumniOnly,
 
   studentOnly,
 
-  roleCheck,
+  facultyOnly,
 
 };

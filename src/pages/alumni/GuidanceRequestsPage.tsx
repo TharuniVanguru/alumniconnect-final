@@ -3,8 +3,7 @@ import {
   useState,
 } from "react";
 
-import axios from "axios";
-
+import api, { apiGet, apiPost, apiPut, apiPatch, apiDelete } from "@/utils/api";
 import {
   useNavigate,
 } from "react-router-dom";
@@ -43,6 +42,12 @@ import {
   Calendar,
   Video,
   RefreshCw,
+  Brain,
+  Sparkles,
+  User,
+  BookOpen,
+  AlertCircle,
+  CheckCheck,
 
 } from "lucide-react";
 
@@ -108,6 +113,24 @@ const GuidanceRequestsPage =
 
     const [
 
+      filteredRequests,
+      setFilteredRequests,
+
+    ] = useState<
+      GuidanceRequest[]
+    >([]);
+
+
+    const [
+
+      search,
+      setSearch,
+
+    ] = useState("");
+
+
+    const [
+
       loading,
       setLoading,
 
@@ -128,6 +151,14 @@ const GuidanceRequestsPage =
       setError,
 
     ] = useState("");
+
+
+    const [
+
+      selectedStatus,
+      setSelectedStatus,
+
+    ] = useState("All");
 
 
     // ====================================
@@ -179,9 +210,9 @@ const GuidanceRequestsPage =
 
 
           const response =
-            await axios.get(
+            await api.get(
 
-              "http://localhost:5000/guidance/alumni",
+              "/guidance/alumni",
 
               {
 
@@ -198,6 +229,10 @@ const GuidanceRequestsPage =
 
 
           setRequests(
+            response.data || []
+          );
+
+          setFilteredRequests(
             response.data || []
           );
 
@@ -220,6 +255,68 @@ const GuidanceRequestsPage =
         }
 
       };
+
+
+    // ====================================
+    // FILTER REQUESTS
+    // ====================================
+    useEffect(() => {
+
+      let filtered =
+        requests.filter(
+
+          (request) =>
+
+            request.studentName
+              ?.toLowerCase()
+              .includes(
+                search.toLowerCase()
+              ) ||
+
+            request.topic
+              ?.toLowerCase()
+              .includes(
+                search.toLowerCase()
+              ) ||
+
+            request.domain
+              ?.toLowerCase()
+              .includes(
+                search.toLowerCase()
+              )
+
+        );
+
+
+      if (
+        selectedStatus !==
+        "All"
+      ) {
+
+        filtered =
+          filtered.filter(
+
+            (request) =>
+
+              request.status ===
+              selectedStatus
+
+          );
+
+      }
+
+
+      setFilteredRequests(
+        filtered
+      );
+
+    }, [
+
+      search,
+      requests,
+      selectedStatus,
+
+    ]);
 
 
     // ====================================
@@ -284,9 +381,9 @@ const GuidanceRequestsPage =
             };
 
 
-          await axios.put(
+          await api.put(
 
-            `http://localhost:5000/guidance/${requestId}/status`,
+            `/guidance/${requestId}/status`,
 
             {
 
@@ -314,9 +411,7 @@ const GuidanceRequestsPage =
           );
 
 
-          // ================================
           // UPDATE UI
-          // ================================
           setRequests(
 
             (prev) =>
@@ -420,7 +515,7 @@ const GuidanceRequestsPage =
 
             return (
 
-              <Badge className="bg-green-600 text-white">
+              <Badge className="bg-green-600 text-white rounded-xl">
 
                 <CheckCircle2 className="h-3 w-3 mr-1" />
 
@@ -448,7 +543,9 @@ const GuidanceRequestsPage =
 
             return (
 
-              <Badge className="bg-blue-600 text-white">
+              <Badge className="bg-blue-600 text-white rounded-xl">
+
+                <CheckCheck className="h-3 w-3 mr-1" />
 
                 Completed
 
@@ -462,7 +559,7 @@ const GuidanceRequestsPage =
 
               <Badge
                 variant="secondary"
-                className="bg-yellow-100 text-yellow-700"
+                className="bg-yellow-100 text-yellow-700 rounded-xl"
               >
 
                 <Clock3 className="h-3 w-3 mr-1" />
@@ -479,6 +576,33 @@ const GuidanceRequestsPage =
 
 
     // ====================================
+    // STATS
+    // ====================================
+    const pendingCount =
+      requests.filter(
+        (r) =>
+          r.status ===
+          "Pending"
+      ).length;
+
+
+    const acceptedCount =
+      requests.filter(
+        (r) =>
+          r.status ===
+          "Accepted"
+      ).length;
+
+
+    const completedCount =
+      requests.filter(
+        (r) =>
+          r.status ===
+          "Completed"
+      ).length;
+
+
+    // ====================================
     // UI
     // ====================================
     return (
@@ -489,29 +613,223 @@ const GuidanceRequestsPage =
 
         <div className="max-w-7xl mx-auto p-6">
 
-          {/* HEADER */}
 
-          <div className="flex items-center justify-between mb-8">
+          {/* HERO */}
 
-            <div>
+          <div className="mb-10">
 
-              <h1 className="text-4xl font-bold">
+            <div className="rounded-3xl overflow-hidden bg-gradient-to-r from-primary via-purple-600 to-indigo-700 text-white shadow-2xl">
 
-                Guidance Requests
+              <div className="p-8 md:p-10">
 
-              </h1>
+                <div className="flex items-center gap-5">
 
-              <p className="text-muted-foreground mt-2">
+                  <div className="h-20 w-20 rounded-3xl bg-white/20 flex items-center justify-center">
 
-                Manage mentorship and student guidance requests
+                    <Brain className="h-10 w-10" />
 
-              </p>
+                  </div>
+
+
+                  <div>
+
+                    <h1 className="text-4xl md:text-5xl font-bold">
+
+                      Guidance Requests
+
+                    </h1>
+
+                    <p className="text-white/90 mt-3 text-lg">
+
+                      Mentor students, schedule meetings, and help them grow professionally.
+
+                    </p>
+
+                  </div>
+
+                </div>
+
+              </div>
 
             </div>
+
+          </div>
+
+
+          {/* STATS */}
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+
+            <Card className="rounded-3xl shadow-xl border-0">
+
+              <CardContent className="p-6 flex items-center gap-4">
+
+                <div className="h-14 w-14 rounded-2xl bg-yellow-100 flex items-center justify-center">
+
+                  <Clock3 className="h-7 w-7 text-yellow-600" />
+
+                </div>
+
+                <div>
+
+                  <p className="text-muted-foreground text-sm">
+
+                    Pending
+
+                  </p>
+
+                  <h2 className="text-3xl font-bold">
+
+                    {pendingCount}
+
+                  </h2>
+
+                </div>
+
+              </CardContent>
+
+            </Card>
+
+
+            <Card className="rounded-3xl shadow-xl border-0">
+
+              <CardContent className="p-6 flex items-center gap-4">
+
+                <div className="h-14 w-14 rounded-2xl bg-green-100 flex items-center justify-center">
+
+                  <CheckCircle2 className="h-7 w-7 text-green-600" />
+
+                </div>
+
+                <div>
+
+                  <p className="text-muted-foreground text-sm">
+
+                    Accepted
+
+                  </p>
+
+                  <h2 className="text-3xl font-bold">
+
+                    {acceptedCount}
+
+                  </h2>
+
+                </div>
+
+              </CardContent>
+
+            </Card>
+
+
+            <Card className="rounded-3xl shadow-xl border-0">
+
+              <CardContent className="p-6 flex items-center gap-4">
+
+                <div className="h-14 w-14 rounded-2xl bg-blue-100 flex items-center justify-center">
+
+                  <CheckCheck className="h-7 w-7 text-blue-600" />
+
+                </div>
+
+                <div>
+
+                  <p className="text-muted-foreground text-sm">
+
+                    Completed
+
+                  </p>
+
+                  <h2 className="text-3xl font-bold">
+
+                    {completedCount}
+
+                  </h2>
+
+                </div>
+
+              </CardContent>
+
+            </Card>
+
+          </div>
+
+
+          {/* SEARCH + FILTER */}
+
+          <div className="flex flex-col lg:flex-row gap-4 mb-8">
+
+            <Input
+
+              placeholder="Search by topic, student, or domain..."
+
+              value={search}
+
+              onChange={(e) =>
+
+                setSearch(
+                  e.target.value
+                )
+
+              }
+
+              className="h-14 rounded-2xl"
+
+            />
+
+
+            <select
+
+              value={selectedStatus}
+
+              onChange={(e) =>
+
+                setSelectedStatus(
+                  e.target.value
+                )
+
+              }
+
+              className="h-14 px-5 rounded-2xl border bg-background"
+
+            >
+
+              <option>
+
+                All
+
+              </option>
+
+              <option>
+
+                Pending
+
+              </option>
+
+              <option>
+
+                Accepted
+
+              </option>
+
+              <option>
+
+                Rejected
+
+              </option>
+
+              <option>
+
+                Completed
+
+              </option>
+
+            </select>
 
 
             <Button
               variant="outline"
+              className="h-14 rounded-2xl"
               onClick={
                 fetchRequests
               }
@@ -530,7 +848,7 @@ const GuidanceRequestsPage =
 
           {error && (
 
-            <div className="bg-red-100 text-red-600 p-4 rounded-xl mb-5">
+            <div className="bg-red-100 text-red-600 p-4 rounded-2xl mb-5">
 
               {error}
 
@@ -545,16 +863,18 @@ const GuidanceRequestsPage =
 
             <div className="flex items-center justify-center py-20">
 
-              <Loader2 className="h-10 w-10 animate-spin text-primary" />
+              <Loader2 className="h-12 w-12 animate-spin text-primary" />
 
             </div>
 
-          ) : requests.length ===
+          ) : filteredRequests.length ===
             0 ? (
 
-            <Card>
+            <Card className="rounded-3xl shadow-2xl border-0">
 
-              <CardContent className="py-20 text-center">
+              <CardContent className="py-24 text-center">
+
+                <Sparkles className="h-16 w-16 mx-auto text-muted-foreground mb-5" />
 
                 <h2 className="text-3xl font-bold mb-3">
 
@@ -574,9 +894,9 @@ const GuidanceRequestsPage =
 
           ) : (
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
 
-              {requests.map(
+              {filteredRequests.map(
                 (
                   request
                 ) => (
@@ -586,15 +906,15 @@ const GuidanceRequestsPage =
                       request._id
                     }
 
-                    className="shadow-xl rounded-3xl border-0"
+                    className="shadow-2xl rounded-3xl border-0 overflow-hidden"
 
                   >
 
-                    <CardContent className="p-6">
+                    {/* TOP */}
 
-                      {/* TOP */}
+                    <div className="bg-gradient-to-r from-primary to-purple-600 text-white p-6">
 
-                      <div className="flex items-start justify-between mb-5">
+                      <div className="flex items-center justify-between gap-4">
 
                         <div>
 
@@ -606,7 +926,7 @@ const GuidanceRequestsPage =
 
                           </h2>
 
-                          <p className="text-muted-foreground">
+                          <p className="text-white/90 mt-1">
 
                             by {
                               request.studentName
@@ -622,139 +942,164 @@ const GuidanceRequestsPage =
 
                       </div>
 
-
-                      {/* CONTENT */}
-
-                      <div className="space-y-4">
-
-                        <div>
-
-                          <span className="font-semibold">
-
-                            Domain:
-
-                          </span>
-
-                          <p>
-
-                            {
-                              request.domain
-                            }
-
-                          </p>
-
-                        </div>
+                    </div>
 
 
-                        <div>
+                    {/* BODY */}
 
-                          <span className="font-semibold">
-
-                            Urgency:
-
-                          </span>
-
-                          <p>
-
-                            {
-                              request.urgency
-                            }
-
-                          </p>
-
-                        </div>
+                    <CardContent className="p-6 space-y-5">
 
 
-                        <div>
+                      {/* DOMAIN */}
 
-                          <span className="font-semibold">
+                      <div className="flex items-center gap-2">
 
-                            Description:
+                        <BookOpen className="h-4 w-4 text-primary" />
 
-                          </span>
+                        <Badge
+                          variant="outline"
+                          className="rounded-xl"
+                        >
 
-                          <p className="leading-7">
+                          {
+                            request.domain
+                          }
 
-                            {
-                              request.description
-                            }
-
-                          </p>
-
-                        </div>
-
-
-                        {/* MEETING LINK */}
-
-                        {request.meetingLink && (
-
-                          <div>
-
-                            <span className="font-semibold flex items-center gap-2">
-
-                              <Video className="h-4 w-4" />
-
-                              Meeting Link
-
-                            </span>
-
-                            <a
-
-                              href={
-                                request.meetingLink
-                              }
-
-                              target="_blank"
-
-                              rel="noreferrer"
-
-                              className="text-blue-600 underline break-all"
-
-                            >
-
-                              Join Meeting
-
-                            </a>
-
-                          </div>
-
-                        )}
-
-
-                        {/* DATE */}
-
-                        {request.scheduledDate && (
-
-                          <div>
-
-                            <span className="font-semibold flex items-center gap-2">
-
-                              <Calendar className="h-4 w-4" />
-
-                              Scheduled Date
-
-                            </span>
-
-                            <p>
-
-                              {new Date(
-
-                                request.scheduledDate
-
-                              ).toLocaleString()}
-
-                            </p>
-
-                          </div>
-
-                        )}
+                        </Badge>
 
                       </div>
 
 
+                      {/* URGENCY */}
+
+                      <div>
+
+                        <span className="font-semibold">
+
+                          Urgency:
+
+                        </span>
+
+                        <p className="mt-1">
+
+                          {
+                            request.urgency
+                          }
+
+                        </p>
+
+                      </div>
+
+
+                      {/* DESCRIPTION */}
+
+                      <div className="rounded-2xl bg-muted/40 border p-5">
+
+                        <div className="flex items-center gap-2 mb-3">
+
+                          <User className="h-5 w-5 text-primary" />
+
+                          <h3 className="font-semibold">
+
+                            Student Description
+
+                          </h3>
+
+                        </div>
+
+                        <p className="leading-7 text-muted-foreground">
+
+                          {
+                            request.description
+                          }
+
+                        </p>
+
+                      </div>
+
+
+                      {/* DATE */}
+
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+
+                        <Calendar className="h-4 w-4" />
+
+                        {new Date(
+
+                          request.createdAt
+
+                        ).toLocaleDateString()}
+
+                      </div>
+
+
+                      {/* MEETING LINK */}
+
+                      {request.meetingLink && (
+
+                        <div>
+
+                          <span className="font-semibold flex items-center gap-2 mb-2">
+
+                            <Video className="h-4 w-4" />
+
+                            Meeting Link
+
+                          </span>
+
+                          <a
+
+                            href={
+                              request.meetingLink
+                            }
+
+                            target="_blank"
+
+                            rel="noreferrer"
+
+                            className="text-blue-600 underline break-all"
+
+                          >
+
+                            Join Meeting
+
+                          </a>
+
+                        </div>
+
+                      )}
+
+
+                      {/* SCHEDULE */}
+
+                      {request.scheduledDate && (
+
+                        <div>
+
+                          <span className="font-semibold">
+
+                            Scheduled Date:
+
+                          </span>
+
+                          <p className="mt-1">
+
+                            {new Date(
+
+                              request.scheduledDate
+
+                            ).toLocaleString()}
+
+                          </p>
+
+                        </div>
+
+                      )}
+
+
                       {/* ACTIONS */}
 
-                      <div className="mt-6 space-y-3">
+                      <div className="pt-3 space-y-3">
 
                         {request.status ===
                           "Pending" && (
@@ -791,6 +1136,8 @@ const GuidanceRequestsPage =
 
                               }
 
+                              className="rounded-2xl h-12"
+
                             />
 
 
@@ -824,16 +1171,20 @@ const GuidanceRequestsPage =
 
                               }
 
+                              className="rounded-2xl h-12"
+
                             />
 
 
-                            <div className="flex gap-3">
+                            <div className="flex flex-wrap gap-3">
 
                               <Button
 
                                 disabled={
                                   actionLoading
                                 }
+
+                                className="rounded-2xl"
 
                                 onClick={() =>
 
@@ -867,6 +1218,8 @@ const GuidanceRequestsPage =
                               <Button
 
                                 variant="destructive"
+
+                                className="rounded-2xl"
 
                                 disabled={
                                   actionLoading
@@ -904,11 +1257,13 @@ const GuidanceRequestsPage =
                         {request.status ===
                           "Accepted" && (
 
-                          <div className="flex gap-3">
+                          <div className="flex flex-wrap gap-3">
 
                             <Button
 
                               variant="outline"
+
+                              className="rounded-2xl"
 
                               onClick={() =>
 
@@ -930,6 +1285,8 @@ const GuidanceRequestsPage =
 
 
                             <Button
+
+                              className="rounded-2xl"
 
                               disabled={
                                 actionLoading

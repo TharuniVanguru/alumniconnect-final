@@ -6,7 +6,7 @@ const mongoose =
 // NOTIFICATION SCHEMA
 // ==========================================
 const notificationSchema =
-  mongoose.Schema(
+  new mongoose.Schema(
 
     {
 
@@ -36,6 +36,8 @@ const notificationSchema =
           mongoose.Schema.Types.ObjectId,
 
         ref: "User",
+
+        default: null,
 
       },
 
@@ -97,6 +99,8 @@ const notificationSchema =
 
           "reminder",
 
+          "recommendation",
+
         ],
 
         default: "system",
@@ -136,6 +140,8 @@ const notificationSchema =
         type:
           mongoose.Schema.Types.ObjectId,
 
+        default: null,
+
       },
 
 
@@ -147,6 +153,8 @@ const notificationSchema =
         type: String,
 
         default: "",
+
+        trim: true,
 
       },
 
@@ -168,6 +176,8 @@ const notificationSchema =
 
         type: Date,
 
+        default: null,
+
       },
 
 
@@ -178,7 +188,7 @@ const notificationSchema =
 
         type: Boolean,
 
-        default: true,
+        default: false,
 
       },
 
@@ -196,11 +206,61 @@ const notificationSchema =
 
 
       // ====================================
-      // EXPIRE NOTIFICATION
+      // SOCKET DELIVERED
+      // ====================================
+      socketDelivered: {
+
+        type: Boolean,
+
+        default: false,
+
+      },
+
+
+      // ====================================
+      // EMAIL SENT
+      // ====================================
+      emailSent: {
+
+        type: Boolean,
+
+        default: false,
+
+      },
+
+
+      // ====================================
+      // EXPIRE AT
       // ====================================
       expiresAt: {
 
         type: Date,
+
+        default: null,
+
+      },
+
+
+      // ====================================
+      // ICON
+      // ====================================
+      icon: {
+
+        type: String,
+
+        default: "🔔",
+
+      },
+
+
+      // ====================================
+      // SOFT DELETE
+      // ====================================
+      deleted: {
+
+        type: Boolean,
+
+        default: false,
 
       },
 
@@ -216,13 +276,47 @@ const notificationSchema =
 
 
 // ==========================================
-// INDEXES
+// MAIN INDEX
 // ==========================================
 notificationSchema.index({
 
   recipient: 1,
 
   isRead: 1,
+
+  createdAt: -1,
+
+});
+
+
+// ==========================================
+// TYPE INDEX
+// ==========================================
+notificationSchema.index({
+
+  recipient: 1,
+
+  type: 1,
+
+});
+
+
+// ==========================================
+// UNREAD INDEX
+// ==========================================
+notificationSchema.index({
+
+  recipient: 1,
+
+  isRead: 1,
+
+});
+
+
+// ==========================================
+// CREATED DATE INDEX
+// ==========================================
+notificationSchema.index({
 
   createdAt: -1,
 

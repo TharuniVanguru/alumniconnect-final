@@ -15,57 +15,39 @@ import {
 } from "@/components/ui/label";
 
 import {
-
   Card,
-
   CardContent,
-
   CardDescription,
-
   CardFooter,
-
   CardHeader,
-
   CardTitle,
-
 } from "@/components/ui/card";
 
 import {
-
   Tabs,
-
   TabsContent,
-
   TabsList,
-
   TabsTrigger,
-
 } from "@/components/ui/tabs";
 
 import {
   UserRole,
+  User,
 } from "@/types/user";
 
 import {
-
   useNavigate,
-
   Link,
-
   useLocation,
-
 } from "react-router-dom";
 
 import {
-
-  User,
-
   GraduationCap,
-
   Shield,
-
   Loader2,
-
+  User as UserIcon,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 
 import {
@@ -97,6 +79,12 @@ export const LoginForm = () => {
   const [formError, setFormError] =
     useState("");
 
+  const [submitting, setSubmitting] =
+    useState(false);
+
+  const [showPassword, setShowPassword] =
+    useState(false);
+
 
   // ========================================
   // HOOKS
@@ -111,11 +99,7 @@ export const LoginForm = () => {
     useToast();
 
   const {
-
     login,
-
-    isLoading,
-
   } = useAuth();
 
 
@@ -125,7 +109,7 @@ export const LoginForm = () => {
   const from =
     (
       location.state as any
-    )?.from?.pathname;
+    )?.from;
 
 
   // ========================================
@@ -137,6 +121,8 @@ export const LoginForm = () => {
 
     e.preventDefault();
 
+    if (submitting) return;
+
     setFormError("");
 
 
@@ -144,11 +130,8 @@ export const LoginForm = () => {
     // VALIDATION
     // ======================================
     if (
-
       !identifier.trim() ||
-
       !password.trim()
-
     ) {
 
       setFormError(
@@ -173,13 +156,10 @@ export const LoginForm = () => {
     }
 
 
-    // ======================================
-    // PASSWORD VALIDATION
-    // ======================================
     if (password.length < 6) {
 
       setFormError(
-        "Password too short"
+        "Password must be at least 6 characters"
       );
 
       return;
@@ -188,6 +168,9 @@ export const LoginForm = () => {
 
 
     try {
+
+      setSubmitting(true);
+
 
       // ====================================
       // LOGIN API
@@ -209,12 +192,13 @@ export const LoginForm = () => {
       // ====================================
       if (!result.success) {
 
-        setFormError(
+        const errorMessage =
 
           result.message ||
+          "Invalid credentials";
 
-          "Invalid credentials"
-
+        setFormError(
+          errorMessage
         );
 
         toast({
@@ -223,10 +207,7 @@ export const LoginForm = () => {
             "Login Failed",
 
           description:
-
-            result.message ||
-
-            "Invalid credentials",
+            errorMessage,
 
           variant:
             "destructive",
@@ -246,6 +227,7 @@ export const LoginForm = () => {
           "userInfo"
         );
 
+
       if (!storedUser) {
 
         navigate("/");
@@ -254,10 +236,30 @@ export const LoginForm = () => {
 
       }
 
-      const user =
-        JSON.parse(
-          storedUser
+
+      // ====================================
+      // SAFE PARSE
+      // ====================================
+      let user: User;
+
+      try {
+
+        user =
+          JSON.parse(
+            storedUser
+          );
+
+      }
+
+      catch {
+
+        setFormError(
+          "Invalid user data"
         );
+
+        return;
+
+      }
 
 
       // ====================================
@@ -303,9 +305,17 @@ export const LoginForm = () => {
       // ====================================
       // REDIRECT TO PREVIOUS PAGE
       // ====================================
-      if (from) {
+      if (
+        from &&
+        from !== "/login"
+      ) {
 
-        navigate(from);
+        navigate(
+          from,
+          {
+            replace: true,
+          }
+        );
 
         return;
 
@@ -313,14 +323,17 @@ export const LoginForm = () => {
 
 
       // ====================================
-      // ROLE BASED REDIRECT
+      // ROLE REDIRECT
       // ====================================
       switch (user.role) {
 
         case "student":
 
           navigate(
-            "/student/dashboard"
+            "/student/dashboard",
+            {
+              replace: true,
+            }
           );
 
           break;
@@ -328,7 +341,10 @@ export const LoginForm = () => {
         case "alumni":
 
           navigate(
-            "/alumni/dashboard"
+            "/alumni/dashboard",
+            {
+              replace: true,
+            }
           );
 
           break;
@@ -336,28 +352,43 @@ export const LoginForm = () => {
         case "admin":
 
           navigate(
-            "/admin/dashboard"
+            "/admin/dashboard",
+            {
+              replace: true,
+            }
           );
 
           break;
 
         default:
 
-          navigate("/");
+          navigate(
+            "/",
+            {
+              replace: true,
+            }
+          );
 
       }
 
     }
 
-    catch (error) {
+    catch (error: any) {
 
       console.log(
         "LOGIN ERROR:",
         error
       );
 
+      const errorMessage =
+
+        error?.response?.data
+          ?.message ||
+
+        "Server connection failed";
+
       setFormError(
-        "Server connection failed"
+        errorMessage
       );
 
       toast({
@@ -366,12 +397,18 @@ export const LoginForm = () => {
           "Server Error",
 
         description:
-          "Backend connection failed",
+          errorMessage,
 
         variant:
           "destructive",
 
       });
+
+    }
+
+    finally {
+
+      setSubmitting(false);
 
     }
 
@@ -394,7 +431,7 @@ export const LoginForm = () => {
     );
 
     setPassword(
-      "123456"
+      "Password123"
     );
 
     setActiveRole(
@@ -412,7 +449,7 @@ export const LoginForm = () => {
   const roleIcons = {
 
     student:
-      <User className="h-4 w-4" />,
+      <UserIcon className="h-4 w-4" />,
 
     alumni:
       <GraduationCap className="h-4 w-4" />,
@@ -571,7 +608,7 @@ export const LoginForm = () => {
 
                     }
 
-                    disabled={isLoading}
+                    disabled={submitting}
 
                     required
 
@@ -589,31 +626,68 @@ export const LoginForm = () => {
 
                   </Label>
 
-                  <Input
+                  <div className="relative">
 
-                    id="password"
+                    <Input
 
-                    type="password"
+                      id="password"
 
-                    placeholder="Enter password"
+                      type={
+                        showPassword
+                          ? "text"
+                          : "password"
+                      }
 
-                    autoComplete="current-password"
+                      placeholder="Enter password"
 
-                    value={password}
+                      autoComplete="current-password"
 
-                    onChange={(e) =>
+                      value={password}
 
-                      setPassword(
-                        e.target.value
-                      )
+                      onChange={(e) =>
 
-                    }
+                        setPassword(
+                          e.target.value
+                        )
 
-                    disabled={isLoading}
+                      }
 
-                    required
+                      disabled={submitting}
 
-                  />
+                      required
+
+                    />
+
+
+                    <button
+
+                      type="button"
+
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+
+                      onClick={() =>
+
+                        setShowPassword(
+                          !showPassword
+                        )
+
+                      }
+
+                    >
+
+                      {showPassword ? (
+
+                        <EyeOff className="h-4 w-4" />
+
+                      ) : (
+
+                        <Eye className="h-4 w-4" />
+
+                      )}
+
+                    </button>
+
+                  </div>
 
                 </div>
 
@@ -625,13 +699,13 @@ export const LoginForm = () => {
 
                   className="w-full"
 
-                  disabled={isLoading}
+                  disabled={submitting}
 
                   variant="hero"
 
                 >
 
-                  {isLoading ? (
+                  {submitting ? (
 
                     <div className="flex items-center gap-2">
 
@@ -694,11 +768,8 @@ export const LoginForm = () => {
                     onClick={() =>
 
                       quickLogin(
-
                         "student",
-
                         "22A91A05A1"
-
                       )
 
                     }
@@ -725,11 +796,8 @@ export const LoginForm = () => {
                     onClick={() =>
 
                       quickLogin(
-
                         "alumni",
-
                         "ALU001"
-
                       )
 
                     }
@@ -756,11 +824,8 @@ export const LoginForm = () => {
                     onClick={() =>
 
                       quickLogin(
-
                         "admin",
-
                         "ADMIN001"
-
                       )
 
                     }
@@ -813,3 +878,6 @@ export const LoginForm = () => {
   );
 
 };
+
+
+export default LoginForm;

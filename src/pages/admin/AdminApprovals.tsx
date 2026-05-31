@@ -1,54 +1,55 @@
 import {
-
   useEffect,
-
+  useMemo,
   useState,
-
 } from "react";
 
-import api
-  from "@/utils/api";
+import api from "@/utils/api";
+
+import { Header } from "@/components/layout/Header";
 
 import {
-
   Card,
-
   CardContent,
-
   CardHeader,
-
   CardTitle,
-
+  CardDescription,
 } from "@/components/ui/card";
 
 import {
-
   Button,
-
 } from "@/components/ui/button";
 
 import {
-
   Badge,
-
 } from "@/components/ui/badge";
 
+import { Input }
+  from "@/components/ui/input";
+
 import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
 
+import {
   Loader2,
-
   Shield,
-
   User,
-
   GraduationCap,
-
+  Search,
+  Users,
+  CheckCircle2,
+  Ban,
+  Sparkles,
+  RefreshCw,
+  Calendar,
 } from "lucide-react";
 
 import {
-
   useToast,
-
 } from "@/hooks/use-toast";
 
 
@@ -83,14 +84,30 @@ React.FC = () => {
   // ========================================
   // STATES
   // ========================================
-  const [users, setUsers] =
-    useState<AdminUser[]>([]);
+  const [
+    users,
+    setUsers,
+  ] = useState<AdminUser[]>([]);
 
-  const [loading, setLoading] =
-    useState(true);
+  const [
+    loading,
+    setLoading,
+  ] = useState(true);
 
-  const [actionLoading, setActionLoading] =
-    useState<string | null>(null);
+  const [
+    actionLoading,
+    setActionLoading,
+  ] = useState<string | null>(null);
+
+  const [
+    search,
+    setSearch,
+  ] = useState("");
+
+  const [
+    selectedTab,
+    setSelectedTab,
+  ] = useState("all");
 
 
   // ========================================
@@ -284,7 +301,7 @@ React.FC = () => {
 
           return (
 
-            <Shield className="h-4 w-4" />
+            <Shield className="h-4 w-4 text-red-500" />
 
           );
 
@@ -292,7 +309,7 @@ React.FC = () => {
 
           return (
 
-            <GraduationCap className="h-4 w-4" />
+            <GraduationCap className="h-4 w-4 text-primary" />
 
           );
 
@@ -300,7 +317,7 @@ React.FC = () => {
 
           return (
 
-            <User className="h-4 w-4" />
+            <User className="h-4 w-4 text-blue-500" />
 
           );
 
@@ -310,23 +327,94 @@ React.FC = () => {
 
 
   // ========================================
+  // FILTERED USERS
+  // ========================================
+  const filteredUsers =
+    useMemo(() => {
+
+      return users.filter((user) => {
+
+        const matchesSearch =
+
+          user.name
+            .toLowerCase()
+            .includes(
+              search.toLowerCase()
+            ) ||
+
+          user.email
+            .toLowerCase()
+            .includes(
+              search.toLowerCase()
+            );
+
+        const matchesTab =
+
+          selectedTab === "all"
+
+            ? true
+
+            : selectedTab === "active"
+
+            ? user.isActive
+
+            : !user.isActive;
+
+        return (
+          matchesSearch &&
+          matchesTab
+        );
+
+      });
+
+    }, [
+      users,
+      search,
+      selectedTab,
+    ]);
+
+
+  // ========================================
+  // STATS
+  // ========================================
+  const totalUsers =
+    users.length;
+
+  const activeUsers =
+    users.filter(
+      (u) => u.isActive
+    ).length;
+
+  const blockedUsers =
+    users.filter(
+      (u) => !u.isActive
+    ).length;
+
+
+  // ========================================
   // LOADING SCREEN
   // ========================================
   if (loading) {
 
     return (
 
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen bg-background">
 
-        <div className="flex items-center gap-3">
+        <Header />
 
-          <Loader2 className="h-6 w-6 animate-spin text-primary" />
+        <div className="flex items-center justify-center h-[80vh]">
 
-          <span className="text-lg font-medium">
+          <div className="text-center">
 
-            Loading users...
+            <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
 
-          </span>
+            <h2 className="text-2xl font-bold">
+
+              Loading Users...
+
+            </h2>
+
+          </div>
 
         </div>
 
@@ -342,175 +430,83 @@ React.FC = () => {
   // ========================================
   return (
 
-    <div className="p-4 md:p-6">
+    <div className="min-h-screen bg-background">
 
-      {/* HEADER */}
-      <div className="mb-6">
+      <Header />
 
-        <h1 className="text-3xl font-bold">
-
-          User Approvals
-
-        </h1>
-
-        <p className="text-muted-foreground mt-1">
-
-          Manage alumni, students and admins
-
-        </p>
-
-      </div>
+      <main className="max-w-7xl mx-auto p-6">
 
 
-      {/* EMPTY */}
-      {users.length === 0 && (
+        {/* HERO */}
+        <div className="mb-10">
 
-        <Card>
+          <div className="rounded-3xl overflow-hidden bg-gradient-to-r from-primary via-purple-600 to-indigo-700 text-white shadow-2xl">
 
-          <CardContent className="py-10 text-center">
+            <div className="p-8 md:p-10">
 
-            <p className="text-muted-foreground">
+              <div className="flex items-center gap-5">
 
-              No users found
+                <div className="h-20 w-20 rounded-3xl bg-white/20 flex items-center justify-center">
 
-            </p>
+                  <Shield className="h-10 w-10" />
 
-          </CardContent>
-
-        </Card>
-
-      )}
-
-
-      {/* USERS */}
-      <div className="grid gap-4">
-
-        {users.map((user) => (
-
-          <Card
-            key={user._id}
-            className="shadow-sm"
-          >
-
-            <CardHeader>
-
-              <div className="flex items-center justify-between">
+                </div>
 
                 <div>
 
-                  <CardTitle className="flex items-center gap-2">
+                  <h1 className="text-4xl md:text-5xl font-bold">
 
-                    {getRoleIcon(
-                      user.role
-                    )}
+                    User Approvals
 
-                    {user.name}
+                  </h1>
 
-                  </CardTitle>
+                  <p className="text-white/90 mt-3 text-lg">
 
-                  <p className="text-sm text-muted-foreground mt-1">
-
-                    {user.email}
+                    Manage platform users, approvals, and access permissions.
 
                   </p>
 
                 </div>
-
-
-                {/* STATUS */}
-                <Badge
-
-                  variant={
-                    user.isActive
-
-                      ? "default"
-
-                      : "destructive"
-                  }
-
-                >
-
-                  {user.isActive
-
-                    ? "Active"
-
-                    : "Blocked"}
-
-                </Badge>
 
               </div>
 
-            </CardHeader>
+            </div>
+
+          </div>
+
+        </div>
 
 
-            <CardContent>
+        {/* STATS */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+
+          <Card className="rounded-3xl shadow-xl border-0">
+
+            <CardContent className="p-6">
 
               <div className="flex items-center justify-between">
 
-                {/* ROLE */}
                 <div>
 
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-muted-foreground">
 
-                    Role
-
-                  </p>
-
-                  <p className="font-medium capitalize">
-
-                    {user.role}
+                    Total Users
 
                   </p>
+
+                  <h2 className="text-4xl font-bold mt-2">
+
+                    {totalUsers}
+
+                  </h2>
 
                 </div>
 
+                <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center">
 
-                {/* ACTION */}
-                <Button
+                  <Users className="h-7 w-7 text-primary" />
 
-                  disabled={
-                    actionLoading ===
-                    user._id
-                  }
-
-                  variant={
-                    user.isActive
-
-                      ? "destructive"
-
-                      : "default"
-                  }
-
-                  onClick={() =>
-
-                    toggleUserStatus(
-
-                      user._id,
-
-                      user.isActive
-
-                    )
-
-                  }
-
-                >
-
-                  {actionLoading ===
-                  user._id ? (
-
-                    <Loader2 className="h-4 w-4 animate-spin" />
-
-                  ) : user.isActive ? (
-
-                    "Block User"
-
-                  ) : (
-
-                    "Approve User"
-
-                  )}
-
-                </Button>
+                </div>
 
               </div>
 
@@ -518,9 +514,374 @@ React.FC = () => {
 
           </Card>
 
-        ))}
 
-      </div>
+          <Card className="rounded-3xl shadow-xl border-0">
+
+            <CardContent className="p-6">
+
+              <div className="flex items-center justify-between">
+
+                <div>
+
+                  <p className="text-muted-foreground">
+
+                    Active Users
+
+                  </p>
+
+                  <h2 className="text-4xl font-bold mt-2 text-green-600">
+
+                    {activeUsers}
+
+                  </h2>
+
+                </div>
+
+                <div className="h-14 w-14 rounded-2xl bg-green-100 flex items-center justify-center">
+
+                  <CheckCircle2 className="h-7 w-7 text-green-600" />
+
+                </div>
+
+              </div>
+
+            </CardContent>
+
+          </Card>
+
+
+          <Card className="rounded-3xl shadow-xl border-0">
+
+            <CardContent className="p-6">
+
+              <div className="flex items-center justify-between">
+
+                <div>
+
+                  <p className="text-muted-foreground">
+
+                    Blocked Users
+
+                  </p>
+
+                  <h2 className="text-4xl font-bold mt-2 text-red-600">
+
+                    {blockedUsers}
+
+                  </h2>
+
+                </div>
+
+                <div className="h-14 w-14 rounded-2xl bg-red-100 flex items-center justify-center">
+
+                  <Ban className="h-7 w-7 text-red-600" />
+
+                </div>
+
+              </div>
+
+            </CardContent>
+
+          </Card>
+
+        </div>
+
+
+        {/* SEARCH + ACTIONS */}
+        <div className="flex flex-col lg:flex-row gap-4 mb-8">
+
+          <div className="relative flex-1">
+
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+
+            <Input
+
+              placeholder="Search users by name or email..."
+
+              value={search}
+
+              onChange={(e) =>
+
+                setSearch(
+                  e.target.value
+                )
+
+              }
+
+              className="pl-12 h-14 rounded-2xl"
+
+            />
+
+          </div>
+
+
+          <Button
+            variant="outline"
+            className="h-14 rounded-2xl"
+            onClick={fetchUsers}
+          >
+
+            <RefreshCw className="h-4 w-4 mr-2" />
+
+            Refresh
+
+          </Button>
+
+        </div>
+
+
+        {/* TABS */}
+        <Tabs
+          defaultValue="all"
+          value={selectedTab}
+          onValueChange={setSelectedTab}
+        >
+
+          <TabsList className="mb-8 rounded-2xl">
+
+            <TabsTrigger value="all">
+
+              All Users
+
+            </TabsTrigger>
+
+            <TabsTrigger value="active">
+
+              Active
+
+            </TabsTrigger>
+
+            <TabsTrigger value="blocked">
+
+              Blocked
+
+            </TabsTrigger>
+
+          </TabsList>
+
+
+          <TabsContent value={selectedTab}>
+
+
+            {/* EMPTY */}
+            {filteredUsers.length === 0 ? (
+
+              <Card className="rounded-3xl shadow-xl border-0">
+
+                <CardContent className="py-24 text-center">
+
+                  <Sparkles className="h-16 w-16 mx-auto text-muted-foreground mb-5" />
+
+                  <h2 className="text-3xl font-bold mb-3">
+
+                    No Users Found
+
+                  </h2>
+
+                  <p className="text-muted-foreground">
+
+                    No matching users available.
+
+                  </p>
+
+                </CardContent>
+
+              </Card>
+
+            ) : (
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+                {filteredUsers.map((user) => (
+
+                  <Card
+                    key={user._id}
+                    className="rounded-3xl shadow-xl border-0 overflow-hidden hover:shadow-2xl transition-all duration-300"
+                  >
+
+                    {/* TOP */}
+                    <div className="bg-gradient-to-r from-primary to-purple-600 text-white p-6">
+
+                      <div className="flex items-center justify-between">
+
+                        <div>
+
+                          <h2 className="text-2xl font-bold flex items-center gap-2">
+
+                            {getRoleIcon(
+                              user.role
+                            )}
+
+                            {user.name}
+
+                          </h2>
+
+                          <p className="text-white/90 mt-2">
+
+                            {user.email}
+
+                          </p>
+
+                        </div>
+
+
+                        <Badge
+
+                          className={
+                            user.isActive
+
+                              ? "bg-green-500 text-white border-0"
+
+                              : "bg-red-500 text-white border-0"
+                          }
+
+                        >
+
+                          {user.isActive
+
+                            ? "Active"
+
+                            : "Blocked"}
+
+                        </Badge>
+
+                      </div>
+
+                    </div>
+
+
+                    {/* BODY */}
+                    <CardContent className="p-6 space-y-5">
+
+                      {/* ROLE */}
+                      <div className="flex items-center justify-between">
+
+                        <div>
+
+                          <p className="text-sm text-muted-foreground">
+
+                            Role
+
+                          </p>
+
+                          <p className="font-semibold capitalize text-lg">
+
+                            {user.role}
+
+                          </p>
+
+                        </div>
+
+
+                        {user.createdAt && (
+
+                          <div className="text-right">
+
+                            <p className="text-sm text-muted-foreground flex items-center gap-1 justify-end">
+
+                              <Calendar className="h-4 w-4" />
+
+                              Joined
+
+                            </p>
+
+                            <p className="font-medium">
+
+                              {new Date(
+                                user.createdAt
+                              ).toLocaleDateString()}
+
+                            </p>
+
+                          </div>
+
+                        )}
+
+                      </div>
+
+
+                      {/* ACTION BUTTON */}
+                      <Button
+
+                        className="w-full h-12 rounded-2xl"
+
+                        disabled={
+                          actionLoading ===
+                          user._id
+                        }
+
+                        variant={
+                          user.isActive
+
+                            ? "destructive"
+
+                            : "default"
+                        }
+
+                        onClick={() =>
+
+                          toggleUserStatus(
+
+                            user._id,
+
+                            user.isActive
+
+                          )
+
+                        }
+
+                      >
+
+                        {actionLoading ===
+                        user._id ? (
+
+                          <>
+
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+
+                            Processing...
+
+                          </>
+
+                        ) : user.isActive ? (
+
+                          <>
+
+                            <Ban className="h-4 w-4 mr-2" />
+
+                            Block User
+
+                          </>
+
+                        ) : (
+
+                          <>
+
+                            <CheckCircle2 className="h-4 w-4 mr-2" />
+
+                            Approve User
+
+                          </>
+
+                        )}
+
+                      </Button>
+
+                    </CardContent>
+
+                  </Card>
+
+                ))}
+
+              </div>
+
+            )}
+
+          </TabsContent>
+
+        </Tabs>
+
+      </main>
 
     </div>
 

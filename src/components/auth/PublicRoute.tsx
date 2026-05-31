@@ -48,13 +48,13 @@ const LoadingScreen = () => {
 
           <h2 className="text-lg font-semibold">
 
-            Loading
+            Loading...
 
           </h2>
 
           <p className="text-sm text-muted-foreground">
 
-            Please wait...
+            Please wait
 
           </p>
 
@@ -70,6 +70,40 @@ const LoadingScreen = () => {
 
 
 // ==========================================
+// GET DASHBOARD
+// ==========================================
+const getDashboardRoute = (
+  role?: string
+) => {
+
+  switch (role) {
+
+    case "student":
+
+      return "/student/dashboard";
+
+    case "alumni":
+
+      return "/alumni/dashboard";
+
+    case "admin":
+
+      return "/admin/dashboard";
+
+    case "faculty":
+
+      return "/faculty/dashboard";
+
+    default:
+
+      return "/login";
+
+  }
+
+};
+
+
+// ==========================================
 // PUBLIC ROUTE
 // ==========================================
 export const PublicRoute = ({
@@ -79,7 +113,7 @@ export const PublicRoute = ({
 }: PublicRouteProps) => {
 
   // ========================================
-  // AUTH CONTEXT
+  // AUTH
   // ========================================
   const {
 
@@ -90,6 +124,8 @@ export const PublicRoute = ({
     isAuthenticated,
 
     isLoading,
+
+    logout,
 
   } = useAuth();
 
@@ -102,7 +138,7 @@ export const PublicRoute = ({
 
 
   // ========================================
-  // AUTH LOADING
+  // LOADING
   // ========================================
   if (isLoading) {
 
@@ -112,7 +148,16 @@ export const PublicRoute = ({
 
 
   // ========================================
-  // NOT LOGGED IN
+  // TOKEN CHECK
+  // ========================================
+  const storedToken =
+    localStorage.getItem(
+      "token"
+    );
+
+
+  // ========================================
+  // NOT AUTHENTICATED
   // ========================================
   if (
 
@@ -120,7 +165,9 @@ export const PublicRoute = ({
 
     !user ||
 
-    !token
+    !token ||
+
+    !storedToken
 
   ) {
 
@@ -130,14 +177,40 @@ export const PublicRoute = ({
 
 
   // ========================================
-  // FIRST LOGIN
+  // USER DISABLED
+  // ========================================
+  if (
+
+    user.isActive === false
+
+  ) {
+
+    logout();
+
+    return (
+
+      <Navigate
+
+        to="/login"
+
+        replace
+
+      />
+
+    );
+
+  }
+
+
+  // ========================================
+  // FORCE PASSWORD CHANGE
   // ========================================
   if (
 
     user.isFirstLogin &&
 
     location.pathname !==
-    "/change-password"
+      "/change-password"
 
   ) {
 
@@ -157,68 +230,23 @@ export const PublicRoute = ({
 
 
   // ========================================
-  // ROLE BASED REDIRECT
+  // ALREADY LOGGED IN
   // ========================================
-  switch (user.role) {
+  return (
 
-    case "student":
+    <Navigate
 
-      return (
+      to={
+        getDashboardRoute(
+          user.role
+        )
+      }
 
-        <Navigate
+      replace
 
-          to="/student/dashboard"
+    />
 
-          replace
-
-        />
-
-      );
-
-    case "alumni":
-
-      return (
-
-        <Navigate
-
-          to="/alumni/dashboard"
-
-          replace
-
-        />
-
-      );
-
-    case "admin":
-
-      return (
-
-        <Navigate
-
-          to="/admin/dashboard"
-
-          replace
-
-        />
-
-      );
-
-    default:
-
-      // ====================================
-      // INVALID ROLE
-      // ====================================
-      localStorage.removeItem(
-        "userInfo"
-      );
-
-      localStorage.removeItem(
-        "token"
-      );
-
-      return <>{children}</>;
-
-  }
+  );
 
 };
 

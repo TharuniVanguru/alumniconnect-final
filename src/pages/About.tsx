@@ -6,6 +6,10 @@ import {
 } from "@/components/ui/card";
 
 import {
+  Button,
+} from "@/components/ui/button";
+
+import {
   Users,
   Briefcase,
   Calendar,
@@ -15,64 +19,240 @@ import {
   Sparkles,
   Target,
   ShieldCheck,
+  ArrowRight,
+  Trophy,
+  Globe,
+  HeartHandshake,
 } from "lucide-react";
 
+import {
+  motion,
+} from "framer-motion";
 
+import {
+  Link,
+} from "react-router-dom";
+
+
+// ==========================================
+// COMPONENT
+// ==========================================
 const About: React.FC = () => {
 
+  // ========================================
+  // FEATURES
+  // ========================================
   const features = [
 
     {
-      title: "Alumni Networking",
+
+      title:
+        "Alumni Networking",
+
       description:
         "Connect students with experienced alumni mentors and industry professionals.",
-      icon: Users,
-      color: "bg-primary/10 text-primary",
+
+      icon:
+        Users,
+
+      color:
+        "bg-primary/10 text-primary",
+
     },
 
     {
-      title: "Job Opportunities",
+
+      title:
+        "Job Opportunities",
+
       description:
         "Explore internships, placements, and career opportunities shared by alumni.",
-      icon: Briefcase,
-      color: "bg-green-100 text-green-600",
+
+      icon:
+        Briefcase,
+
+      color:
+        "bg-green-100 text-green-600",
+
     },
 
     {
-      title: "Mentorship & Guidance",
+
+      title:
+        "Mentorship & Guidance",
+
       description:
         "Raise guidance requests and receive career mentorship from alumni experts.",
-      icon: GraduationCap,
-      color: "bg-purple-100 text-purple-600",
+
+      icon:
+        GraduationCap,
+
+      color:
+        "bg-purple-100 text-purple-600",
+
     },
 
     {
-      title: "Events & Workshops",
+
+      title:
+        "Events & Workshops",
+
       description:
         "Participate in networking sessions, technical workshops, and alumni events.",
-      icon: Calendar,
-      color: "bg-orange-100 text-orange-600",
+
+      icon:
+        Calendar,
+
+      color:
+        "bg-orange-100 text-orange-600",
+
     },
 
     {
-      title: "AI Assistant",
+
+      title:
+        "AI Assistant",
+
       description:
         "Get instant career support, interview tips, and roadmap suggestions with AI.",
-      icon: Brain,
-      color: "bg-violet-100 text-violet-600",
+
+      icon:
+        Brain,
+
+      color:
+        "bg-violet-100 text-violet-600",
+
     },
 
     {
-      title: "Real-Time Chat",
+
+      title:
+        "Real-Time Chat",
+
       description:
         "Chat directly with mentors, alumni, and fellow students in real time.",
-      icon: MessageSquare,
-      color: "bg-blue-100 text-blue-600",
+
+      icon:
+        MessageSquare,
+
+      color:
+        "bg-blue-100 text-blue-600",
+
     },
 
   ];
 
 
+  // ========================================
+  // STATS
+  // ========================================
+  const stats = [
+
+    {
+
+      title:
+        "4K+",
+
+      subtitle:
+        "Students Connected",
+
+      icon:
+        Users,
+
+    },
+
+    {
+
+      title:
+        "500+",
+
+      subtitle:
+        "Active Alumni",
+
+      icon:
+        GraduationCap,
+
+    },
+
+    {
+
+      title:
+        "300+",
+
+      subtitle:
+        "Career Opportunities",
+
+      icon:
+        Briefcase,
+
+    },
+
+    {
+
+      title:
+        "100+",
+
+      subtitle:
+        "Events Conducted",
+
+      icon:
+        Trophy,
+
+    },
+
+  ];
+
+
+  // ========================================
+  // VALUES
+  // ========================================
+  const values = [
+
+    {
+
+      title:
+        "Innovation",
+
+      description:
+        "Building modern AI-powered solutions for alumni engagement.",
+
+      icon:
+        Sparkles,
+
+    },
+
+    {
+
+      title:
+        "Collaboration",
+
+      description:
+        "Strengthening the connection between students and alumni communities.",
+
+      icon:
+        HeartHandshake,
+
+    },
+
+    {
+
+      title:
+        "Global Reach",
+
+      description:
+        "Connecting institutions, alumni, and students worldwide.",
+
+      icon:
+        Globe,
+
+    },
+
+  ];
+
+
+  // ========================================
+  // UI
+  // ========================================
   return (
 
     <div className="min-h-screen bg-background">
@@ -82,24 +262,45 @@ const About: React.FC = () => {
       <main className="max-w-7xl mx-auto px-4 py-8">
 
 
+        {/* ================================= */}
         {/* HERO SECTION */}
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-primary via-purple-600 to-indigo-700 text-white shadow-2xl mb-12">
+        {/* ================================= */}
+
+        <motion.div
+
+          initial={{
+            opacity: 0,
+            y: 30,
+          }}
+
+          animate={{
+            opacity: 1,
+            y: 0,
+          }}
+
+          transition={{
+            duration: 0.5,
+          }}
+
+          className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-primary via-purple-600 to-indigo-700 text-white shadow-2xl mb-12"
+
+        >
 
           <div className="absolute inset-0 bg-black/10" />
 
-          <div className="relative p-8 md:p-12">
+          <div className="relative p-8 md:p-14">
 
             <div className="max-w-4xl">
 
-              <div className="flex items-center gap-3 mb-5">
+              <div className="flex items-center gap-4 mb-6">
 
-                <div className="h-14 w-14 rounded-2xl bg-white/20 flex items-center justify-center">
+                <div className="h-16 w-16 rounded-2xl bg-white/20 flex items-center justify-center backdrop-blur-md">
 
-                  <Sparkles className="h-7 w-7 text-yellow-300" />
+                  <Sparkles className="h-8 w-8 text-yellow-300" />
 
                 </div>
 
-                <h1 className="text-4xl md:text-5xl font-bold">
+                <h1 className="text-4xl md:text-6xl font-bold">
 
                   About AlumniConnect
 
@@ -107,27 +308,111 @@ const About: React.FC = () => {
 
               </div>
 
-              <p className="text-lg md:text-xl text-white/90 leading-8">
 
-                AlumniConnect is an AI-powered alumni-student engagement platform
+              <p className="text-lg md:text-xl text-white/90 leading-8 mb-8">
+
+                AlumniConnect is an AI-powered alumni-student engagement ecosystem
                 designed to bridge the gap between students and alumni through
-                mentorship, networking, jobs, events, and career guidance.
+                mentorship, networking, placements, real-time communication,
+                and intelligent career guidance.
 
               </p>
+
+
+              <div className="flex flex-col sm:flex-row gap-4">
+
+                <Button
+                  size="lg"
+                  className="bg-white text-primary hover:bg-white/90"
+                  asChild
+                >
+
+                  <Link to="/register">
+
+                    Join Platform
+
+                    <ArrowRight className="ml-2 h-4 w-4" />
+
+                  </Link>
+
+                </Button>
+
+
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="border-white text-white hover:bg-white/10"
+                  asChild
+                >
+
+                  <Link to="/student/alumni-directory">
+
+                    Explore Alumni
+
+                  </Link>
+
+                </Button>
+
+              </div>
 
             </div>
 
           </div>
 
+        </motion.div>
+
+
+        {/* ================================= */}
+        {/* STATS */}
+        {/* ================================= */}
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-14">
+
+          {stats.map((item, index) => (
+
+            <Card
+              key={index}
+              className="rounded-3xl border-0 shadow-xl hover:shadow-2xl transition-all duration-300"
+            >
+
+              <CardContent className="p-8 text-center">
+
+                <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-5">
+
+                  <item.icon className="h-8 w-8 text-primary" />
+
+                </div>
+
+                <h2 className="text-4xl font-bold mb-2">
+
+                  {item.title}
+
+                </h2>
+
+                <p className="text-muted-foreground">
+
+                  {item.subtitle}
+
+                </p>
+
+              </CardContent>
+
+            </Card>
+
+          ))}
+
         </div>
 
 
-        {/* MISSION */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+        {/* ================================= */}
+        {/* MISSION & VISION */}
+        {/* ================================= */}
 
-          <Card className="shadow-xl rounded-3xl border-0">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-14">
 
-            <CardContent className="p-8">
+          <Card className="shadow-2xl rounded-3xl border-0 overflow-hidden">
+
+            <CardContent className="p-10">
 
               <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-6">
 
@@ -143,9 +428,9 @@ const About: React.FC = () => {
 
               <p className="text-muted-foreground leading-8 text-lg">
 
-                To empower students by creating meaningful connections with alumni,
+                To empower students by creating meaningful relationships with alumni,
                 enabling mentorship, career growth, networking opportunities,
-                and industry exposure through a modern digital ecosystem.
+                and industry exposure through a modern AI-powered platform.
 
               </p>
 
@@ -154,9 +439,9 @@ const About: React.FC = () => {
           </Card>
 
 
-          <Card className="shadow-xl rounded-3xl border-0">
+          <Card className="shadow-2xl rounded-3xl border-0 overflow-hidden">
 
-            <CardContent className="p-8">
+            <CardContent className="p-10">
 
               <div className="h-16 w-16 rounded-2xl bg-green-100 flex items-center justify-center mb-6">
 
@@ -166,15 +451,15 @@ const About: React.FC = () => {
 
               <h2 className="text-3xl font-bold mb-4">
 
-                Platform Vision
+                Our Vision
 
               </h2>
 
               <p className="text-muted-foreground leading-8 text-lg">
 
-                We aim to build a trusted alumni ecosystem where students receive
-                guidance, alumni contribute back to the institution, and everyone
-                grows together through collaboration and innovation.
+                To build a trusted digital ecosystem where alumni contribute back
+                to their institution while students receive guidance, opportunities,
+                and support to achieve their career goals.
 
               </p>
 
@@ -185,10 +470,13 @@ const About: React.FC = () => {
         </div>
 
 
+        {/* ================================= */}
         {/* FEATURES */}
-        <div className="mb-12">
+        {/* ================================= */}
 
-          <div className="mb-8">
+        <div className="mb-14">
+
+          <div className="mb-10">
 
             <h2 className="text-4xl font-bold mb-3">
 
@@ -209,28 +497,115 @@ const About: React.FC = () => {
 
             {features.map((feature, index) => (
 
-              <Card
+              <motion.div
+
                 key={index}
-                className="shadow-xl rounded-3xl border-0 hover:shadow-2xl hover:-translate-y-1 transition-all duration-300"
+
+                initial={{
+                  opacity: 0,
+                  y: 20,
+                }}
+
+                whileInView={{
+                  opacity: 1,
+                  y: 0,
+                }}
+
+                transition={{
+                  duration: 0.4,
+                  delay: index * 0.1,
+                }}
+
+                viewport={{
+                  once: true,
+                }}
+
               >
 
-                <CardContent className="p-8">
+                <Card className="shadow-xl rounded-3xl border-0 hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 h-full">
 
-                  <div className={`h-16 w-16 rounded-2xl flex items-center justify-center mb-6 ${feature.color}`}>
+                  <CardContent className="p-8">
 
-                    <feature.icon className="h-8 w-8" />
+                    <div className={`h-16 w-16 rounded-2xl flex items-center justify-center mb-6 ${feature.color}`}>
+
+                      <feature.icon className="h-8 w-8" />
+
+                    </div>
+
+                    <h3 className="text-2xl font-bold mb-3">
+
+                      {feature.title}
+
+                    </h3>
+
+                    <p className="text-muted-foreground leading-7">
+
+                      {feature.description}
+
+                    </p>
+
+                  </CardContent>
+
+                </Card>
+
+              </motion.div>
+
+            ))}
+
+          </div>
+
+        </div>
+
+
+        {/* ================================= */}
+        {/* VALUES */}
+        {/* ================================= */}
+
+        <div className="mb-14">
+
+          <div className="mb-10">
+
+            <h2 className="text-4xl font-bold mb-3">
+
+              Core Values
+
+            </h2>
+
+            <p className="text-muted-foreground text-lg">
+
+              Principles driving AlumniConnect forward.
+
+            </p>
+
+          </div>
+
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+
+            {values.map((value, index) => (
+
+              <Card
+                key={index}
+                className="rounded-3xl border-0 shadow-xl"
+              >
+
+                <CardContent className="p-8 text-center">
+
+                  <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-5">
+
+                    <value.icon className="h-8 w-8 text-primary" />
 
                   </div>
 
                   <h3 className="text-2xl font-bold mb-3">
 
-                    {feature.title}
+                    {value.title}
 
                   </h3>
 
                   <p className="text-muted-foreground leading-7">
 
-                    {feature.description}
+                    {value.description}
 
                   </p>
 
@@ -245,34 +620,57 @@ const About: React.FC = () => {
         </div>
 
 
-        {/* FOOTER CARD */}
+        {/* ================================= */}
+        {/* FOOTER CTA */}
+        {/* ================================= */}
+
         <Card className="shadow-2xl rounded-3xl border-0 bg-gradient-to-r from-slate-900 to-slate-800 text-white overflow-hidden">
 
-          <CardContent className="p-10 text-center">
+          <CardContent className="p-10 md:p-14 text-center">
 
             <div className="flex justify-center mb-6">
 
-              <div className="h-20 w-20 rounded-full bg-white/10 flex items-center justify-center">
+              <div className="h-24 w-24 rounded-full bg-white/10 flex items-center justify-center">
 
-                <GraduationCap className="h-10 w-10 text-yellow-300" />
+                <GraduationCap className="h-12 w-12 text-yellow-300" />
 
               </div>
 
             </div>
 
-            <h2 className="text-4xl font-bold mb-4">
+
+            <h2 className="text-4xl md:text-5xl font-bold mb-5">
 
               Built for Students & Alumni
 
             </h2>
 
-            <p className="text-white/80 text-lg max-w-3xl mx-auto leading-8">
 
-              AlumniConnect combines AI, mentorship, networking, job opportunities,
-              real-time communication, and community engagement into one unified platform
-              to strengthen alumni-student relationships.
+            <p className="text-white/80 text-lg max-w-3xl mx-auto leading-8 mb-8">
+
+              AlumniConnect combines AI, mentorship, networking,
+              job opportunities, real-time communication, and
+              community engagement into one unified platform to
+              strengthen alumni-student relationships.
 
             </p>
+
+
+            <Button
+              size="lg"
+              className="bg-white text-primary hover:bg-white/90"
+              asChild
+            >
+
+              <Link to="/register">
+
+                Get Started Today
+
+                <ArrowRight className="ml-2 h-4 w-4" />
+
+              </Link>
+
+            </Button>
 
           </CardContent>
 
@@ -287,4 +685,7 @@ const About: React.FC = () => {
 };
 
 
+// ==========================================
+// EXPORT
+// ==========================================
 export default About;

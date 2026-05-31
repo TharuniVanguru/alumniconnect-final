@@ -3,8 +3,7 @@ import {
   useState,
 } from "react";
 
-import axios from "axios";
-
+import api, { apiGet, apiPost, apiPut, apiPatch, apiDelete } from "@/utils/api";
 import { Header }
   from "@/components/layout/Header";
 
@@ -147,9 +146,9 @@ const RecommendationsPage =
 
 
           const response =
-            await axios.get(
+            await api.get(
 
-              "http://localhost:5000/recommendations",
+              "/recommendations",
 
               {
                 headers: {

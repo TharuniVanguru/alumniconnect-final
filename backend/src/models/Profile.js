@@ -6,15 +6,17 @@ const mongoose =
 // PROJECT SCHEMA
 // ==========================================
 const projectSchema =
-  mongoose.Schema({
+  new mongoose.Schema({
 
     title: {
 
       type: String,
 
+      required: true,
+
       trim: true,
 
-      required: true,
+      maxlength: 100,
 
     },
 
@@ -24,7 +26,9 @@ const projectSchema =
 
       trim: true,
 
-      maxlength: 1000,
+      maxlength: 500,
+
+      default: "",
 
     },
 
@@ -46,6 +50,8 @@ const projectSchema =
 
       trim: true,
 
+      default: "",
+
     },
 
     githubUrl: {
@@ -53,6 +59,8 @@ const projectSchema =
       type: String,
 
       trim: true,
+
+      default: "",
 
     },
 
@@ -63,13 +71,15 @@ const projectSchema =
 // CERTIFICATE SCHEMA
 // ==========================================
 const certificateSchema =
-  mongoose.Schema({
+  new mongoose.Schema({
 
     title: {
 
       type: String,
 
       trim: true,
+
+      default: "",
 
     },
 
@@ -79,6 +89,8 @@ const certificateSchema =
 
       trim: true,
 
+      default: "",
+
     },
 
     certificateUrl: {
@@ -86,6 +98,8 @@ const certificateSchema =
       type: String,
 
       trim: true,
+
+      default: "",
 
     },
 
@@ -96,7 +110,7 @@ const certificateSchema =
 // PROFILE SCHEMA
 // ==========================================
 const profileSchema =
-  mongoose.Schema(
+  new mongoose.Schema(
 
     {
 
@@ -113,8 +127,6 @@ const profileSchema =
         required: true,
 
         unique: true,
-
-        index: true,
 
       },
 
@@ -140,8 +152,6 @@ const profileSchema =
 
         lowercase: true,
 
-        index: true,
-
       },
 
       role: {
@@ -159,8 +169,6 @@ const profileSchema =
 
         required: true,
 
-        index: true,
-
       },
 
       identifier: {
@@ -169,8 +177,6 @@ const profileSchema =
 
         trim: true,
 
-        index: true,
-
       },
 
       phone: {
@@ -178,6 +184,8 @@ const profileSchema =
         type: String,
 
         trim: true,
+
+        default: "",
 
       },
 
@@ -199,7 +207,7 @@ const profileSchema =
 
         trim: true,
 
-        index: true,
+        default: "",
 
       },
 
@@ -209,6 +217,8 @@ const profileSchema =
 
         trim: true,
 
+        default: "",
+
       },
 
       batch: {
@@ -217,7 +227,7 @@ const profileSchema =
 
         trim: true,
 
-        index: true,
+        default: "",
 
       },
 
@@ -231,7 +241,7 @@ const profileSchema =
 
 
       // ====================================
-      // DOMAIN
+      // DOMAIN & SKILLS
       // ====================================
       domain: {
 
@@ -239,14 +249,10 @@ const profileSchema =
 
         trim: true,
 
-        index: true,
+        default: "",
 
       },
 
-
-      // ====================================
-      // SKILLS
-      // ====================================
       skills: [
 
         {
@@ -259,10 +265,6 @@ const profileSchema =
 
       ],
 
-
-      // ====================================
-      // INTERESTS
-      // ====================================
       interests: [
 
         {
@@ -285,6 +287,8 @@ const profileSchema =
 
         trim: true,
 
+        default: "",
+
       },
 
       githubUrl: {
@@ -293,6 +297,8 @@ const profileSchema =
 
         trim: true,
 
+        default: "",
+
       },
 
       portfolioUrl: {
@@ -300,6 +306,8 @@ const profileSchema =
         type: String,
 
         trim: true,
+
+        default: "",
 
       },
 
@@ -314,6 +322,8 @@ const profileSchema =
         trim: true,
 
         maxlength: 1000,
+
+        default: "",
 
       },
 
@@ -359,7 +369,7 @@ const profileSchema =
 
         trim: true,
 
-        index: true,
+        default: "",
 
       },
 
@@ -369,6 +379,8 @@ const profileSchema =
 
         trim: true,
 
+        default: "",
+
       },
 
       experience: {
@@ -377,17 +389,7 @@ const profileSchema =
 
         trim: true,
 
-      },
-
-
-      // ====================================
-      // JOB POSTING
-      // ====================================
-      canPostJobs: {
-
-        type: Boolean,
-
-        default: false,
+        default: "",
 
       },
 
@@ -403,14 +405,6 @@ const profileSchema =
 
       },
 
-      mentorshipCount: {
-
-        type: Number,
-
-        default: 0,
-
-      },
-
 
       // ====================================
       // PROFILE STATUS
@@ -420,50 +414,6 @@ const profileSchema =
         type: Boolean,
 
         default: false,
-
-      },
-
-      profileStrength: {
-
-        type: String,
-
-        enum: [
-
-          "Beginner",
-          "Intermediate",
-          "Strong",
-          "Excellent",
-
-        ],
-
-        default: "Beginner",
-
-      },
-
-      trustScore: {
-
-        type: Number,
-
-        default: 40,
-
-        min: 0,
-        max: 100,
-
-      },
-
-      averageRating: {
-
-        type: Number,
-
-        default: 0,
-
-      },
-
-      totalRatings: {
-
-        type: Number,
-
-        default: 0,
 
       },
 
@@ -527,24 +477,29 @@ profileSchema.index({
 
   jobRole: "text",
 
-  bio: "text",
+  skills: "text",
 
 });
 
 
 // ==========================================
-// COMPOUND INDEXES
+// SIMPLE INDEXES
 // ==========================================
 profileSchema.index({
 
   role: 1,
-  domain: 1,
 
 });
 
 profileSchema.index({
 
-  skills: 1,
+  branch: 1,
+
+});
+
+profileSchema.index({
+
+  batch: 1,
 
 });
 

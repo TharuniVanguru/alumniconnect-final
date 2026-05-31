@@ -25,6 +25,9 @@ const {
   "../middleware/authMiddleware"
 );
 
+const User =
+  require("../models/User");
+
 const router =
   express.Router();
 
@@ -86,6 +89,149 @@ router.get(
 
 
 // ==========================================
+// SEARCH USERS
+// ==========================================
+router.get(
+
+  "/search/:keyword",
+
+  protect,
+
+  async (req, res) => {
+
+    try {
+
+      const keyword =
+        req.params.keyword;
+
+      // ====================================
+      // SEARCH USERS
+      // ====================================
+      const users =
+        await User.find({
+
+          isActive: true,
+
+          $or: [
+
+            {
+
+              name: {
+
+                $regex:
+                  keyword,
+
+                $options:
+                  "i",
+
+              },
+
+            },
+
+            {
+
+              domain: {
+
+                $regex:
+                  keyword,
+
+                $options:
+                  "i",
+
+              },
+
+            },
+
+            {
+
+              company: {
+
+                $regex:
+                  keyword,
+
+                $options:
+                  "i",
+
+              },
+
+            },
+
+            {
+
+              skills: {
+
+                $elemMatch: {
+
+                  $regex:
+                    keyword,
+
+                  $options:
+                    "i",
+
+                },
+
+              },
+
+            },
+
+          ],
+
+        }).select(
+
+          `
+          name
+          email
+          role
+          domain
+          company
+          skills
+          interests
+          profileImage
+          isOnline
+          `
+        );
+
+
+      // ====================================
+      // RESPONSE
+      // ====================================
+      res.status(200).json({
+
+        success: true,
+
+        count:
+          users.length,
+
+        users,
+
+      });
+
+    }
+
+    catch (error) {
+
+      console.log(
+        "SEARCH USERS ERROR:",
+        error
+      );
+
+      res.status(500).json({
+
+        success: false,
+
+        message:
+          "Server Error",
+
+      });
+
+    }
+
+  }
+
+);
+
+
+// ==========================================
 // GET PROFILE BY ID
 // ==========================================
 router.get(
@@ -100,7 +246,7 @@ router.get(
 
 
 // ==========================================
-// EXPORT
+// EXPORT ROUTER
 // ==========================================
 module.exports =
   router;

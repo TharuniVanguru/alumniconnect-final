@@ -11,6 +11,8 @@ const {
 
   markMessagesAsRead,
 
+  deleteMessage,
+
 } = require(
   "../controllers/messageController"
 );
@@ -28,13 +30,20 @@ const router =
 
 
 // ==========================================
+// ALL ROUTES PROTECTED
+// ==========================================
+router.use(
+  protect
+);
+
+
+// ==========================================
 // SEND MESSAGE
+// POST /api/messages
 // ==========================================
 router.post(
 
   "/",
-
-  protect,
 
   sendMessage
 
@@ -42,15 +51,12 @@ router.post(
 
 
 // ==========================================
-// CHAT LIST
-// IMPORTANT:
-// MUST COME BEFORE :userId
+// GET CHAT LIST
+// GET /api/messages/chat-list
 // ==========================================
 router.get(
 
   "/chat-list",
-
-  protect,
 
   getChatList
 
@@ -59,12 +65,11 @@ router.get(
 
 // ==========================================
 // MARK MESSAGES AS READ
+// PUT /api/messages/read/:userId
 // ==========================================
 router.put(
 
   "/read/:userId",
-
-  protect,
 
   markMessagesAsRead
 
@@ -73,12 +78,11 @@ router.put(
 
 // ==========================================
 // GET CONVERSATION
+// GET /api/messages/:userId
 // ==========================================
 router.get(
 
   "/:userId",
-
-  protect,
 
   getConversation
 
@@ -86,7 +90,20 @@ router.get(
 
 
 // ==========================================
-// EXPORT
+// DELETE MESSAGE
+// DELETE /api/messages/:messageId
+// ==========================================
+router.delete(
+
+  "/delete/:messageId",
+
+  deleteMessage
+
+);
+
+
+// ==========================================
+// EXPORT ROUTER
 // ==========================================
 module.exports =
   router;

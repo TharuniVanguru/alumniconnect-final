@@ -28,26 +28,10 @@ const generateToken =
 
       {
 
-        expiresIn: "7d",
+        expiresIn:
+          process.env.JWT_EXPIRE || "7d",
 
       }
-
-    );
-
-  };
-
-
-// =========================================
-// VERIFY TOKEN
-// =========================================
-const verifyToken =
-  (token) => {
-
-    return jwt.verify(
-
-      token,
-
-      process.env.JWT_SECRET
 
     );
 
@@ -60,46 +44,61 @@ const verifyToken =
 const getTransporter =
   () => {
 
-    if (
+    try {
 
-      process.env.EMAIL_HOST &&
+      if (
 
-      process.env.EMAIL_USER &&
+        process.env.EMAIL_HOST &&
 
-      process.env.EMAIL_PASS
+        process.env.EMAIL_USER &&
 
-    ) {
+        process.env.EMAIL_PASS
 
-      return nodemailer.createTransport({
+      ) {
 
-        host:
-          process.env.EMAIL_HOST,
+        return nodemailer.createTransport({
 
-        port:
-          Number(
-            process.env.EMAIL_PORT
-          ) || 587,
+          host:
+            process.env.EMAIL_HOST,
 
-        secure:
+          port:
+            Number(
+              process.env.EMAIL_PORT
+            ) || 587,
 
-          process.env.EMAIL_SECURE ===
-          "true",
+          secure:
 
-        auth: {
+            process.env.EMAIL_SECURE ===
+            "true",
 
-          user:
-            process.env.EMAIL_USER,
+          auth: {
 
-          pass:
-            process.env.EMAIL_PASS,
+            user:
+              process.env.EMAIL_USER,
 
-        },
+            pass:
+              process.env.EMAIL_PASS,
 
-      });
+          },
+
+        });
+
+      }
+
+      return null;
 
     }
 
-    return null;
+    catch (error) {
+
+      console.log(
+        "TRANSPORT ERROR:",
+        error
+      );
+
+      return null;
+
+    }
 
   };
 
@@ -116,38 +115,53 @@ const sendEmail =
 
   ) => {
 
-    const transporter =
-      getTransporter();
+    try {
 
-    if (!transporter) {
+      const transporter =
+        getTransporter();
 
-      console.log(
+      if (!transporter) {
 
-        "Email not configured:",
+        console.log(
 
-        text
+          "⚠️ Email service not configured"
 
-      );
+        );
 
-      return;
+        return false;
+
+      }
+
+      await transporter.sendMail({
+
+        from:
+
+          process.env.EMAIL_FROM ||
+
+          process.env.EMAIL_USER,
+
+        to,
+
+        subject,
+
+        text,
+
+      });
+
+      return true;
 
     }
 
-    await transporter.sendMail({
+    catch (error) {
 
-      from:
+      console.log(
+        "EMAIL ERROR:",
+        error
+      );
 
-        process.env.EMAIL_FROM ||
+      return false;
 
-        process.env.EMAIL_USER,
-
-      to,
-
-      subject,
-
-      text,
-
-    });
+    }
 
   };
 
@@ -175,7 +189,14 @@ const maskPhone =
 
     if (!phone) return "";
 
-    return `${phone.slice(0, 2)}******${phone.slice(-2)}`;
+    const cleaned =
+      phone.toString().trim();
+
+    if (cleaned.length < 4) {
+      return "****";
+    }
+
+    return `${cleaned.slice(0, 2)}******${cleaned.slice(-2)}`;
 
   };
 
@@ -239,7 +260,8 @@ const saveOtpRequest =
 
       {
 
-        identifier,
+        identifier:
+          identifier.toLowerCase(),
 
       },
 
@@ -293,7 +315,8 @@ const validateOtpRequest =
     const record =
       await OtpRequest.findOne({
 
-        identifier,
+        identifier:
+          identifier.toLowerCase(),
 
       });
 
@@ -312,7 +335,6 @@ const validateOtpRequest =
     }
 
 
-    // OTP EXPIRED
     if (
 
       record.expiresAt <
@@ -332,7 +354,6 @@ const validateOtpRequest =
     }
 
 
-    // ATTEMPT LIMIT
     if (
       record.attempts >= 3
     ) {
@@ -342,7 +363,6 @@ const validateOtpRequest =
         valid: false,
 
         reason:
-
           "OTP attempt limit reached",
 
       };
@@ -350,21 +370,25 @@ const validateOtpRequest =
     }
 
 
-    // INVALID OTP
     if (
       record.otp !== otp
     ) {
 
       record.attempts += 1;
 
-      await record.save();
+      await record.save({
+
+        validateBeforeSave:
+          false,
+
+      });
 
       return {
 
         valid: false,
 
         reason:
-          "OTP invalid",
+          "Invalid OTP",
 
       };
 
@@ -401,14 +425,21 @@ const registerUser =
       } = req.body;
 
 
-      // ====================================
-      // VALIDATION
-      // ====================================
+      const cleanIdentifier =
+        identifier?.trim().toLowerCase();
+
+      const cleanEmail =
+        email?.trim().toLowerCase();
+
+      const cleanName =
+        name?.trim();
+
+
       if (
 
-        !identifier ||
-        !name ||
-        !email ||
+        !cleanIdentifier ||
+        !cleanName ||
+        !cleanEmail ||
         !password ||
         !role
 
@@ -426,65 +457,20 @@ const registerUser =
       }
 
 
-      // ====================================
-      // EMAIL VALIDATION
-      // ====================================
-      const emailRegex =
-
-        /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-
-      if (
-        !emailRegex.test(email)
-      ) {
-
-        return res.status(400).json({
-
-          success: false,
-
-          message:
-            "Invalid email format",
-
-        });
-
-      }
-
-
-      // ====================================
-      // PASSWORD VALIDATION
-      // ====================================
-      if (
-
-        !isStrongPassword(
-          password
-        )
-
-      ) {
-
-        return res.status(400).json({
-
-          success: false,
-
-          message:
-
-            "Password must contain uppercase, lowercase, number and minimum 8 characters",
-
-        });
-
-      }
-
-
-      // ====================================
-      // CHECK EXISTING USER
-      // ====================================
       const existingUser =
         await User.findOne({
 
           $or: [
 
-            { email },
+            {
+              email:
+                cleanEmail,
+            },
 
-            { identifier },
+            {
+              identifier:
+                cleanIdentifier,
+            },
 
           ],
 
@@ -505,9 +491,6 @@ const registerUser =
       }
 
 
-      // ====================================
-      // HASH PASSWORD
-      // ====================================
       const salt =
         await bcrypt.genSalt(10);
 
@@ -521,24 +504,24 @@ const registerUser =
         );
 
 
-      // ====================================
-      // CREATE USER
-      // ====================================
       const user =
         await User.create({
 
-          identifier,
+          identifier:
+            cleanIdentifier,
 
-          name,
+          name:
+            cleanName,
 
-          email,
+          email:
+            cleanEmail,
 
           password:
             hashedPassword,
 
           role,
 
-          avatar: "",
+          profileImage: "",
 
           isOnline:
             false,
@@ -555,22 +538,18 @@ const registerUser =
           isFirstLogin:
             true,
 
+          trustScore: 0,
+
         });
 
 
-      // ====================================
-      // TOKEN
-      // ====================================
       const token =
         generateToken(
           user._id
         );
 
 
-      // ====================================
-      // RESPONSE
-      // ====================================
-      res.status(201).json({
+      return res.status(201).json({
 
         success: true,
 
@@ -580,34 +559,13 @@ const registerUser =
         token,
 
         user: {
-
-          _id:
-            user._id,
-
-          identifier:
-            user.identifier,
-
-          name:
-            user.name,
-
-          email:
-            user.email,
-
-          role:
-            user.role,
-
-          avatar:
-            user.avatar || "",
-
-          isOnline:
-            user.isOnline,
-
-          isFirstLogin:
-            user.isFirstLogin,
-
-          createdAt:
-            user.createdAt,
-
+          _id: user._id,
+          identifier: user.identifier,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          isFirstLogin: user.isFirstLogin,
+          isActive: user.isActive,
         },
 
       });
@@ -617,14 +575,11 @@ const registerUser =
     catch (error) {
 
       console.log(
-
         "REGISTER ERROR:",
-
         error
-
       );
 
-      res.status(500).json({
+      return res.status(500).json({
 
         success: false,
 
@@ -655,14 +610,10 @@ const loginUser =
       } = req.body;
 
 
-      // ====================================
-      // VALIDATION
-      // ====================================
       if (
 
         !identifier ||
-        !password ||
-        !role
+        !password
 
       ) {
 
@@ -671,118 +622,86 @@ const loginUser =
           success: false,
 
           message:
-            "All fields are required",
+            "Identifier and password are required",
 
         });
 
       }
 
 
-      // ====================================
-      // FIND USER WITH PASSWORD
-      // ====================================
+      const cleanIdentifier =
+        identifier
+          .trim()
+          .toLowerCase();
+
+
       const user =
         await User.findOne({
 
-          identifier,
+          $or: [
+
+            {
+              email:
+                cleanIdentifier,
+            },
+
+            {
+              identifier:
+                cleanIdentifier,
+            },
+
+          ],
 
         }).select("+password");
 
 
-      // ====================================
-      // USER NOT FOUND
-      // ====================================
       if (!user) {
 
-        return res.status(400).json({
+        return res.status(404).json({
 
           success: false,
 
           message:
-            "Invalid credentials",
+            "User not found",
 
         });
 
       }
 
 
-      // ====================================
-      // PASSWORD FIELD CHECK
-      // ====================================
-      if (!user.password) {
+      if (
+        role &&
+        user.role !== role
+      ) {
 
-        return res.status(500).json({
+        return res.status(403).json({
 
           success: false,
 
           message:
-            "Password missing in database",
+            "Role does not match",
 
         });
 
       }
 
 
-      // ====================================
-      // ACCOUNT LOCK CHECK
-      // ====================================
       if (
         isAccountLocked(user)
       ) {
 
-        return res.status(403).json({
+        return res.status(423).json({
 
           success: false,
 
           message:
-            "Account temporarily locked. Try again later.",
+            "Account temporarily locked",
 
         });
 
       }
 
 
-      // ====================================
-      // ROLE CHECK
-      // ====================================
-      if (
-        user.role !== role
-      ) {
-
-        return res.status(400).json({
-
-          success: false,
-
-          message:
-            "Invalid role selected",
-
-        });
-
-      }
-
-
-      // ====================================
-      // ACCOUNT ACTIVE CHECK
-      // ====================================
-      if (
-        user.isActive === false
-      ) {
-
-        return res.status(403).json({
-
-          success: false,
-
-          message:
-            "Account inactive",
-
-        });
-
-      }
-
-
-      // ====================================
-      // PASSWORD CHECK
-      // ====================================
       const isMatch =
         await bcrypt.compare(
 
@@ -793,32 +712,32 @@ const loginUser =
         );
 
 
-      // ====================================
-      // INVALID PASSWORD
-      // ====================================
       if (!isMatch) {
 
         user.loginAttempts =
           (user.loginAttempts || 0) + 1;
 
 
-        // ==================================
-        // LOCK ACCOUNT
-        // ==================================
         if (
           user.loginAttempts >= 5
         ) {
 
           user.lockUntil =
             Date.now() +
-
-            30 * 60 * 1000;
+            15 * 60 * 1000;
 
         }
 
-        await user.save();
 
-        return res.status(400).json({
+        await user.save({
+
+          validateBeforeSave:
+            false,
+
+        });
+
+
+        return res.status(401).json({
 
           success: false,
 
@@ -830,74 +749,40 @@ const loginUser =
       }
 
 
-      // ====================================
-      // RESET LOGIN STATE
-      // ====================================
       user.loginAttempts = 0;
 
       user.lockUntil = null;
 
       user.isOnline = true;
 
-      user.lastLogin =
-        new Date();
+      await user.save({
 
-      await user.save();
+        validateBeforeSave:
+          false,
+
+      });
 
 
-      // ====================================
-      // GENERATE TOKEN
-      // ====================================
       const token =
         generateToken(
           user._id
         );
 
 
-      // ====================================
-      // RESPONSE
-      // ====================================
-      res.status(200).json({
+      return res.status(200).json({
 
         success: true,
-
-        message:
-          "Login successful",
 
         token,
 
         user: {
-
-          _id:
-            user._id,
-
-          identifier:
-            user.identifier,
-
-          name:
-            user.name,
-
-          email:
-            user.email,
-
-          role:
-            user.role,
-
-          avatar:
-            user.avatar || "",
-
-          isOnline:
-            user.isOnline,
-
-          isFirstLogin:
-            user.isFirstLogin,
-
-          createdAt:
-            user.createdAt,
-
-          lastLogin:
-            user.lastLogin,
-
+          _id: user._id,
+          identifier: user.identifier,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          isFirstLogin: user.isFirstLogin,
+          isActive: user.isActive,
         },
 
       });
@@ -911,7 +796,7 @@ const loginUser =
         error
       );
 
-      res.status(500).json({
+      return res.status(500).json({
 
         success: false,
 
@@ -923,7 +808,7 @@ const loginUser =
     }
 
   };
-
+  //
 // =========================================
 // LOGOUT USER
 // =========================================
@@ -932,25 +817,27 @@ const logoutUser =
 
     try {
 
-      const user =
-        await User.findById(
-          req.user._id
+      if (req.user?._id) {
+
+        await User.findByIdAndUpdate(
+
+          req.user._id,
+
+          {
+
+            isOnline: false,
+
+            lastActive:
+              new Date(),
+
+          }
+
         );
-
-      if (user) {
-
-        user.isOnline =
-          false;
-
-        user.lastSeen =
-          new Date();
-
-        await user.save();
 
       }
 
 
-      res.status(200).json({
+      return res.status(200).json({
 
         success: true,
 
@@ -963,9 +850,12 @@ const logoutUser =
 
     catch (error) {
 
-      console.log(error);
+      console.log(
+        "LOGOUT ERROR:",
+        error
+      );
 
-      res.status(500).json({
+      return res.status(500).json({
 
         success: false,
 
@@ -997,9 +887,8 @@ const changePassword =
 
       if (
 
-        !isStrongPassword(
-          newPassword
-        )
+        !oldPassword ||
+        !newPassword
 
       ) {
 
@@ -1008,8 +897,7 @@ const changePassword =
           success: false,
 
           message:
-
-            "Password must contain uppercase, lowercase, number and minimum 8 characters",
+            "All fields are required",
 
         });
 
@@ -1019,7 +907,7 @@ const changePassword =
       const user =
         await User.findById(
           req.user._id
-        );
+        ).select("+password");
 
 
       if (!user) {
@@ -1040,7 +928,6 @@ const changePassword =
         await bcrypt.compare(
 
           oldPassword,
-
           user.password
 
         );
@@ -1067,10 +954,10 @@ const changePassword =
         await bcrypt.hash(
 
           newPassword,
-
           salt
 
         );
+
 
       user.isFirstLogin =
         false;
@@ -1078,15 +965,20 @@ const changePassword =
       user.passwordChangedAt =
         new Date();
 
-      await user.save();
+
+      await user.save({
+
+        validateBeforeSave:
+          false,
+
+      });
 
 
-      res.status(200).json({
+      return res.status(200).json({
 
         success: true,
 
         message:
-
           "Password changed successfully",
 
       });
@@ -1095,9 +987,12 @@ const changePassword =
 
     catch (error) {
 
-      console.log(error);
+      console.log(
+        "CHANGE PASSWORD ERROR:",
+        error
+      );
 
-      res.status(500).json({
+      return res.status(500).json({
 
         success: false,
 
@@ -1124,10 +1019,31 @@ const forgotPassword =
       } = req.body;
 
 
+      const cleanIdentifier =
+        identifier
+          ?.trim()
+          .toLowerCase();
+
+
+      if (!cleanIdentifier) {
+
+        return res.status(400).json({
+
+          success: false,
+
+          message:
+            "Identifier is required",
+
+        });
+
+      }
+
+
       const user =
         await User.findOne({
 
-          identifier,
+          identifier:
+            cleanIdentifier,
 
         });
 
@@ -1149,13 +1065,15 @@ const forgotPassword =
       const otp =
         generateOtp();
 
+
       await saveOtpRequest(
-        identifier,
+
+        cleanIdentifier,
         otp
+
       );
 
 
-      // SEND EMAIL
       if (user.email) {
 
         await sendEmail(
@@ -1171,7 +1089,7 @@ const forgotPassword =
       }
 
 
-      res.status(200).json({
+      return res.status(200).json({
 
         success: true,
 
@@ -1194,9 +1112,12 @@ const forgotPassword =
 
     catch (error) {
 
-      console.log(error);
+      console.log(
+        "FORGOT PASSWORD ERROR:",
+        error
+      );
 
-      res.status(500).json({
+      return res.status(500).json({
 
         success: false,
 
@@ -1223,10 +1144,17 @@ const resendOtp =
       } = req.body;
 
 
+      const cleanIdentifier =
+        identifier
+          ?.trim()
+          .toLowerCase();
+
+
       const user =
         await User.findOne({
 
-          identifier,
+          identifier:
+            cleanIdentifier,
 
         });
 
@@ -1245,49 +1173,15 @@ const resendOtp =
       }
 
 
-      const existingOtp =
-        await OtpRequest.findOne({
-
-          identifier,
-
-        });
-
-
-      // COOLDOWN
-      if (
-
-        existingOtp &&
-        existingOtp.lastSentAt &&
-
-        Date.now() -
-
-        new Date(
-          existingOtp.lastSentAt
-        ).getTime() <
-
-        60 * 1000
-
-      ) {
-
-        return res.status(429).json({
-
-          success: false,
-
-          message:
-
-            "Please wait before requesting another OTP",
-
-        });
-
-      }
-
-
       const otp =
         generateOtp();
 
+
       await saveOtpRequest(
-        identifier,
+
+        cleanIdentifier,
         otp
+
       );
 
 
@@ -1306,12 +1200,22 @@ const resendOtp =
       }
 
 
-      res.status(200).json({
+      return res.status(200).json({
 
         success: true,
 
         message:
           "OTP resent successfully",
+
+        email:
+          maskEmail(
+            user.email
+          ),
+
+        phone:
+          maskPhone(
+            user.phone
+          ),
 
       });
 
@@ -1319,9 +1223,12 @@ const resendOtp =
 
     catch (error) {
 
-      console.log(error);
+      console.log(
+        "RESEND OTP ERROR:",
+        error
+      );
 
-      res.status(500).json({
+      return res.status(500).json({
 
         success: false,
 
@@ -1374,15 +1281,7 @@ const verifyOtp =
       }
 
 
-      // DELETE OTP
-      await OtpRequest.deleteOne({
-
-        identifier,
-
-      });
-
-
-      res.status(200).json({
+      return res.status(200).json({
 
         success: true,
 
@@ -1395,9 +1294,12 @@ const verifyOtp =
 
     catch (error) {
 
-      console.log(error);
+      console.log(
+        "VERIFY OTP ERROR:",
+        error
+      );
 
-      res.status(500).json({
+      return res.status(500).json({
 
         success: false,
 
@@ -1428,27 +1330,6 @@ const resetPassword =
       } = req.body;
 
 
-      if (
-
-        !isStrongPassword(
-          password
-        )
-
-      ) {
-
-        return res.status(400).json({
-
-          success: false,
-
-          message:
-
-            "Password must contain uppercase, lowercase, number and minimum 8 characters",
-
-        });
-
-      }
-
-
       const result =
         await validateOtpRequest(
 
@@ -1475,9 +1356,10 @@ const resetPassword =
       const user =
         await User.findOne({
 
-          identifier,
+          identifier:
+            identifier.toLowerCase(),
 
-        });
+        }).select("+password");
 
 
       if (!user) {
@@ -1501,10 +1383,10 @@ const resetPassword =
         await bcrypt.hash(
 
           password,
-
           salt
 
         );
+
 
       user.isFirstLogin =
         false;
@@ -1512,18 +1394,30 @@ const resetPassword =
       user.passwordChangedAt =
         new Date();
 
-      await user.save();
+      user.loginAttempts =
+        0;
+
+      user.lockUntil =
+        null;
 
 
-      // DELETE OTP
-      await OtpRequest.deleteOne({
+      await user.save({
 
-        identifier,
+        validateBeforeSave:
+          false,
 
       });
 
 
-      res.status(200).json({
+      await OtpRequest.deleteOne({
+
+        identifier:
+          identifier.toLowerCase(),
+
+      });
+
+
+      return res.status(200).json({
 
         success: true,
 
@@ -1536,9 +1430,71 @@ const resetPassword =
 
     catch (error) {
 
-      console.log(error);
+      console.log(
+        "RESET PASSWORD ERROR:",
+        error
+      );
 
-      res.status(500).json({
+      return res.status(500).json({
+
+        success: false,
+
+        message:
+          "Server Error",
+
+      });
+
+    }
+
+  };
+
+
+// =========================================
+// GET CURRENT USER
+// =========================================
+const getMe =
+  async (req, res) => {
+
+    try {
+
+      const user =
+        await User.findById(
+          req.user._id
+        ).select("-password");
+
+
+      if (!user) {
+
+        return res.status(404).json({
+
+          success: false,
+
+          message:
+            "User not found",
+
+        });
+
+      }
+
+
+      return res.status(200).json({
+
+        success: true,
+
+        user,
+
+      });
+
+    }
+
+    catch (error) {
+
+      console.log(
+        "GET ME ERROR:",
+        error
+      );
+
+      return res.status(500).json({
 
         success: false,
 
@@ -1573,6 +1529,6 @@ module.exports = {
 
   resetPassword,
 
-  verifyToken,
+  getMe,
 
 };

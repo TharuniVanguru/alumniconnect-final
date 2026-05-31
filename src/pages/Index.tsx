@@ -1,4 +1,6 @@
-import { Button } from '@/components/ui/button';
+import {
+  Button,
+} from '@/components/ui/button';
 
 import {
   Card,
@@ -8,53 +10,79 @@ import {
   CardTitle
 } from '@/components/ui/card';
 
-import { Badge } from '@/components/ui/badge';
+import {
+  Badge,
+} from '@/components/ui/badge';
 
 import {
 
   Award,
   Users,
   Briefcase,
-  TrendingUp,
-  Star,
   Trophy,
+  Star,
   ArrowRight,
   GraduationCap,
-  Building,
   MessageSquare,
   Brain,
   Zap,
   Sparkles,
   CheckCircle,
+  ShieldCheck,
+  TrendingUp,
+  Globe,
+  Rocket,
+  Building2,
 
 } from 'lucide-react';
 
-import { Link } from 'react-router-dom';
+import {
+  Link,
+  Navigate,
+} from 'react-router-dom';
 
-import { useAuth } from '@/contexts/AuthContext';
+import {
+  motion,
+} from 'framer-motion';
+
+import {
+  useAuth,
+} from '@/contexts/AuthContext';
 
 
+// ==========================================
+// COMPONENT
+// ==========================================
 const Index = () => {
 
-  const { user } = useAuth();
+  // ========================================
+  // AUTH
+  // ========================================
+  const {
+    user,
+  } = useAuth();
 
 
-  // =====================================
-  // REDIRECT IF LOGGED IN
-  // =====================================
+  // ========================================
+  // REDIRECT
+  // ========================================
   if (user) {
 
-    window.location.href =
-      `/${user.role}/dashboard`;
+    return (
 
-    return null;
+      <Navigate
+        to={`/${user.role}/dashboard`}
+        replace
+      />
+
+    );
 
   }
 
 
-  // =====================================
+  // ========================================
   // FEATURES
-  // =====================================
+  // ========================================
   const features = [
 
     {
@@ -65,7 +93,10 @@ const Index = () => {
         "Alumni Networking",
 
       description:
-        "Connect students with experienced alumni mentors for career guidance, networking, and collaboration."
+        "Build meaningful connections between students and successful alumni professionals.",
+
+      gradient:
+        "from-blue-500 to-cyan-500",
 
     },
 
@@ -77,7 +108,10 @@ const Index = () => {
         "Jobs & Internships",
 
       description:
-        "Alumni can post exclusive job openings, internships, and startup opportunities for students."
+        "Discover internships, placements, and startup opportunities shared by alumni.",
+
+      gradient:
+        "from-green-500 to-emerald-500",
 
     },
 
@@ -86,10 +120,13 @@ const Index = () => {
       icon: MessageSquare,
 
       title:
-        "Mentorship & Guidance",
+        "Mentorship Support",
 
       description:
-        "Students can request mentorship, interview preparation, resume reviews, and career roadmaps."
+        "Get resume reviews, interview prep, and career guidance from experts.",
+
+      gradient:
+        "from-purple-500 to-pink-500",
 
     },
 
@@ -98,10 +135,13 @@ const Index = () => {
       icon: Brain,
 
       title:
-        "AI Recommendation System",
+        "AI Recommendation",
 
       description:
-        "Smart AI recommendation engine matches students with suitable alumni mentors based on skills and interests."
+        "Smart AI engine connects students with the best mentors based on skills.",
+
+      gradient:
+        "from-violet-500 to-indigo-500",
 
     },
 
@@ -110,10 +150,13 @@ const Index = () => {
       icon: Zap,
 
       title:
-        "AI Chatbot Assistant",
+        "AI Chat Assistant",
 
       description:
-        "AI-powered chatbot provides instant career guidance, resume help, and technical support."
+        "Get instant career support, technical help, and roadmap suggestions.",
+
+      gradient:
+        "from-yellow-500 to-orange-500",
 
     },
 
@@ -122,19 +165,22 @@ const Index = () => {
       icon: Trophy,
 
       title:
-        "Contribution & Trust Score",
+        "Contribution System",
 
       description:
-        "Gamification system rewards active alumni and students with contribution points and trust scores."
+        "Earn trust scores, badges, and contribution rewards through activity.",
 
-    }
+      gradient:
+        "from-amber-500 to-red-500",
+
+    },
 
   ];
 
 
-  // =====================================
+  // ========================================
   // STATS
-  // =====================================
+  // ========================================
   const stats = [
 
     {
@@ -145,7 +191,7 @@ const Index = () => {
         "Alumni Connected",
 
       icon:
-        GraduationCap
+        GraduationCap,
 
     },
 
@@ -157,7 +203,7 @@ const Index = () => {
         "Students Supported",
 
       icon:
-        Users
+        Users,
 
     },
 
@@ -166,10 +212,10 @@ const Index = () => {
       value: "250+",
 
       label:
-        "Jobs & Internships",
+        "Jobs Posted",
 
       icon:
-        Briefcase
+        Briefcase,
 
     },
 
@@ -181,25 +227,25 @@ const Index = () => {
         "Mentorship Sessions",
 
       icon:
-        Trophy
+        Trophy,
 
-    }
+    },
 
   ];
 
 
-  // =====================================
-  // TOP CONTRIBUTORS
-  // =====================================
+  // ========================================
+  // CONTRIBUTORS
+  // ========================================
   const contributors = [
 
     {
 
       name:
-        'Tharuni',
+        "Tharuni",
 
       role:
-        'Frontend & AI Integration',
+        "Frontend & AI Integration",
 
       points:
         1580,
@@ -209,10 +255,10 @@ const Index = () => {
     {
 
       name:
-        'AlumniProject',
+        "AlumniProject",
 
       role:
-        'Backend Development',
+        "Backend Development",
 
       points:
         1320,
@@ -222,22 +268,22 @@ const Index = () => {
     {
 
       name:
-        'MVSREC',
+        "MVSREC",
 
       role:
-        'Innovation & Research',
+        "Innovation & Research",
 
       points:
         1180,
 
-    }
+    },
 
   ];
 
 
-  // =====================================
+  // ========================================
   // BADGES
-  // =====================================
+  // ========================================
   const badges = [
 
     {
@@ -246,10 +292,10 @@ const Index = () => {
         Trophy,
 
       name:
-        'Gold Contributor',
+        "Gold Contributor",
 
       color:
-        'from-yellow-400 to-yellow-600'
+        "from-yellow-400 to-yellow-600",
 
     },
 
@@ -259,10 +305,10 @@ const Index = () => {
         Star,
 
       name:
-        'Silver Contributor',
+        "Silver Contributor",
 
       color:
-        'from-gray-300 to-gray-500'
+        "from-gray-300 to-gray-500",
 
     },
 
@@ -272,53 +318,78 @@ const Index = () => {
         Award,
 
       name:
-        'Bronze Contributor',
+        "Bronze Contributor",
 
       color:
-        'from-amber-600 to-amber-800'
+        "from-amber-600 to-orange-800",
 
-    }
+    },
 
   ];
 
 
+  // ========================================
+  // UI
+  // ========================================
   return (
 
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background overflow-hidden">
 
 
-      {/* =====================================
-          HEADER
-      ===================================== */}
+      {/* ================================= */}
+      {/* HEADER */}
+      {/* ================================= */}
 
-      <header className="border-b bg-background/95 backdrop-blur sticky top-0 z-50">
+      <header className="sticky top-0 z-50 border-b bg-background/80 backdrop-blur-xl">
 
-        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+        <div className="container mx-auto px-4 h-20 flex items-center justify-between">
+
 
           {/* LOGO */}
-
           <div className="flex items-center gap-3">
 
-            <div className="h-10 w-10 rounded-xl bg-gradient-to-r from-primary to-purple-600 flex items-center justify-center shadow-lg">
+            <motion.div
 
-              <Award className="h-5 w-5 text-white" />
+              whileHover={{
+                rotate: 10,
+                scale: 1.05,
+              }}
+
+              className="h-12 w-12 rounded-2xl bg-gradient-to-r from-primary via-purple-600 to-indigo-600 flex items-center justify-center shadow-xl"
+
+            >
+
+              <Award className="h-6 w-6 text-white" />
+
+            </motion.div>
+
+
+            <div>
+
+              <h1 className="font-extrabold text-2xl bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
+
+                AlumniConnect
+
+              </h1>
+
+              <p className="text-xs text-muted-foreground">
+
+                AI Powered Alumni Platform
+
+              </p>
 
             </div>
-
-            <span className="font-bold text-2xl bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
-
-              AlumniConnect
-
-            </span>
 
           </div>
 
 
-          {/* NAV */}
-
+          {/* NAVIGATION */}
           <div className="flex items-center gap-4">
 
-            <Button variant="ghost" asChild>
+            <Button
+              variant="ghost"
+              asChild
+            >
 
               <Link to="/about">
 
@@ -329,7 +400,10 @@ const Index = () => {
             </Button>
 
 
-            <Button variant="outline" asChild>
+            <Button
+              variant="outline"
+              asChild
+            >
 
               <Link to="/login">
 
@@ -346,52 +420,80 @@ const Index = () => {
       </header>
 
 
-      {/* =====================================
-          HERO SECTION
-      ===================================== */}
+      {/* ================================= */}
+      {/* HERO SECTION */}
+      {/* ================================= */}
 
-      <section className="relative overflow-hidden bg-gradient-to-br from-background via-primary/5 to-purple-100">
+      <section className="relative overflow-hidden py-28 lg:py-36">
 
-        <div className="container mx-auto px-4 py-24 lg:py-32">
 
-          <div className="text-center max-w-5xl mx-auto">
+        {/* BACKGROUND */}
+        <div className="absolute inset-0 bg-gradient-to-br from-background via-primary/5 to-purple-100 dark:to-purple-950" />
 
-            <Badge className="mb-6 bg-gradient-to-r from-primary to-purple-600 text-white px-5 py-2 text-sm">
+        <div className="absolute top-0 left-0 h-72 w-72 bg-primary/10 rounded-full blur-3xl" />
+
+        <div className="absolute bottom-0 right-0 h-96 w-96 bg-purple-500/10 rounded-full blur-3xl" />
+
+
+        <div className="container relative z-10 mx-auto px-4">
+
+          <motion.div
+
+            initial={{
+              opacity: 0,
+              y: 40,
+            }}
+
+            animate={{
+              opacity: 1,
+              y: 0,
+            }}
+
+            transition={{
+              duration: 0.7,
+            }}
+
+            className="max-w-6xl mx-auto text-center"
+
+          >
+
+            <Badge className="mb-8 px-6 py-2 text-sm bg-gradient-to-r from-primary to-purple-600 text-white shadow-lg">
 
               🚀 Smart Alumni-Student Networking Platform
 
             </Badge>
 
 
-            <h1 className="text-5xl lg:text-7xl font-extrabold leading-tight mb-8">
+            <h1 className="text-5xl md:text-7xl font-extrabold leading-tight mb-8">
 
               Connecting
 
-              <span className="bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-primary via-purple-600 to-indigo-600 bg-clip-text text-transparent">
 
-                {" "}Alumni & Students{" "}
+                {" "}Students & Alumni{" "}
 
               </span>
 
-              for Future Growth
+              for Future Success
 
             </h1>
 
 
-            <p className="text-lg lg:text-xl text-muted-foreground mb-10 max-w-3xl mx-auto">
+            <p className="text-lg md:text-xl text-muted-foreground leading-9 max-w-4xl mx-auto mb-12">
 
-              AlumniConnect is an intelligent alumni-student ecosystem that enables mentorship,
-              networking, job opportunities, AI-powered recommendations, guidance requests,
-              real-time chat, and career support.
+              AlumniConnect is an AI-powered ecosystem for mentorship,
+              networking, jobs, internships, career guidance,
+              real-time chat, contribution tracking, and alumni engagement.
 
             </p>
 
 
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            {/* BUTTONS */}
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-5">
 
               <Button
                 size="lg"
-                className="text-lg px-8 py-6"
+                className="h-14 px-10 text-lg rounded-2xl shadow-xl"
                 asChild
               >
 
@@ -409,13 +511,11 @@ const Index = () => {
               <Button
                 size="lg"
                 variant="outline"
-                className="text-lg px-8 py-6"
+                className="h-14 px-10 text-lg rounded-2xl"
                 asChild
               >
 
-                <Link
-                  to="/about"
-                >
+                <Link to="/about">
 
                   Learn More
 
@@ -425,18 +525,51 @@ const Index = () => {
 
             </div>
 
-          </div>
+
+            {/* HIGHLIGHTS */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-20">
+
+              {[
+
+                "AI Mentor Matching",
+
+                "Real-Time Alumni Networking",
+
+                "Career Growth Platform",
+
+              ].map((item, index) => (
+
+                <div
+                  key={index}
+                  className="flex items-center justify-center gap-3 rounded-2xl bg-background/70 backdrop-blur-xl border p-5 shadow-lg"
+                >
+
+                  <CheckCircle className="h-5 w-5 text-green-500" />
+
+                  <span className="font-medium">
+
+                    {item}
+
+                  </span>
+
+                </div>
+
+              ))}
+
+            </div>
+
+          </motion.div>
 
         </div>
 
       </section>
 
 
-      {/* =====================================
-          STATS SECTION
-      ===================================== */}
+      {/* ================================= */}
+      {/* STATS */}
+      {/* ================================= */}
 
-      <section className="py-16 bg-muted/30">
+      <section className="py-20 bg-muted/30">
 
         <div className="container mx-auto px-4">
 
@@ -444,36 +577,43 @@ const Index = () => {
 
             {stats.map((stat, index) => (
 
-              <div
+              <motion.div
+
                 key={index}
+
+                whileHover={{
+                  y: -8,
+                }}
+
                 className="text-center"
+
               >
 
-                <div className="flex items-center justify-center mb-4">
+                <div className="flex justify-center mb-5">
 
-                  <div className="p-4 rounded-xl bg-gradient-to-r from-primary to-purple-600 shadow-lg">
+                  <div className="h-20 w-20 rounded-3xl bg-gradient-to-r from-primary to-purple-600 flex items-center justify-center shadow-2xl">
 
-                    <stat.icon className="h-7 w-7 text-white" />
+                    <stat.icon className="h-9 w-9 text-white" />
 
                   </div>
 
                 </div>
 
 
-                <div className="text-3xl lg:text-4xl font-bold mb-2 bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
+                <h2 className="text-4xl font-extrabold bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent mb-2">
 
                   {stat.value}
 
-                </div>
+                </h2>
 
 
-                <div className="text-muted-foreground">
+                <p className="text-muted-foreground text-lg">
 
                   {stat.label}
 
-                </div>
+                </p>
 
-              </div>
+              </motion.div>
 
             ))}
 
@@ -484,9 +624,9 @@ const Index = () => {
       </section>
 
 
-      {/* =====================================
-          FEATURES SECTION
-      ===================================== */}
+      {/* ================================= */}
+      {/* FEATURES */}
+      {/* ================================= */}
 
       <section className="py-24">
 
@@ -494,15 +634,24 @@ const Index = () => {
 
           <div className="text-center mb-16">
 
-            <h2 className="text-4xl font-bold mb-4">
+            <Badge className="mb-4 bg-primary/10 text-primary">
 
-              Powerful Features
+              FEATURES
+
+            </Badge>
+
+
+            <h2 className="text-5xl font-bold mb-5">
+
+              Powerful Platform Features
 
             </h2>
 
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
 
-              Everything needed to build a strong alumni-student ecosystem.
+            <p className="text-muted-foreground text-lg max-w-3xl mx-auto">
+
+              Everything needed to build a strong alumni-student
+              collaboration ecosystem powered by AI.
 
             </p>
 
@@ -513,40 +662,49 @@ const Index = () => {
 
             {features.map((feature, index) => (
 
-              <Card
+              <motion.div
+
                 key={index}
-                className="border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-2"
+
+                whileHover={{
+                  y: -10,
+                }}
+
               >
 
-                <CardHeader>
+                <Card className="border-0 rounded-3xl shadow-xl hover:shadow-2xl transition-all h-full overflow-hidden">
 
-                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-r from-primary to-purple-600 flex items-center justify-center mb-5">
+                  <CardHeader>
 
-                    <feature.icon className="h-7 w-7 text-white" />
+                    <div className={`h-16 w-16 rounded-2xl bg-gradient-to-r ${feature.gradient} flex items-center justify-center mb-6 shadow-lg`}>
 
-                  </div>
+                      <feature.icon className="h-8 w-8 text-white" />
 
-
-                  <CardTitle className="text-2xl">
-
-                    {feature.title}
-
-                  </CardTitle>
-
-                </CardHeader>
+                    </div>
 
 
-                <CardContent>
+                    <CardTitle className="text-2xl">
 
-                  <CardDescription className="text-base leading-7">
+                      {feature.title}
 
-                    {feature.description}
+                    </CardTitle>
 
-                  </CardDescription>
+                  </CardHeader>
 
-                </CardContent>
 
-              </Card>
+                  <CardContent>
+
+                    <CardDescription className="text-base leading-8">
+
+                      {feature.description}
+
+                    </CardDescription>
+
+                  </CardContent>
+
+                </Card>
+
+              </motion.div>
 
             ))}
 
@@ -557,17 +715,17 @@ const Index = () => {
       </section>
 
 
-      {/* =====================================
-          CONTRIBUTORS
-      ===================================== */}
+      {/* ================================= */}
+      {/* CONTRIBUTORS */}
+      {/* ================================= */}
 
-      <section className="py-20 bg-muted/30">
+      <section className="py-24 bg-muted/30">
 
         <div className="container mx-auto px-4">
 
-          <div className="text-center mb-12">
+          <div className="text-center mb-14">
 
-            <h2 className="text-4xl font-bold mb-4">
+            <h2 className="text-5xl font-bold mb-4">
 
               Top Contributors
 
@@ -575,29 +733,31 @@ const Index = () => {
 
             <p className="text-muted-foreground text-lg">
 
-              People contributing to the AlumniConnect ecosystem
+              Leading contributors driving AlumniConnect forward
 
             </p>
 
           </div>
 
 
-          <div className="max-w-4xl mx-auto space-y-5">
+          <div className="max-w-5xl mx-auto space-y-6">
 
             {contributors.map((contributor, index) => (
 
               <Card
                 key={index}
-                className="shadow-lg border-0"
+                className="rounded-3xl border-0 shadow-xl"
               >
 
-                <CardContent className="p-6">
+                <CardContent className="p-7">
 
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
 
+
+                    {/* LEFT */}
                     <div className="flex items-center gap-5">
 
-                      <div className="w-14 h-14 rounded-full bg-gradient-to-r from-primary to-purple-600 flex items-center justify-center text-white font-bold text-xl">
+                      <div className="h-16 w-16 rounded-full bg-gradient-to-r from-primary to-purple-600 text-white flex items-center justify-center text-2xl font-bold shadow-xl">
 
                         {index + 1}
 
@@ -606,7 +766,7 @@ const Index = () => {
 
                       <div>
 
-                        <h3 className="font-bold text-xl">
+                        <h3 className="text-2xl font-bold">
 
                           {contributor.name}
 
@@ -623,13 +783,14 @@ const Index = () => {
                     </div>
 
 
+                    {/* RIGHT */}
                     <div className="text-right">
 
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 justify-end">
 
-                        <Trophy className="h-5 w-5 text-yellow-500" />
+                        <Trophy className="h-6 w-6 text-yellow-500" />
 
-                        <span className="font-bold text-2xl text-primary">
+                        <span className="text-3xl font-bold text-primary">
 
                           {contributor.points}
 
@@ -637,11 +798,11 @@ const Index = () => {
 
                       </div>
 
-                      <span className="text-sm text-muted-foreground">
+                      <p className="text-muted-foreground text-sm">
 
-                        points
+                        Contribution Points
 
-                      </span>
+                      </p>
 
                     </div>
 
@@ -660,23 +821,31 @@ const Index = () => {
       </section>
 
 
-      {/* =====================================
-          BADGES
-      ===================================== */}
+      {/* ================================= */}
+      {/* BADGES */}
+      {/* ================================= */}
 
-      <section className="py-20">
+      <section className="py-24">
 
         <div className="container mx-auto px-4 text-center">
 
-          <h2 className="text-4xl font-bold mb-5">
+          <Badge className="mb-5 bg-primary/10 text-primary">
+
+            ACHIEVEMENTS
+
+          </Badge>
+
+
+          <h2 className="text-5xl font-bold mb-5">
 
             Contribution Badges
 
           </h2>
 
-          <p className="text-muted-foreground mb-12 text-lg">
 
-            Earn rewards and recognition through contributions
+          <p className="text-muted-foreground text-lg mb-14">
+
+            Earn recognition and rewards by helping the community.
 
           </p>
 
@@ -685,25 +854,32 @@ const Index = () => {
 
             {badges.map((badge, index) => (
 
-              <div
+              <motion.div
+
                 key={index}
-                className="flex flex-col items-center gap-3"
+
+                whileHover={{
+                  scale: 1.08,
+                }}
+
+                className="flex flex-col items-center gap-5"
+
               >
 
-                <div className={`w-24 h-24 rounded-full bg-gradient-to-br ${badge.color} flex items-center justify-center shadow-2xl`}>
+                <div className={`h-28 w-28 rounded-full bg-gradient-to-br ${badge.color} flex items-center justify-center shadow-2xl`}>
 
-                  <badge.icon className="h-12 w-12 text-white" />
+                  <badge.icon className="h-14 w-14 text-white" />
 
                 </div>
 
 
-                <span className="font-semibold text-lg">
+                <span className="font-bold text-xl">
 
                   {badge.name}
 
                 </span>
 
-              </div>
+              </motion.div>
 
             ))}
 
@@ -714,89 +890,137 @@ const Index = () => {
       </section>
 
 
-      {/* =====================================
-          CTA SECTION
-      ===================================== */}
+      {/* ================================= */}
+      {/* CTA */}
+      {/* ================================= */}
 
-      <section className="py-24 bg-gradient-to-r from-primary via-purple-600 to-primary">
+      <section className="py-28 bg-gradient-to-r from-primary via-purple-600 to-indigo-600 relative overflow-hidden">
 
-        <div className="container mx-auto px-4 text-center">
+        <div className="absolute inset-0 bg-black/10" />
 
-          <h2 className="text-4xl lg:text-5xl font-bold text-white mb-6">
+        <div className="container relative z-10 mx-auto px-4 text-center">
 
-            Start Building Your Network Today
+          <motion.div
 
-          </h2>
+            initial={{
+              opacity: 0,
+              y: 30,
+            }}
 
+            whileInView={{
+              opacity: 1,
+              y: 0,
+            }}
 
-          <p className="text-white/90 text-lg max-w-2xl mx-auto mb-10">
+            viewport={{
+              once: true,
+            }}
 
-            Connect with alumni mentors, explore opportunities,
-            gain career guidance, and grow professionally.
+            transition={{
+              duration: 0.6,
+            }}
 
-          </p>
-
-
-          <Button
-            size="lg"
-            variant="secondary"
-            className="text-lg px-10 py-6"
-            asChild
           >
 
-            <Link to="/login">
+            <h2 className="text-5xl font-bold text-white mb-6">
 
-              Join AlumniConnect
+              Start Building Your Network Today
 
-              <ArrowRight className="ml-2 h-5 w-5" />
+            </h2>
 
-            </Link>
 
-          </Button>
+            <p className="text-white/90 text-xl max-w-3xl mx-auto mb-10 leading-9">
+
+              Connect with alumni mentors, discover opportunities,
+              gain career support, and become part of a powerful community.
+
+            </p>
+
+
+            <Button
+              size="lg"
+              variant="secondary"
+              className="h-14 px-10 text-lg rounded-2xl shadow-xl"
+              asChild
+            >
+
+              <Link to="/login">
+
+                Join AlumniConnect
+
+                <ArrowRight className="ml-2 h-5 w-5" />
+
+              </Link>
+
+            </Button>
+
+          </motion.div>
 
         </div>
 
       </section>
 
 
-      {/* =====================================
-          FOOTER
-      ===================================== */}
+      {/* ================================= */}
+      {/* FOOTER */}
+      {/* ================================= */}
 
       <footer className="border-t bg-muted/30 py-10">
 
         <div className="container mx-auto px-4">
 
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-5">
 
+
+            {/* LEFT */}
             <div className="flex items-center gap-3">
 
-              <div className="h-8 w-8 rounded-lg bg-gradient-to-r from-primary to-purple-600 flex items-center justify-center">
+              <div className="h-10 w-10 rounded-xl bg-gradient-to-r from-primary to-purple-600 flex items-center justify-center shadow-lg">
 
-                <Award className="h-4 w-4 text-white" />
+                <Award className="h-5 w-5 text-white" />
 
               </div>
 
 
-              <span className="font-bold text-xl bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
+              <div>
 
-                AlumniConnect
+                <h2 className="font-bold text-xl bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
 
-              </span>
+                  AlumniConnect
+
+                </h2>
+
+                <p className="text-xs text-muted-foreground">
+
+                  Smart Alumni Ecosystem
+
+                </p>
+
+              </div>
 
             </div>
 
 
-            <div className="text-sm text-muted-foreground text-center">
+            {/* RIGHT */}
+            <div className="text-center md:text-right">
 
-              © 2025 AlumniConnect.
-              Designed & Developed by
-              {" "}
-              <span className="font-semibold text-primary">
+              <p className="text-sm text-muted-foreground">
 
-                Tharuni
+                © 2025 AlumniConnect. All rights reserved.
 
-              </span>
+              </p>
+
+              <p className="text-sm text-muted-foreground">
+
+                Designed & Developed by
+
+                <span className="font-semibold text-primary">
+
+                  {" "}Tharuni
+
+                </span>
+
+              </p>
 
             </div>
 
@@ -812,4 +1036,8 @@ const Index = () => {
 
 };
 
+
+// ==========================================
+// EXPORT
+// ==========================================
 export default Index;

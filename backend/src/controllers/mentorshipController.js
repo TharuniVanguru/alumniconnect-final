@@ -43,7 +43,7 @@ const sendMentorshipRequest =
         alumniId,
         message,
         domain,
-        priority,
+        mentorshipType,
 
       } = req.body;
 
@@ -51,14 +51,17 @@ const sendMentorshipRequest =
       // ====================================
       // VALIDATION
       // ====================================
-      if (!alumniId) {
+      if (
+        !alumniId ||
+        !message
+      ) {
 
         return res.status(400).json({
 
           success: false,
 
           message:
-            "Alumni ID is required",
+            "alumniId and message are required",
 
         });
 
@@ -88,7 +91,7 @@ const sendMentorshipRequest =
 
 
       // ====================================
-      // CHECK ROLE
+      // ROLE CHECK
       // ====================================
       if (
         alumni.role !== "alumni"
@@ -155,17 +158,14 @@ const sendMentorshipRequest =
           alumniName:
             alumni.name,
 
-          message:
-            message || "",
+          message,
 
           domain:
             domain || "",
 
-          priority:
-            priority || "Medium",
-
-          status:
-            "Pending",
+          mentorshipType:
+            mentorshipType ||
+            "General Mentorship",
 
         });
 
@@ -185,13 +185,10 @@ const sendMentorshipRequest =
           "New Mentorship Request",
 
         message:
-          `${req.user.name} requested mentorship in ${domain || "your domain"}`,
+          `${req.user.name} requested mentorship`,
 
         type:
-          "Mentorship",
-
-        priority:
-          priority || "Medium",
+          "mentorship",
 
         relatedId:
           mentorship._id,
@@ -218,7 +215,7 @@ const sendMentorshipRequest =
     catch (error) {
 
       console.log(
-        "Mentorship Request Error:",
+        "SEND MENTORSHIP ERROR:",
         error
       );
 
@@ -237,73 +234,61 @@ const sendMentorshipRequest =
 
 
 // ==========================================
-// GET ALL MENTORSHIP REQUESTS
+// GET MENTORSHIP REQUESTS
 // ==========================================
 const getMentorshipRequests =
   async (req, res) => {
 
     try {
 
-      let mentorships = [];
+      let filter = {};
 
 
       // ====================================
-      // STUDENT
+      // ROLE BASED FILTER
       // ====================================
       if (
         req.user.role === "student"
       ) {
 
-        mentorships =
-          await Mentorship.find({
-
-            student:
-              req.user._id,
-
-          })
-
-          .sort({
-            createdAt: -1,
-          });
+        filter.student =
+          req.user._id;
 
       }
 
-
-      // ====================================
-      // ALUMNI
-      // ====================================
       else if (
         req.user.role === "alumni"
       ) {
 
-        mentorships =
-          await Mentorship.find({
-
-            alumni:
-              req.user._id,
-
-          })
-
-          .sort({
-            createdAt: -1,
-          });
+        filter.alumni =
+          req.user._id;
 
       }
 
 
       // ====================================
-      // ADMIN
+      // FETCH
       // ====================================
-      else {
+      const mentorships =
+        await Mentorship.find(
+          filter
+        )
 
-        mentorships =
-          await Mentorship.find()
+          .populate(
+            "student",
+            "name email role profileImage"
+          )
+
+          .populate(
+            "alumni",
+            "name email role profileImage"
+          )
 
           .sort({
-            createdAt: -1,
-          });
 
-      }
+            createdAt: -1,
+
+          });
 
 
       // ====================================
@@ -353,6 +338,9 @@ const getMentorshipRequests =
       };
 
 
+      // ====================================
+      // RESPONSE
+      // ====================================
       res.status(200).json({
 
         success: true,
@@ -368,7 +356,7 @@ const getMentorshipRequests =
     catch (error) {
 
       console.log(
-        "Get Mentorship Error:",
+        "GET MENTORSHIP ERROR:",
         error
       );
 
@@ -397,7 +385,18 @@ const getSingleMentorship =
       const mentorship =
         await Mentorship.findById(
           req.params.id
-        );
+        )
+
+          .populate(
+            "student",
+            "name email role profileImage"
+          )
+
+          .populate(
+            "alumni",
+            "name email role profileImage"
+          );
+
 
       if (!mentorship) {
 
@@ -416,14 +415,14 @@ const getSingleMentorship =
       // ====================================
       // ACCESS CONTROL
       // ====================================
-      const isOwner =
+      const allowed =
 
-        mentorship.student.toString() ===
+        mentorship.student._id.toString() ===
           req.user._id.toString()
 
         ||
 
-        mentorship.alumni.toString() ===
+        mentorship.alumni._id.toString() ===
           req.user._id.toString()
 
         ||
@@ -431,7 +430,7 @@ const getSingleMentorship =
         req.user.role === "admin";
 
 
-      if (!isOwner) {
+      if (!allowed) {
 
         return res.status(403).json({
 
@@ -457,7 +456,10 @@ const getSingleMentorship =
 
     catch (error) {
 
-      console.log(error);
+      console.log(
+        "GET SINGLE ERROR:",
+        error
+      );
 
       res.status(500).json({
 
@@ -541,23 +543,9 @@ const updateMentorshipStatus =
         req.body.meetingLink ||
         mentorship.meetingLink;
 
-      mentorship.sessionNotes =
-        req.body.sessionNotes ||
-        mentorship.sessionNotes;
-
-
-      // ====================================
-      // COMPLETED
-      // ====================================
-      if (
-        req.body.status ===
-        "Completed"
-      ) {
-
-        mentorship.completedAt =
-          new Date();
-
-      }
+      mentorship.mentorNotes =
+        req.body.mentorNotes ||
+        mentorship.mentorNotes;
 
 
       // ====================================
@@ -568,57 +556,8 @@ const updateMentorshipStatus =
 
 
       // ====================================
-      // NOTIFICATION
+      // CREATE NOTIFICATION
       // ====================================
-      let title =
-        "Mentorship Updated";
-
-      let message =
-        `${req.user.name} updated mentorship status`;
-
-
-      if (
-        req.body.status ===
-        "Accepted"
-      ) {
-
-        title =
-          "Mentorship Accepted";
-
-        message =
-          `${req.user.name} accepted your mentorship request`;
-
-      }
-
-
-      if (
-        req.body.status ===
-        "Rejected"
-      ) {
-
-        title =
-          "Mentorship Rejected";
-
-        message =
-          `${req.user.name} rejected your mentorship request`;
-
-      }
-
-
-      if (
-        req.body.status ===
-        "Completed"
-      ) {
-
-        title =
-          "Mentorship Completed";
-
-        message =
-          `${req.user.name} marked mentorship as completed`;
-
-      }
-
-
       await Notification.create({
 
         recipient:
@@ -627,12 +566,14 @@ const updateMentorshipStatus =
         sender:
           req.user._id,
 
-        title,
+        title:
+          "Mentorship Updated",
 
-        message,
+        message:
+          `Your mentorship request status changed to ${mentorship.status}`,
 
         type:
-          "Mentorship",
+          "mentorship",
 
         relatedId:
           mentorship._id,
@@ -640,6 +581,9 @@ const updateMentorshipStatus =
       });
 
 
+      // ====================================
+      // RESPONSE
+      // ====================================
       res.status(200).json({
 
         success: true,
@@ -657,7 +601,7 @@ const updateMentorshipStatus =
     catch (error) {
 
       console.log(
-        "Update Mentorship Error:",
+        "UPDATE MENTORSHIP ERROR:",
         error
       );
 
@@ -708,7 +652,6 @@ const submitMentorshipFeedback =
       if (
 
         mentorship.student.toString() !==
-
         req.user._id.toString()
 
       ) {
@@ -729,7 +672,7 @@ const submitMentorshipFeedback =
         req.body.feedback || "";
 
       mentorship.rating =
-        req.body.rating || 0;
+        req.body.rating || null;
 
 
       await mentorship.save();
@@ -751,7 +694,7 @@ const submitMentorshipFeedback =
     catch (error) {
 
       console.log(
-        "Feedback Error:",
+        "FEEDBACK ERROR:",
         error
       );
 
@@ -830,7 +773,7 @@ const deleteMentorshipRequest =
         success: true,
 
         message:
-          "Mentorship request deleted successfully",
+          "Mentorship deleted successfully",
 
       });
 
@@ -838,7 +781,10 @@ const deleteMentorshipRequest =
 
     catch (error) {
 
-      console.log(error);
+      console.log(
+        "DELETE MENTORSHIP ERROR:",
+        error
+      );
 
       res.status(500).json({
 
@@ -871,76 +817,75 @@ const getMentorshipStats =
         });
 
 
-      const stats = {
-
-        totalSessions:
-          mentorships.length,
-
-        completedSessions:
-          mentorships.filter(
-
-            (m) =>
-              m.status ===
-              "Completed"
-
-          ).length,
-
-        pendingSessions:
-          mentorships.filter(
-
-            (m) =>
-              m.status ===
-              "Pending"
-
-          ).length,
-
-        acceptedSessions:
-          mentorships.filter(
-
-            (m) =>
-              m.status ===
-              "Accepted"
-
-          ).length,
-
-        averageRating: 0,
-
-      };
-
-
       const ratings =
         mentorships
+
           .filter(
             (m) => m.rating
           )
+
           .map(
             (m) => m.rating
           );
 
 
-      if (ratings.length > 0) {
+      const averageRating =
 
-        stats.averageRating =
+        ratings.length > 0
 
-          (
-            ratings.reduce(
+          ? (
+              ratings.reduce(
 
-              (a, b) => a + b,
+                (a, b) => a + b,
 
-              0
+                0
 
-            ) / ratings.length
+              ) / ratings.length
 
-          ).toFixed(1);
+            ).toFixed(1)
 
-      }
+          : 0;
 
 
       res.status(200).json({
 
         success: true,
 
-        stats,
+        stats: {
+
+          totalSessions:
+            mentorships.length,
+
+          completedSessions:
+            mentorships.filter(
+
+              (m) =>
+                m.status ===
+                "Completed"
+
+            ).length,
+
+          pendingSessions:
+            mentorships.filter(
+
+              (m) =>
+                m.status ===
+                "Pending"
+
+            ).length,
+
+          acceptedSessions:
+            mentorships.filter(
+
+              (m) =>
+                m.status ===
+                "Accepted"
+
+            ).length,
+
+          averageRating,
+
+        },
 
       });
 
@@ -948,7 +893,10 @@ const getMentorshipStats =
 
     catch (error) {
 
-      console.log(error);
+      console.log(
+        "MENTORSHIP STATS ERROR:",
+        error
+      );
 
       res.status(500).json({
 

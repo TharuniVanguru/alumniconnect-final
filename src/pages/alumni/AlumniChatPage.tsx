@@ -4,8 +4,7 @@ import {
   useRef,
 } from "react";
 
-import axios from "axios";
-
+import api, { apiGet, apiPost, apiPut, apiPatch, apiDelete } from "@/utils/api";
 import {
   useParams,
   useNavigate,
@@ -16,6 +15,9 @@ import {
   connectSocket,
 } from "@/socket";
 
+import { motion }
+  from "framer-motion";
+
 import { Button }
   from "@/components/ui/button";
 
@@ -23,14 +25,22 @@ import { Input }
   from "@/components/ui/input";
 
 import {
-
   Card,
   CardContent,
-
 } from "@/components/ui/card";
 
 import { Header }
   from "@/components/layout/Header";
+
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@/components/ui/avatar";
+
+import {
+  Badge,
+} from "@/components/ui/badge";
 
 import {
 
@@ -39,11 +49,17 @@ import {
   Phone,
   Video,
   ArrowLeft,
+  Check,
+  CheckCheck,
+  Paperclip,
+  Smile,
+  Circle,
 
 } from "lucide-react";
 
-import { useToast }
-  from "@/hooks/use-toast";
+import {
+  useToast,
+} from "@/hooks/use-toast";
 
 
 // ==========================================
@@ -53,11 +69,13 @@ interface Message {
 
   _id?: string;
 
+  senderId?: string;
+
+  receiverId?: string;
+
   senderName: string;
 
   receiverName: string;
-
-  receiverId?: string;
 
   message: string;
 
@@ -96,31 +114,70 @@ const AlumniChatPage = () => {
   // ========================================
   // STATES
   // ========================================
-  const [messages, setMessages] =
-    useState<Message[]>([]);
+  const [
 
-  const [newMessage, setNewMessage] =
-    useState("");
+    messages,
+    setMessages,
 
-  const [onlineUsers, setOnlineUsers] =
-    useState<string[]>([]);
+  ] = useState<Message[]>([]);
 
-  const [isTyping, setIsTyping] =
-    useState(false);
 
-  const [sending, setSending] =
-    useState(false);
+  const [
 
-  const [loading, setLoading] =
-    useState(true);
+    newMessage,
+    setNewMessage,
 
-  const [error, setError] =
-    useState("");
+  ] = useState("");
 
-  const [chatUser, setChatUser] =
-    useState<ChatUser | null>(
-      null
-    );
+
+  const [
+
+    onlineUsers,
+    setOnlineUsers,
+
+  ] = useState<string[]>([]);
+
+
+  const [
+
+    isTyping,
+    setIsTyping,
+
+  ] = useState(false);
+
+
+  const [
+
+    sending,
+    setSending,
+
+  ] = useState(false);
+
+
+  const [
+
+    loading,
+    setLoading,
+
+  ] = useState(true);
+
+
+  const [
+
+    error,
+    setError,
+
+  ] = useState("");
+
+
+  const [
+
+    chatUser,
+    setChatUser,
+
+  ] = useState<ChatUser | null>(
+    null
+  );
 
 
   // ========================================
@@ -195,9 +252,9 @@ const AlumniChatPage = () => {
       try {
 
         const response =
-          await axios.get(
+          await api.get(
 
-            `http://localhost:5000/profile/${userId}`,
+            `/profile/${userId}`,
 
             {
 
@@ -238,9 +295,9 @@ const AlumniChatPage = () => {
         setLoading(true);
 
         const response =
-          await axios.get(
+          await api.get(
 
-            `http://localhost:5000/messages/${userId}`,
+            `/messages/${userId}`,
 
             {
 
@@ -261,9 +318,9 @@ const AlumniChatPage = () => {
 
 
         // MARK AS READ
-        await axios.put(
+        await api.put(
 
-          `http://localhost:5000/messages/read/${userId}`,
+          `/messages/read/${userId}`,
 
           {},
 
@@ -364,13 +421,24 @@ const AlumniChatPage = () => {
 
       (message: Message) => {
 
-        setMessages((prev) => [
+        setMessages((prev) => {
 
-          ...prev,
+          const exists =
+            prev.some(
+              (msg) =>
+                msg._id ===
+                message._id
+            );
 
-          message,
+          if (exists)
+            return prev;
 
-        ]);
+          return [
+            ...prev,
+            message,
+          ];
+
+        });
 
 
         socket.emit(
@@ -561,6 +629,9 @@ const AlumniChatPage = () => {
 
         const messageData = {
 
+          senderId:
+            userInfo._id,
+
           senderName:
             userInfo.name,
 
@@ -583,35 +654,40 @@ const AlumniChatPage = () => {
 
 
         // SAVE MESSAGE
-        await axios.post(
+        const response =
+          await api.post(
 
-          "http://localhost:5000/messages",
+            "/messages",
 
-          {
+            {
 
-            receiverId:
-              userId,
+              receiverId:
+                userId,
 
-            receiverName:
-              chatUser?.name,
+              receiverName:
+                chatUser?.name,
 
-            message:
-              newMessage.trim(),
-
-          },
-
-          {
-
-            headers: {
-
-              Authorization:
-                `Bearer ${userInfo.token}`,
+              message:
+                newMessage.trim(),
 
             },
 
-          }
+            {
 
-        );
+              headers: {
+
+                Authorization:
+                  `Bearer ${userInfo.token}`,
+
+              },
+
+            }
+
+          );
+
+
+        const savedMessage =
+          response.data;
 
 
         // SOCKET EMIT
@@ -619,7 +695,7 @@ const AlumniChatPage = () => {
 
           "sendMessage",
 
-          messageData
+          savedMessage
 
         );
 
@@ -629,7 +705,7 @@ const AlumniChatPage = () => {
 
           ...prev,
 
-          messageData,
+          savedMessage,
 
         ]);
 
@@ -759,6 +835,41 @@ const AlumniChatPage = () => {
 
 
   // ========================================
+  // STATUS ICON
+  // ========================================
+  const renderMessageStatus =
+    (
+      status?: string
+    ) => {
+
+      if (
+        status === "seen"
+      ) {
+
+        return (
+          <CheckCheck className="h-4 w-4 text-blue-400" />
+        );
+
+      }
+
+      if (
+        status === "delivered"
+      ) {
+
+        return (
+          <CheckCheck className="h-4 w-4 text-gray-300" />
+        );
+
+      }
+
+      return (
+        <Check className="h-4 w-4 text-gray-300" />
+      );
+
+    };
+
+
+  // ========================================
   // UI
   // ========================================
   return (
@@ -767,142 +878,152 @@ const AlumniChatPage = () => {
 
       <Header />
 
-      <div className="p-3 md:p-6">
+      <div className="max-w-6xl mx-auto p-4">
 
-        {/* ================================= */}
-        {/* HEADER */}
-        {/* ================================= */}
-
-        <div className="flex items-center justify-between mb-6">
-
-          <div className="flex items-center gap-4">
-
-            <Button
-              size="icon"
-              variant="outline"
-              onClick={() =>
-
-                navigate(-1)
-
-              }
-            >
-
-              <ArrowLeft className="h-4 w-4" />
-
-            </Button>
+        <Card className="h-[85vh] rounded-3xl shadow-2xl overflow-hidden flex flex-col border-0">
 
 
-            <div>
+          {/* HEADER */}
+          <div className="border-b bg-background p-5 flex items-center justify-between">
 
-              <h1 className="text-2xl md:text-3xl font-bold">
+            <div className="flex items-center gap-4">
 
-                {chatUser?.name || "Chat"}
+              <Button
+                size="icon"
+                variant="ghost"
+                onClick={() =>
+                  navigate(-1)
+                }
+              >
 
-              </h1>
+                <ArrowLeft className="h-5 w-5" />
 
-
-              <div className="flex items-center gap-2 mt-1">
-
-                <div
-                  className={`h-3 w-3 rounded-full animate-pulse ${
-                    isOnline
-
-                      ? "bg-green-500"
-
-                      : "bg-gray-400"
-                  }`}
-                />
+              </Button>
 
 
-                <p className="text-sm text-muted-foreground">
+              <div className="relative">
 
-                  {isOnline
-                    ? "Online"
-                    : "Offline"}
+                <Avatar className="h-14 w-14">
 
-                </p>
+                  <AvatarImage
+                    src={
+                      chatUser?.profileImage
+                    }
+                  />
+
+                  <AvatarFallback className="text-lg font-bold">
+
+                    {chatUser?.name?.charAt(0)}
+
+                  </AvatarFallback>
+
+                </Avatar>
+
+
+                {isOnline && (
+
+                  <Circle className="absolute bottom-0 right-0 h-4 w-4 fill-green-500 text-green-500 border-2 border-white rounded-full" />
+
+                )}
 
               </div>
+
+
+              <div>
+
+                <h2 className="text-xl font-bold">
+
+                  {chatUser?.name}
+
+                </h2>
+
+                <div className="flex items-center gap-2">
+
+                  <Badge variant="secondary">
+
+                    {chatUser?.role}
+
+                  </Badge>
+
+                  <p className="text-sm text-muted-foreground">
+
+                    {isOnline
+                      ? "Online"
+                      : "Offline"}
+
+                  </p>
+
+                </div>
+
+              </div>
+
+            </div>
+
+
+            {/* ACTIONS */}
+            <div className="flex items-center gap-2">
+
+              <Button
+                size="icon"
+                variant="ghost"
+              >
+
+                <Phone className="h-5 w-5" />
+
+              </Button>
+
+              <Button
+                size="icon"
+                variant="ghost"
+              >
+
+                <Video className="h-5 w-5" />
+
+              </Button>
 
             </div>
 
           </div>
 
 
-          {/* CALL BUTTONS */}
-          <div className="flex items-center gap-2">
+          {/* ERROR */}
+          {error && (
 
-            <Button
-              size="icon"
-              variant="outline"
-            >
+            <div className="bg-red-100 text-red-600 p-3 text-sm">
 
-              <Phone className="h-4 w-4" />
+              {error}
 
-            </Button>
+            </div>
 
-
-            <Button
-              size="icon"
-              variant="outline"
-            >
-
-              <Video className="h-4 w-4" />
-
-            </Button>
-
-          </div>
-
-        </div>
+          )}
 
 
-        {/* ================================= */}
-        {/* ERROR */}
-        {/* ================================= */}
+          {/* CHAT AREA */}
+          <CardContent className="flex-1 overflow-y-auto p-6 bg-muted/20 space-y-4">
 
-        {error && (
-
-          <div className="mb-4 p-3 rounded-lg bg-red-100 text-red-600 text-sm">
-
-            {error}
-
-          </div>
-
-        )}
-
-
-        {/* ================================= */}
-        {/* CHAT CARD */}
-        {/* ================================= */}
-
-        <Card className="h-[80vh] flex flex-col shadow-xl rounded-2xl">
-
-          <CardContent className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 bg-muted/20">
-
-            {/* LOADING */}
             {loading ? (
 
-              <div className="flex items-center justify-center h-full">
+              <div className="h-full flex items-center justify-center">
 
-                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                <Loader2 className="h-10 w-10 animate-spin text-primary" />
 
               </div>
 
             ) : messages.length === 0 ? (
 
-              <div className="flex items-center justify-center h-full">
+              <div className="h-full flex items-center justify-center">
 
                 <div className="text-center">
 
-                  <p className="text-xl font-semibold mb-2">
+                  <h2 className="text-2xl font-bold mb-2">
 
                     No messages yet 🚀
 
-                  </p>
+                  </h2>
 
                   <p className="text-muted-foreground">
 
-                    Start chatting now
+                    Start your conversation now
 
                   </p>
 
@@ -913,110 +1034,87 @@ const AlumniChatPage = () => {
             ) : (
 
               messages.map(
+                (msg, index) => {
 
-                (
-                  msg,
-                  index
-                ) => (
+                  const isMine =
+                    msg.senderName ===
+                    userInfo.name;
 
-                  <div
-
-                    key={index}
-
-                    className={`max-w-[85%] md:max-w-[70%] ${
-                      msg.senderName ===
-                      userInfo.name
-
-                        ? "ml-auto"
-
-                        : "mr-auto"
-                    }`}
-
-                  >
+                  return (
 
                     <div
-
-                      className={`p-4 rounded-2xl shadow-sm ${
-                        msg.senderName ===
-                        userInfo.name
-
-                          ? "bg-primary text-white rounded-br-sm"
-
-                          : "bg-background border rounded-bl-sm"
+                      key={
+                        msg._id ||
+                        index
+                      }
+                      className={`flex ${
+                        isMine
+                          ? "justify-end"
+                          : "justify-start"
                       }`}
-
                     >
 
-                      {/* NAME */}
-                      <p className="font-semibold text-sm mb-1">
+                      <motion.div
 
-                        {msg.senderName}
+                        initial={{
+                          opacity: 0,
+                          y: 10,
+                        }}
 
-                      </p>
+                        animate={{
+                          opacity: 1,
+                          y: 0,
+                        }}
 
+                        className={`max-w-[75%] rounded-3xl px-5 py-4 shadow-md ${
+                          isMine
 
-                      {/* MESSAGE */}
-                      <p className="break-words">
+                            ? "bg-primary text-white rounded-br-md"
 
-                        {msg.message}
+                            : "bg-white rounded-bl-md"
+                        }`}
+                      >
 
-                      </p>
+                        <p className="break-words leading-7">
 
-
-                      {/* FOOTER */}
-                      <div className="flex items-center justify-between mt-2 gap-3">
-
-                        {/* TIME */}
-                        <p className="text-xs opacity-70">
-
-                          {new Date(
-                            msg.createdAt
-                          ).toLocaleTimeString(
-                            [],
-                            {
-
-                              hour:
-                                "2-digit",
-
-                              minute:
-                                "2-digit",
-
-                            }
-                          )}
+                          {msg.message}
 
                         </p>
 
 
-                        {/* STATUS */}
-                        {msg.senderName ===
-                          userInfo.name && (
+                        <div className="flex items-center justify-end gap-2 mt-3 text-xs opacity-80">
 
-                          <p className="text-xs opacity-70">
+                          <span>
 
-                            {msg.status ===
-                              "sent" &&
-                              "✓ Sent"}
+                            {new Date(
+                              msg.createdAt
+                            ).toLocaleTimeString(
+                              [],
+                              {
+                                hour:
+                                  "2-digit",
 
-                            {msg.status ===
-                              "delivered" &&
-                              "✓✓ Delivered"}
+                                minute:
+                                  "2-digit",
+                              }
+                            )}
 
-                            {msg.status ===
-                              "seen" &&
-                              "✓✓ Seen"}
+                          </span>
 
-                          </p>
+                          {isMine &&
+                            renderMessageStatus(
+                              msg.status
+                            )}
 
-                        )}
+                        </div>
 
-                      </div>
+                      </motion.div>
 
                     </div>
 
-                  </div>
+                  );
 
-                )
-
+                }
               )
 
             )}
@@ -1025,79 +1123,104 @@ const AlumniChatPage = () => {
             {/* TYPING */}
             {isTyping && (
 
-              <p className="text-sm text-muted-foreground animate-pulse">
+              <div className="flex justify-start">
 
-                Typing...
+                <div className="bg-white px-5 py-3 rounded-2xl shadow text-sm animate-pulse">
 
-              </p>
+                  Typing...
+
+                </div>
+
+              </div>
 
             )}
 
 
-            {/* AUTO SCROLL */}
             <div ref={bottomRef} />
 
           </CardContent>
 
 
-          {/* ================================= */}
           {/* INPUT */}
-          {/* ================================= */}
+          <div className="border-t bg-background p-4">
 
-          <div className="flex gap-2 p-4 border-t bg-background">
+            <div className="flex items-center gap-3">
 
-            <Input
+              <Button
+                size="icon"
+                variant="ghost"
+              >
 
-              ref={inputRef}
+                <Paperclip className="h-5 w-5" />
 
-              placeholder="Type message..."
+              </Button>
 
-              value={newMessage}
 
-              onChange={
-                handleTyping
-              }
+              <Input
 
-              onKeyDown={(e) => {
+                ref={inputRef}
 
-                if (
-                  e.key === "Enter"
-                ) {
+                value={newMessage}
 
-                  sendMessage();
-
+                onChange={
+                  handleTyping
                 }
 
-              }}
+                placeholder="Type your message..."
 
-              className="h-12 rounded-xl"
+                className="rounded-2xl h-12"
 
-            />
+                onKeyDown={(e) => {
+
+                  if (
+                    e.key === "Enter"
+                  ) {
+
+                    sendMessage();
+
+                  }
+
+                }}
+              />
 
 
-            <Button
+              <Button
+                size="icon"
+                variant="ghost"
+              >
 
-              onClick={
-                sendMessage
-              }
+                <Smile className="h-5 w-5" />
 
-              disabled={sending}
+              </Button>
 
-              className="h-12 px-6 rounded-xl"
 
-            >
+              <Button
 
-              {sending ? (
+                onClick={
+                  sendMessage
+                }
 
-                <Loader2 className="h-4 w-4 animate-spin" />
+                disabled={
+                  sending ||
+                  !newMessage.trim()
+                }
 
-              ) : (
+                className="h-12 w-12 rounded-2xl"
+              >
 
-                <Send className="h-4 w-4" />
+                {sending ? (
 
-              )}
+                  <Loader2 className="h-5 w-5 animate-spin" />
 
-            </Button>
+                ) : (
+
+                  <Send className="h-5 w-5" />
+
+                )}
+
+              </Button>
+
+            </div>
 
           </div>
 

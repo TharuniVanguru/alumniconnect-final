@@ -6,71 +6,141 @@ const mongoose =
 // APPLICATION SCHEMA
 // ==========================================
 const applicationSchema =
-  mongoose.Schema({
+  mongoose.Schema(
 
-    student: {
+    {
 
-      type:
-        mongoose.Schema.Types.ObjectId,
+      // ====================================
+      // STUDENT
+      // ====================================
+      student: {
 
-      ref: "User",
+        type:
+          mongoose.Schema.Types.ObjectId,
 
-      required: true,
+        ref: "User",
+
+        required: true,
+
+        index: true,
+
+      },
+
+
+      // ====================================
+      // STUDENT INFO
+      // ====================================
+      studentName: {
+
+        type: String,
+
+        trim: true,
+
+        maxlength: 100,
+
+      },
+
+      studentEmail: {
+
+        type: String,
+
+        trim: true,
+
+        lowercase: true,
+
+      },
+
+
+      // ====================================
+      // RESUME
+      // ====================================
+      resumeUrl: {
+
+        type: String,
+
+        default: "",
+
+      },
+
+
+      // ====================================
+      // APPLICATION STATUS
+      // ====================================
+      status: {
+
+        type: String,
+
+        enum: [
+
+          "Applied",
+
+          "Shortlisted",
+
+          "Interview",
+
+          "Rejected",
+
+          "Selected",
+
+        ],
+
+        default: "Applied",
+
+        index: true,
+
+      },
+
+
+      // ====================================
+      // COVER LETTER
+      // ====================================
+      coverLetter: {
+
+        type: String,
+
+        default: "",
+
+        maxlength: 2000,
+
+      },
+
+
+      // ====================================
+      // ATS SCORE
+      // ====================================
+      atsScore: {
+
+        type: Number,
+
+        default: 0,
+
+        min: 0,
+
+        max: 100,
+
+      },
+
+
+      // ====================================
+      // APPLIED DATE
+      // ====================================
+      appliedAt: {
+
+        type: Date,
+
+        default: Date.now,
+
+      },
 
     },
 
-    studentName: {
+    {
 
-      type: String,
+      _id: true,
 
-      trim: true,
+    }
 
-    },
-
-    studentEmail: {
-
-      type: String,
-
-      trim: true,
-
-      lowercase: true,
-
-    },
-
-    resumeUrl: {
-
-      type: String,
-
-      default: "",
-
-    },
-
-    status: {
-
-      type: String,
-
-      enum: [
-
-        "Applied",
-        "Shortlisted",
-        "Rejected",
-        "Selected",
-
-      ],
-
-      default: "Applied",
-
-    },
-
-    appliedAt: {
-
-      type: Date,
-
-      default: Date.now,
-
-    },
-
-  });
+  );
 
 
 // ==========================================
@@ -110,7 +180,21 @@ const jobSchema =
 
         trim: true,
 
+        maxlength: 200,
+
         index: true,
+
+      },
+
+
+      // ====================================
+      // COMPANY LOGO
+      // ====================================
+      companyLogo: {
+
+        type: String,
+
+        default: "",
 
       },
 
@@ -126,6 +210,8 @@ const jobSchema =
 
         trim: true,
 
+        maxlength: 200,
+
       },
 
 
@@ -139,13 +225,44 @@ const jobSchema =
         enum: [
 
           "Internship",
+
           "Full-time",
+
           "Part-time",
+
           "Remote",
+
+          "Hybrid",
 
         ],
 
         default: "Internship",
+
+        index: true,
+
+      },
+
+
+      // ====================================
+      // EXPERIENCE LEVEL
+      // ====================================
+      experienceLevel: {
+
+        type: String,
+
+        enum: [
+
+          "Fresher",
+
+          "Junior",
+
+          "Mid-Level",
+
+          "Senior",
+
+        ],
+
+        default: "Fresher",
 
       },
 
@@ -167,6 +284,22 @@ const jobSchema =
 
 
       // ====================================
+      // RESPONSIBILITIES
+      // ====================================
+      responsibilities: [
+
+        {
+
+          type: String,
+
+          trim: true,
+
+        },
+
+      ],
+
+
+      // ====================================
       // REQUIRED SKILLS
       // ====================================
       skillsRequired: [
@@ -176,6 +309,26 @@ const jobSchema =
           type: String,
 
           trim: true,
+
+          lowercase: true,
+
+        },
+
+      ],
+
+
+      // ====================================
+      // PREFERRED SKILLS
+      // ====================================
+      preferredSkills: [
+
+        {
+
+          type: String,
+
+          trim: true,
+
+          lowercase: true,
 
         },
 
@@ -191,6 +344,8 @@ const jobSchema =
 
         default: "",
 
+        trim: true,
+
       },
 
 
@@ -202,6 +357,8 @@ const jobSchema =
         type: String,
 
         default: "",
+
+        trim: true,
 
       },
 
@@ -215,6 +372,8 @@ const jobSchema =
 
         default: "",
 
+        trim: true,
+
       },
 
 
@@ -227,6 +386,8 @@ const jobSchema =
 
         default: "",
 
+        trim: true,
+
       },
 
 
@@ -236,6 +397,8 @@ const jobSchema =
       deadline: {
 
         type: Date,
+
+        index: true,
 
       },
 
@@ -252,6 +415,8 @@ const jobSchema =
 
         required: true,
 
+        index: true,
+
       },
 
       postedByName: {
@@ -259,6 +424,8 @@ const jobSchema =
         type: String,
 
         default: "",
+
+        trim: true,
 
       },
 
@@ -274,6 +441,23 @@ const jobSchema =
 
 
       // ====================================
+      // SAVED USERS
+      // ====================================
+      savedBy: [
+
+        {
+
+          type:
+            mongoose.Schema.Types.ObjectId,
+
+          ref: "User",
+
+        },
+
+      ],
+
+
+      // ====================================
       // ACTIVE STATUS
       // ====================================
       isActive: {
@@ -282,6 +466,8 @@ const jobSchema =
 
         default: true,
 
+        index: true,
+
       },
 
 
@@ -289,6 +475,32 @@ const jobSchema =
       // FEATURED JOB
       // ====================================
       isFeatured: {
+
+        type: Boolean,
+
+        default: false,
+
+        index: true,
+
+      },
+
+
+      // ====================================
+      // VERIFIED JOB
+      // ====================================
+      isVerified: {
+
+        type: Boolean,
+
+        default: false,
+
+      },
+
+
+      // ====================================
+      // AI RECOMMENDED
+      // ====================================
+      aiRecommended: {
 
         type: Boolean,
 
@@ -306,9 +518,29 @@ const jobSchema =
 
         default: 0,
 
+        min: 0,
+
+      },
+
+      clicks: {
+
+        type: Number,
+
+        default: 0,
+
       },
 
       totalApplications: {
+
+        type: Number,
+
+        default: 0,
+
+        min: 0,
+
+      },
+
+      totalSaved: {
 
         type: Number,
 
@@ -328,7 +560,7 @@ const jobSchema =
 
 
 // ==========================================
-// SEARCH INDEX
+// TEXT SEARCH INDEX
 // ==========================================
 jobSchema.index({
 
@@ -340,22 +572,57 @@ jobSchema.index({
 
   skillsRequired: "text",
 
+  preferredSkills: "text",
+
 });
 
 
 // ==========================================
-// COMPOUND INDEX
+// COMPOUND INDEXES
 // ==========================================
 jobSchema.index({
 
   company: 1,
+
+  type: 1,
+
+});
+
+jobSchema.index({
+
+  isActive: 1,
+
+  createdAt: -1,
+
+});
+
+jobSchema.index({
+
+  isFeatured: 1,
+
+  createdAt: -1,
+
+});
+
+jobSchema.index({
+
+  postedBy: 1,
+
+  createdAt: -1,
+
+});
+
+jobSchema.index({
+
+  skillsRequired: 1,
+
   type: 1,
 
 });
 
 
 // ==========================================
-// AUTO UPDATE APPLICATION COUNT
+// AUTO UPDATE COUNTS
 // ==========================================
 jobSchema.pre(
 
@@ -366,11 +633,52 @@ jobSchema.pre(
     this.totalApplications =
       this.applications.length;
 
+    this.totalSaved =
+      this.savedBy.length;
+
     next();
 
   }
 
 );
+
+
+// ==========================================
+// CHECK DUPLICATE APPLICATION
+// ==========================================
+jobSchema.methods.hasApplied =
+  function (studentId) {
+
+    return this.applications.some(
+
+      (app) =>
+
+        app.student.toString() ===
+
+        studentId.toString()
+
+    );
+
+  };
+
+
+// ==========================================
+// CHECK SAVED JOB
+// ==========================================
+jobSchema.methods.isSavedBy =
+  function (userId) {
+
+    return this.savedBy.some(
+
+      (id) =>
+
+        id.toString() ===
+
+        userId.toString()
+
+    );
+
+  };
 
 
 // ==========================================

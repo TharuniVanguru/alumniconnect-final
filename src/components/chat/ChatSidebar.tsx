@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
+import api, { apiGet, apiPost, apiPut, apiPatch, apiDelete } from "@/utils/api";
 import { useNavigate, useParams } from "react-router-dom";
 
 interface ChatItem {
@@ -24,8 +24,8 @@ const ChatSidebar = () => {
 
     try {
 
-      const res = await axios.get(
-        "http://localhost:5000/messages/chat-list",
+      const res = await api.get(
+        "/messages/chat-list",
         {
           headers: {
             Authorization: `Bearer ${userInfo.token}`

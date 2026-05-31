@@ -60,6 +60,28 @@ const createRequest =
 
 
       // ====================================
+      // FIND ALUMNI
+      // ====================================
+      const alumni =
+        await User.findById(
+          alumniId
+        );
+
+      if (!alumni) {
+
+        return res.status(404).json({
+
+          success: false,
+
+          message:
+            "Alumni not found",
+
+        });
+
+      }
+
+
+      // ====================================
       // DUPLICATE CHECK
       // ====================================
       const existingRequest =
@@ -84,7 +106,7 @@ const createRequest =
           success: false,
 
           message:
-            "You already sent a similar request",
+            "Similar request already exists",
 
         });
 
@@ -105,7 +127,9 @@ const createRequest =
 
           alumniId,
 
-          alumniName,
+          alumniName:
+            alumniName ||
+            alumni.name,
 
           domain,
 
@@ -133,17 +157,26 @@ const createRequest =
         recipient:
           alumniId,
 
+        sender:
+          req.user._id,
+
         title:
           "New Guidance Request",
 
         message:
-          `${req.user.name} sent you a guidance request on ${topic}`,
+          `${req.user.name} sent guidance request on ${topic}`,
 
         type:
           "guidance",
 
         priority:
-          urgency || "Medium",
+
+          urgency
+            ? urgency.toLowerCase()
+            : "medium",
+
+        relatedId:
+          request._id,
 
       });
 
@@ -201,16 +234,12 @@ const getMyRequests =
 
         })
 
-        .sort({
+          .sort({
 
-          createdAt: -1,
+            createdAt: -1,
 
-        });
+          });
 
-
-      // ====================================
-      // ANALYTICS
-      // ====================================
       const analytics = {
 
         total:
@@ -243,12 +272,12 @@ const getMyRequests =
 
           ).length,
 
-        highPriority:
+        rejected:
           requests.filter(
 
             (r) =>
-              r.urgency ===
-              "High"
+              r.status ===
+              "Rejected"
 
           ).length,
 
@@ -304,11 +333,11 @@ const getStudentRequests =
 
         })
 
-        .sort({
+          .sort({
 
-          createdAt: -1,
+            createdAt: -1,
 
-        });
+          });
 
 
       res.status(200).json({
@@ -372,9 +401,6 @@ const getSingleRequest =
       }
 
 
-      // ====================================
-      // ACCESS CONTROL
-      // ====================================
       const isAllowed =
 
         request.studentId.toString() ===
@@ -416,7 +442,10 @@ const getSingleRequest =
 
     catch (error) {
 
-      console.log(error);
+      console.log(
+        "GET SINGLE REQUEST ERROR:",
+        error
+      );
 
       res.status(500).json({
 
@@ -433,7 +462,7 @@ const getSingleRequest =
 
 
 // ==========================================
-// UPDATE GUIDANCE STATUS
+// UPDATE STATUS
 // ==========================================
 const updateStatus =
   async (req, res) => {
@@ -445,10 +474,6 @@ const updateStatus =
           req.params.id
         );
 
-
-      // ====================================
-      // REQUEST CHECK
-      // ====================================
       if (!request) {
 
         return res.status(404).json({
@@ -464,37 +489,25 @@ const updateStatus =
 
 
       // ====================================
-      // VALID STATUSES
+      // AUTHORIZATION
       // ====================================
-      const validStatuses = [
-
-        "Pending",
-
-        "Accepted",
-
-        "Rejected",
-
-        "Completed",
-
-      ];
-
-
       if (
 
-        req.body.status &&
+        request.alumniId.toString() !==
+          req.user._id.toString()
 
-        !validStatuses.includes(
-          req.body.status
-        )
+        &&
+
+        req.user.role !== "admin"
 
       ) {
 
-        return res.status(400).json({
+        return res.status(403).json({
 
           success: false,
 
           message:
-            "Invalid status",
+            "Not authorized",
 
         });
 
@@ -502,107 +515,17 @@ const updateStatus =
 
 
       // ====================================
-      // RESPONSE TIME
+      // UPDATE
       // ====================================
-      if (
-        req.body.status ===
-        "Accepted"
-      ) {
+      Object.assign(
 
-        request.responseTime =
-          Math.floor(
+        request,
 
-            (
-              new Date() -
-              new Date(
-                request.createdAt
-              )
-            ) /
+        req.body
 
-            (1000 * 60)
-
-          );
-
-      }
+      );
 
 
-      // ====================================
-      // UPDATE FIELDS
-      // ====================================
-      if (req.body.status) {
-
-        request.status =
-          req.body.status;
-
-      }
-
-      if (req.body.meetingLink) {
-
-        request.meetingLink =
-          req.body.meetingLink;
-
-      }
-
-      if (req.body.scheduledDate) {
-
-        request.scheduledDate =
-          req.body.scheduledDate;
-
-      }
-
-      if (req.body.feedback) {
-
-        request.feedback =
-          req.body.feedback;
-
-      }
-
-      if (req.body.sessionNotes) {
-
-        request.sessionNotes =
-          req.body.sessionNotes;
-
-      }
-
-      if (req.body.rating) {
-
-        request.rating =
-          req.body.rating;
-
-
-        // ==================================
-        // UPDATE TRUST SCORE
-        // ==================================
-        const alumni =
-          await User.findById(
-            request.alumniId
-          );
-
-        if (alumni) {
-
-          alumni.trustScore =
-            Math.min(
-
-              100,
-
-              (alumni.trustScore || 40)
-
-              +
-
-              req.body.rating
-
-            );
-
-          await alumni.save();
-
-        }
-
-      }
-
-
-      // ====================================
-      // COMPLETED
-      // ====================================
       if (
         req.body.status ===
         "Completed"
@@ -614,65 +537,26 @@ const updateStatus =
       }
 
 
-      // ====================================
-      // SAVE
-      // ====================================
       const updatedRequest =
         await request.save();
 
 
       // ====================================
-      // NOTIFICATION MESSAGE
-      // ====================================
-      let notificationMessage =
-
-        `Your guidance request status changed to ${request.status}`;
-
-
-      if (
-        req.body.status ===
-        "Accepted"
-      ) {
-
-        notificationMessage =
-          `${req.user.name} accepted your guidance request`;
-
-      }
-
-      if (
-        req.body.status ===
-        "Rejected"
-      ) {
-
-        notificationMessage =
-          `${req.user.name} rejected your guidance request`;
-
-      }
-
-      if (
-        req.body.status ===
-        "Completed"
-      ) {
-
-        notificationMessage =
-          `${req.user.name} marked guidance session as completed`;
-
-      }
-
-
-      // ====================================
-      // CREATE NOTIFICATION
+      // NOTIFICATION
       // ====================================
       await Notification.create({
 
         recipient:
           request.studentId,
 
+        sender:
+          req.user._id,
+
         title:
           "Guidance Request Updated",
 
         message:
-          notificationMessage,
+          `Guidance request marked as ${request.status}`,
 
         type:
           "guidance",
@@ -680,9 +564,6 @@ const updateStatus =
       });
 
 
-      // ====================================
-      // RESPONSE
-      // ====================================
       res.status(200).json({
 
         success: true,
@@ -719,7 +600,7 @@ const updateStatus =
 
 
 // ==========================================
-// SUBMIT GUIDANCE FEEDBACK
+// SUBMIT FEEDBACK
 // ==========================================
 const submitGuidanceFeedback =
   async (req, res) => {
@@ -745,13 +626,10 @@ const submitGuidanceFeedback =
       }
 
 
-      // ====================================
-      // ONLY STUDENT
-      // ====================================
       if (
 
         request.studentId.toString() !==
-          req.user._id.toString()
+        req.user._id.toString()
 
       ) {
 
@@ -780,34 +658,6 @@ const submitGuidanceFeedback =
         new Date();
 
 
-      // ====================================
-      // UPDATE ALUMNI TRUST SCORE
-      // ====================================
-      const alumni =
-        await User.findById(
-          request.alumniId
-        );
-
-      if (alumni && req.body.rating) {
-
-        alumni.trustScore =
-          Math.min(
-
-            100,
-
-            (alumni.trustScore || 40)
-
-            +
-
-            req.body.rating
-
-          );
-
-        await alumni.save();
-
-      }
-
-
       await request.save();
 
 
@@ -826,7 +676,10 @@ const submitGuidanceFeedback =
 
     catch (error) {
 
-      console.log(error);
+      console.log(
+        "FEEDBACK ERROR:",
+        error
+      );
 
       res.status(500).json({
 
@@ -843,7 +696,7 @@ const submitGuidanceFeedback =
 
 
 // ==========================================
-// DELETE GUIDANCE REQUEST
+// DELETE REQUEST
 // ==========================================
 const deleteGuidanceRequest =
   async (req, res) => {
@@ -869,9 +722,6 @@ const deleteGuidanceRequest =
       }
 
 
-      // ====================================
-      // OWNER OR ADMIN
-      // ====================================
       if (
 
         request.studentId.toString() !==
@@ -911,7 +761,10 @@ const deleteGuidanceRequest =
 
     catch (error) {
 
-      console.log(error);
+      console.log(
+        "DELETE REQUEST ERROR:",
+        error
+      );
 
       res.status(500).json({
 
@@ -943,7 +796,6 @@ const getGuidanceStats =
 
         });
 
-
       const stats = {
 
         total:
@@ -967,15 +819,6 @@ const getGuidanceStats =
 
           ).length,
 
-        rejected:
-          requests.filter(
-
-            (r) =>
-              r.status ===
-              "Rejected"
-
-          ).length,
-
         completed:
           requests.filter(
 
@@ -985,12 +828,12 @@ const getGuidanceStats =
 
           ).length,
 
-        highPriority:
+        rejected:
           requests.filter(
 
             (r) =>
-              r.urgency ===
-              "High"
+              r.status ===
+              "Rejected"
 
           ).length,
 
@@ -1009,7 +852,10 @@ const getGuidanceStats =
 
     catch (error) {
 
-      console.log(error);
+      console.log(
+        "GUIDANCE STATS ERROR:",
+        error
+      );
 
       res.status(500).json({
 

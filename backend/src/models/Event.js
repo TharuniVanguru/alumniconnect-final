@@ -6,67 +6,98 @@ const mongoose =
 // ATTENDEE SCHEMA
 // ==========================================
 const attendeeSchema =
-  mongoose.Schema({
+  new mongoose.Schema(
 
-    student: {
+    {
 
-      type:
-        mongoose.Schema.Types.ObjectId,
+      // ====================================
+      // STUDENT
+      // ====================================
+      student: {
 
-      ref: "User",
+        type:
+          mongoose.Schema.Types.ObjectId,
+
+        ref: "User",
+
+        required: true,
+
+      },
+
+
+      // ====================================
+      // STUDENT INFO
+      // ====================================
+      studentName: {
+
+        type: String,
+
+        trim: true,
+
+      },
+
+      studentEmail: {
+
+        type: String,
+
+        trim: true,
+
+        lowercase: true,
+
+      },
+
+
+      // ====================================
+      // REGISTRATION DATE
+      // ====================================
+      registeredAt: {
+
+        type: Date,
+
+        default: Date.now,
+
+      },
+
+
+      // ====================================
+      // ATTENDANCE
+      // ====================================
+      attended: {
+
+        type: Boolean,
+
+        default: false,
+
+      },
+
+
+      // ====================================
+      // CERTIFICATE
+      // ====================================
+      certificateIssued: {
+
+        type: Boolean,
+
+        default: false,
+
+      },
 
     },
 
-    studentName: {
+    {
 
-      type: String,
+      _id: false,
 
-      trim: true,
+    }
 
-    },
-
-    studentEmail: {
-
-      type: String,
-
-      trim: true,
-
-      lowercase: true,
-
-    },
-
-    registeredAt: {
-
-      type: Date,
-
-      default: Date.now,
-
-    },
-
-    attended: {
-
-      type: Boolean,
-
-      default: false,
-
-    },
-
-    certificateIssued: {
-
-      type: Boolean,
-
-      default: false,
-
-    },
-
-  });
+  );
 
 
 // ==========================================
 // EVENT SCHEMA
 // ==========================================
 const eventSchema =
-  mongoose.Schema(
+  new mongoose.Schema(
 
     {
 
@@ -148,6 +179,8 @@ const eventSchema =
 
           "Placement Drive",
 
+          "Alumni Meet",
+
         ],
 
         default: "Workshop",
@@ -179,6 +212,40 @@ const eventSchema =
         default: "Upcoming",
 
         index: true,
+
+      },
+
+
+      // ====================================
+      // FEATURED EVENT
+      // ====================================
+      isFeatured: {
+
+        type: Boolean,
+
+        default: false,
+
+        index: true,
+
+      },
+
+
+      // ====================================
+      // EVENT VISIBILITY
+      // ====================================
+      visibility: {
+
+        type: String,
+
+        enum: [
+
+          "Public",
+
+          "Private",
+
+        ],
+
+        default: "Public",
 
       },
 
@@ -222,6 +289,8 @@ const eventSchema =
 
         trim: true,
 
+        default: "Online",
+
       },
 
       mode: {
@@ -247,6 +316,8 @@ const eventSchema =
         type: String,
 
         trim: true,
+
+        default: "",
 
       },
 
@@ -292,23 +363,6 @@ const eventSchema =
 
 
       // ====================================
-      // WAITLIST
-      // ====================================
-      waitlist: [
-
-        {
-
-          type:
-            mongoose.Schema.Types.ObjectId,
-
-          ref: "User",
-
-        },
-
-      ],
-
-
-      // ====================================
       // TAGS
       // ====================================
       tags: [
@@ -319,9 +373,35 @@ const eventSchema =
 
           trim: true,
 
+          lowercase: true,
+
         },
 
       ],
+
+
+      // ====================================
+      // EVENT RATINGS
+      // ====================================
+      averageRating: {
+
+        type: Number,
+
+        default: 0,
+
+        min: 0,
+
+        max: 5,
+
+      },
+
+      totalRatings: {
+
+        type: Number,
+
+        default: 0,
+
+      },
 
 
       // ====================================
@@ -343,15 +423,11 @@ const eventSchema =
 
       },
 
+      totalViews: {
 
-      // ====================================
-      // REMINDERS
-      // ====================================
-      reminderSent: {
+        type: Number,
 
-        type: Boolean,
-
-        default: false,
+        default: 0,
 
       },
 
@@ -364,6 +440,8 @@ const eventSchema =
         type: Boolean,
 
         default: true,
+
+        index: true,
 
       },
 
@@ -379,7 +457,7 @@ const eventSchema =
 
 
 // ==========================================
-// INDEXES
+// TEXT SEARCH INDEX
 // ==========================================
 eventSchema.index({
 
@@ -388,6 +466,138 @@ eventSchema.index({
   description: "text",
 
   tags: "text",
+
+  location: "text",
+
+});
+
+
+// ==========================================
+// COMPOUND INDEXES
+// ==========================================
+eventSchema.index({
+
+  date: 1,
+
+  status: 1,
+
+});
+
+eventSchema.index({
+
+  organizer: 1,
+
+  createdAt: -1,
+
+});
+
+eventSchema.index({
+
+  type: 1,
+
+  isActive: 1,
+
+});
+
+eventSchema.index({
+
+  isFeatured: 1,
+
+  createdAt: -1,
+
+});
+
+
+// ==========================================
+// AUTO UPDATE STATUS
+// ==========================================
+eventSchema.pre(
+
+  "save",
+
+  function (next) {
+
+    const now =
+      new Date();
+
+
+    // ====================================
+    // AUTO EVENT STATUS
+    // ====================================
+    if (
+
+      this.date < now &&
+
+      this.status === "Upcoming"
+
+    ) {
+
+      this.status =
+        "Completed";
+
+    }
+
+
+    // ====================================
+    // ANALYTICS
+    // ====================================
+    this.totalRegistrations =
+      this.attendees.length;
+
+    this.attendanceCount =
+      this.attendees.filter(
+
+        (attendee) =>
+
+          attendee.attended
+
+      ).length;
+
+
+    next();
+
+  }
+
+);
+
+
+// ==========================================
+// CHECK STUDENT REGISTERED
+// ==========================================
+eventSchema.methods.isRegistered =
+  function (studentId) {
+
+    return this.attendees.some(
+
+      (attendee) =>
+
+        attendee.student.toString()
+
+        ===
+
+        studentId.toString()
+
+    );
+
+  };
+
+
+// ==========================================
+// AVAILABLE SEATS
+// ==========================================
+eventSchema.virtual(
+
+  "availableSeats"
+
+).get(function () {
+
+  return (
+
+    this.maxAttendees -
+
+    this.attendees.length
+
+  );
 
 });
 

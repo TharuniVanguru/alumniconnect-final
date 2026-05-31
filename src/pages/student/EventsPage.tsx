@@ -4,8 +4,7 @@ import {
   useState,
 } from "react";
 
-import axios from "axios";
-
+import api, { apiGet, apiPost, apiPut, apiPatch, apiDelete } from "@/utils/api";
 import { Header }
   from "@/components/layout/Header";
 
@@ -26,6 +25,13 @@ import { Input }
   from "@/components/ui/input";
 
 import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
+
+import {
   useToast,
 } from "@/hooks/use-toast";
 
@@ -39,6 +45,12 @@ import {
   Video,
   Loader2,
   CheckCircle2,
+  Sparkles,
+  TrendingUp,
+  Bookmark,
+  Share2,
+  Flame,
+  ArrowRight,
 
 } from "lucide-react";
 
@@ -67,6 +79,10 @@ interface EventItem {
   mode?: string;
 
   attendees?: number;
+
+  maxAttendees?: number;
+
+  banner?: string;
 
 }
 
@@ -114,6 +130,22 @@ React.FC = () => {
   ] = useState("");
 
 
+  const [
+
+    savedEvents,
+    setSavedEvents,
+
+  ] = useState<string[]>([]);
+
+
+  const [
+
+    activeTab,
+    setActiveTab,
+
+  ] = useState("upcoming");
+
+
   const { toast } =
     useToast();
 
@@ -142,9 +174,9 @@ React.FC = () => {
         setLoading(true);
 
         const response =
-          await axios.get(
+          await api.get(
 
-            "http://localhost:5000/events",
+            "/events",
 
             {
 
@@ -208,9 +240,9 @@ React.FC = () => {
           eventId
         );
 
-        await axios.post(
+        await api.post(
 
-          `http://localhost:5000/events/${eventId}/register`,
+          `/events/${eventId}/register`,
 
           {},
 
@@ -231,15 +263,14 @@ React.FC = () => {
         toast({
 
           title:
-            "Registered Successfully",
+            "Successfully Registered 🎉",
 
           description:
-            "You have successfully registered for the event.",
+            "You are now registered for this event.",
 
         });
 
 
-        // REMOVE REGISTERED EVENT
         setEvents((prev) =>
 
           prev.filter(
@@ -283,43 +314,196 @@ React.FC = () => {
 
 
   // ========================================
+  // SAVE EVENT
+  // ========================================
+  const toggleSaveEvent =
+    (
+      eventId: string
+    ) => {
+
+      setSavedEvents((prev) => {
+
+        if (
+          prev.includes(eventId)
+        ) {
+
+          return prev.filter(
+            (id) =>
+              id !== eventId
+          );
+
+        }
+
+        return [
+          ...prev,
+          eventId,
+        ];
+
+      });
+
+    };
+
+
+  // ========================================
+  // SHARE EVENT
+  // ========================================
+  const shareEvent =
+    async (
+      event: EventItem
+    ) => {
+
+      try {
+
+        await navigator.share({
+
+          title:
+            event.title,
+
+          text:
+            event.description,
+
+          url:
+            window.location.href,
+
+        });
+
+      }
+
+      catch {
+
+        toast({
+
+          title:
+            "Share not supported",
+
+        });
+
+      }
+
+    };
+
+
+  // ========================================
+  // COUNTDOWN
+  // ========================================
+  const getRemainingDays =
+    (
+      date: string
+    ) => {
+
+      const diff =
+
+        new Date(date)
+          .getTime() -
+
+        new Date()
+          .getTime();
+
+      const days =
+        Math.ceil(
+
+          diff /
+
+          (
+            1000 *
+            60 *
+            60 *
+            24
+          )
+
+        );
+
+      if (days <= 0)
+        return "Today";
+
+      return `${days} Days Left`;
+
+    };
+
+
+  // ========================================
   // FILTER EVENTS
   // ========================================
   const filteredEvents =
     useMemo(() => {
 
-      return events.filter(
-        (event) =>
+      let updated =
+        [...events];
 
-          event.title
-            ?.toLowerCase()
-            .includes(
-              searchQuery.toLowerCase()
-            ) ||
 
-          event.description
-            ?.toLowerCase()
-            .includes(
-              searchQuery.toLowerCase()
-            ) ||
+      // SEARCH
+      updated =
+        updated.filter(
+          (event) =>
 
-          event.location
-            ?.toLowerCase()
-            .includes(
-              searchQuery.toLowerCase()
-            ) ||
+            event.title
+              ?.toLowerCase()
+              .includes(
+                searchQuery.toLowerCase()
+              ) ||
 
-          event.type
-            ?.toLowerCase()
-            .includes(
-              searchQuery.toLowerCase()
-            )
+            event.description
+              ?.toLowerCase()
+              .includes(
+                searchQuery.toLowerCase()
+              ) ||
 
-      );
+            event.location
+              ?.toLowerCase()
+              .includes(
+                searchQuery.toLowerCase()
+              ) ||
+
+            event.type
+              ?.toLowerCase()
+              .includes(
+                searchQuery.toLowerCase()
+              )
+        );
+
+
+      // TABS
+      if (
+        activeTab ===
+        "upcoming"
+      ) {
+
+        updated =
+          updated.filter(
+            (event) =>
+
+              new Date(
+                event.date
+              ) >= new Date()
+          );
+
+      }
+
+
+      if (
+        activeTab ===
+        "past"
+      ) {
+
+        updated =
+          updated.filter(
+            (event) =>
+
+              new Date(
+                event.date
+              ) < new Date()
+          );
+
+      }
+
+      return updated;
 
     }, [
+
       events,
       searchQuery,
+      activeTab,
+
     ]);
 
 
@@ -344,37 +528,119 @@ React.FC = () => {
 
       <main className="container mx-auto px-4 py-6">
 
+
         {/* ================================= */}
-        {/* HEADER */}
+        {/* HERO */}
         {/* ================================= */}
-        <div className="mb-8">
+        <div className="mb-10">
 
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+          <div className="rounded-3xl overflow-hidden bg-gradient-to-r from-primary via-violet-600 to-indigo-600 text-white shadow-2xl">
 
-            <div>
+            <div className="p-8 md:p-10">
 
-              <h1 className="text-4xl font-bold text-foreground mb-2">
+              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8">
 
-                Events Hub
+                <div>
 
-              </h1>
+                  <div className="flex items-center gap-3 mb-4">
 
-              <p className="text-muted-foreground">
+                    <div className="h-16 w-16 rounded-2xl bg-white/20 flex items-center justify-center">
 
-                Explore workshops, mentorship sessions, webinars, networking events, and alumni meetups.
+                      <Calendar className="h-8 w-8" />
 
-              </p>
+                    </div>
+
+                    <div>
+
+                      <h1 className="text-4xl font-bold">
+
+                        Events Hub
+
+                      </h1>
+
+                      <p className="text-white/90 mt-2">
+
+                        Discover workshops, webinars, hackathons, networking sessions, and alumni meetups.
+
+                      </p>
+
+                    </div>
+
+                  </div>
+
+
+                  <div className="flex flex-wrap gap-3 mt-6">
+
+                    <Badge className="bg-white/20 text-white border-0 px-4 py-2">
+
+                      <Sparkles className="h-4 w-4 mr-2" />
+
+                      Smart Networking
+
+                    </Badge>
+
+                    <Badge className="bg-white/20 text-white border-0 px-4 py-2">
+
+                      <TrendingUp className="h-4 w-4 mr-2" />
+
+                      Career Growth
+
+                    </Badge>
+
+                    <Badge className="bg-white/20 text-white border-0 px-4 py-2">
+
+                      <Flame className="h-4 w-4 mr-2" />
+
+                      Live Events
+
+                    </Badge>
+
+                  </div>
+
+                </div>
+
+
+                {/* STATS */}
+                <div className="grid grid-cols-2 gap-4">
+
+                  <div className="bg-white/10 backdrop-blur-md rounded-2xl p-5 text-center">
+
+                    <h2 className="text-3xl font-bold">
+
+                      {events.length}
+
+                    </h2>
+
+                    <p className="text-white/80 text-sm">
+
+                      Total Events
+
+                    </p>
+
+                  </div>
+
+
+                  <div className="bg-white/10 backdrop-blur-md rounded-2xl p-5 text-center">
+
+                    <h2 className="text-3xl font-bold">
+
+                      {savedEvents.length}
+
+                    </h2>
+
+                    <p className="text-white/80 text-sm">
+
+                      Saved Events
+
+                    </p>
+
+                  </div>
+
+                </div>
+
+              </div>
 
             </div>
-
-
-            <Badge className="bg-gradient-primary text-white px-4 py-2 text-sm">
-
-              {filteredEvents.length}
-              {" "}
-              Upcoming Events
-
-            </Badge>
 
           </div>
 
@@ -386,7 +652,7 @@ React.FC = () => {
         {/* ================================= */}
         <div className="mb-8">
 
-          <div className="relative max-w-xl">
+          <div className="relative max-w-2xl">
 
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
 
@@ -394,7 +660,7 @@ React.FC = () => {
 
               type="text"
 
-              placeholder="Search events by title, location, or type..."
+              placeholder="Search events by title, location, or category..."
 
               className="pl-10 h-12 rounded-xl"
 
@@ -414,308 +680,399 @@ React.FC = () => {
 
 
         {/* ================================= */}
-        {/* LOADING */}
+        {/* TABS */}
         {/* ================================= */}
-        {loading ? (
+        <Tabs
+          defaultValue="upcoming"
+          onValueChange={
+            setActiveTab
+          }
+        >
 
-          <div className="flex items-center justify-center py-20">
+          <TabsList className="mb-8">
 
-            <Loader2 className="h-10 w-10 animate-spin text-primary" />
+            <TabsTrigger value="upcoming">
 
-          </div>
+              Upcoming
 
-        ) : filteredEvents.length === 0 ? (
+            </TabsTrigger>
 
-          // ================================
-          // EMPTY
-          // ================================
-          <Card className="shadow-soft">
+            <TabsTrigger value="past">
 
-            <CardContent className="py-20 text-center">
+              Past Events
 
-              <h2 className="text-2xl font-bold mb-2">
+            </TabsTrigger>
 
-                No Events Found
+          </TabsList>
 
-              </h2>
 
-              <p className="text-muted-foreground">
+          <TabsContent value={activeTab}>
 
-                There are currently no upcoming events available.
 
-              </p>
+            {/* ============================= */}
+            {/* LOADING */}
+            {/* ============================= */}
+            {loading ? (
 
-            </CardContent>
+              <div className="flex items-center justify-center py-20">
 
-          </Card>
+                <Loader2 className="h-10 w-10 animate-spin text-primary" />
 
-        ) : (
+              </div>
 
-          // ================================
-          // EVENTS GRID
-          // ================================
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            ) : filteredEvents.length === 0 ? (
 
-            {filteredEvents.map(
-              (event) => (
+              <Card className="shadow-soft">
 
-                <Card
+                <CardContent className="py-20 text-center">
 
-                  key={event._id}
+                  <h2 className="text-2xl font-bold mb-2">
 
-                  className="shadow-soft hover:shadow-xl transition-all duration-300 border-0"
+                    No Events Found
 
-                >
+                  </h2>
 
-                  {/* HEADER */}
-                  <CardHeader>
+                  <p className="text-muted-foreground">
 
-                    <div className="flex items-start justify-between gap-3">
+                    Try changing your search or filters.
 
-                      <div>
+                  </p>
 
-                        <CardTitle className="text-2xl">
+                </CardContent>
 
-                          {event.title}
+              </Card>
 
-                        </CardTitle>
+            ) : (
 
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-                        <p className="text-muted-foreground mt-2">
+                {filteredEvents.map(
+                  (event) => (
 
-                          Organized by
-                          {" "}
-                          {event.organizerName || "AlumniConnect"}
+                    <Card
 
-                        </p>
+                      key={event._id}
 
-                      </div>
-
-
-                      <Badge>
-
-                        {event.type || "Event"}
-
-                      </Badge>
-
-                    </div>
-
-                  </CardHeader>
-
-
-                  {/* CONTENT */}
-                  <CardContent className="space-y-5">
-
-                    {/* DESCRIPTION */}
-                    <p className="text-sm leading-7 text-muted-foreground">
-
-                      {event.description}
-
-                    </p>
-
-
-                    {/* META */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-
-                      {/* DATE */}
-                      <div className="flex items-center gap-3 p-3 rounded-xl bg-muted/30">
-
-                        <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-
-                          <Calendar className="h-5 w-5 text-primary" />
-
-                        </div>
-
-
-                        <div>
-
-                          <p className="text-xs text-muted-foreground">
-
-                            Event Date
-
-                          </p>
-
-                          <p className="font-medium">
-
-                            {new Date(
-                              event.date
-                            ).toLocaleDateString()}
-
-                          </p>
-
-                        </div>
-
-                      </div>
-
-
-                      {/* TIME */}
-                      <div className="flex items-center gap-3 p-3 rounded-xl bg-muted/30">
-
-                        <div className="h-10 w-10 rounded-full bg-accent/10 flex items-center justify-center">
-
-                          <Clock className="h-5 w-5 text-accent" />
-
-                        </div>
-
-
-                        <div>
-
-                          <p className="text-xs text-muted-foreground">
-
-                            Time
-
-                          </p>
-
-                          <p className="font-medium">
-
-                            {event.time || "Not specified"}
-
-                          </p>
-
-                        </div>
-
-                      </div>
-
-
-                      {/* LOCATION */}
-                      <div className="flex items-center gap-3 p-3 rounded-xl bg-muted/30">
-
-                        <div className="h-10 w-10 rounded-full bg-success/10 flex items-center justify-center">
-
-                          <MapPin className="h-5 w-5 text-success" />
-
-                        </div>
-
-
-                        <div>
-
-                          <p className="text-xs text-muted-foreground">
-
-                            Location
-
-                          </p>
-
-                          <p className="font-medium">
-
-                            {event.location || "Online"}
-
-                          </p>
-
-                        </div>
-
-                      </div>
-
-
-                      {/* MODE */}
-                      <div className="flex items-center gap-3 p-3 rounded-xl bg-muted/30">
-
-                        <div className="h-10 w-10 rounded-full bg-warning/10 flex items-center justify-center">
-
-                          <Video className="h-5 w-5 text-warning" />
-
-                        </div>
-
-
-                        <div>
-
-                          <p className="text-xs text-muted-foreground">
-
-                            Mode
-
-                          </p>
-
-                          <p className="font-medium">
-
-                            {event.mode || "Online"}
-
-                          </p>
-
-                        </div>
-
-                      </div>
-
-                    </div>
-
-
-                    {/* ATTENDEES */}
-                    <div className="flex items-center justify-between">
-
-                      <div className="flex items-center gap-2 text-muted-foreground">
-
-                        <Users className="h-4 w-4" />
-
-                        <span className="text-sm">
-
-                          {event.attendees || 0}
-                          {" "}
-                          Registered
-
-                        </span>
-
-                      </div>
-
-
-                      <Badge
-                        variant="outline"
-                        className="bg-green-50 text-green-700"
-                      >
-
-                        <CheckCircle2 className="h-3 w-3 mr-1" />
-
-                        Open Registration
-
-                      </Badge>
-
-                    </div>
-
-
-                    {/* BUTTON */}
-                    <Button
-
-                      className="w-full h-11 rounded-xl"
-
-                      onClick={() =>
-                        registerEvent(
-                          event._id
-                        )
-                      }
-
-                      disabled={
-                        registeringId ===
-                        event._id
-                      }
+                      className="shadow-soft hover:shadow-2xl transition-all duration-300 border-0 overflow-hidden"
 
                     >
 
-                      {registeringId ===
-                      event._id ? (
+                      {/* BANNER */}
+                      <div className="h-52 bg-gradient-to-r from-primary to-violet-600 flex items-center justify-center">
 
-                        <>
+                        <Calendar className="h-16 w-16 text-white" />
 
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      </div>
 
-                          Registering...
 
-                        </>
+                      {/* HEADER */}
+                      <CardHeader>
 
-                      ) : (
+                        <div className="flex items-start justify-between gap-3">
 
-                        "Register Now"
+                          <div>
 
-                      )}
+                            <CardTitle className="text-2xl">
 
-                    </Button>
+                              {event.title}
 
-                  </CardContent>
+                            </CardTitle>
 
-                </Card>
 
-              )
+                            <p className="text-muted-foreground mt-2">
+
+                              Organized by{" "}
+
+                              {event.organizerName ||
+                                "AlumniConnect"}
+
+                            </p>
+
+                          </div>
+
+
+                          <div className="flex gap-2">
+
+                            <Badge>
+
+                              {event.type ||
+                                "Event"}
+
+                            </Badge>
+
+
+                            <button
+
+                              onClick={() =>
+                                toggleSaveEvent(
+                                  event._id
+                                )
+                              }
+
+                              className={`h-10 w-10 rounded-xl flex items-center justify-center transition ${
+                                savedEvents.includes(
+                                  event._id
+                                )
+
+                                  ? "bg-primary text-white"
+
+                                  : "bg-muted"
+                              }`}
+
+                            >
+
+                              <Bookmark className="h-4 w-4" />
+
+                            </button>
+
+                          </div>
+
+                        </div>
+
+                      </CardHeader>
+
+
+                      {/* CONTENT */}
+                      <CardContent className="space-y-5">
+
+
+                        {/* DESCRIPTION */}
+                        <p className="text-sm leading-7 text-muted-foreground">
+
+                          {event.description}
+
+                        </p>
+
+
+                        {/* COUNTDOWN */}
+                        <Badge className="bg-orange-100 text-orange-700">
+
+                          {getRemainingDays(
+                            event.date
+                          )}
+
+                        </Badge>
+
+
+                        {/* META */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+
+                          {/* DATE */}
+                          <div className="flex items-center gap-3 p-3 rounded-xl bg-muted/30">
+
+                            <Calendar className="h-5 w-5 text-primary" />
+
+                            <div>
+
+                              <p className="text-xs text-muted-foreground">
+
+                                Date
+
+                              </p>
+
+                              <p className="font-medium">
+
+                                {new Date(
+                                  event.date
+                                ).toLocaleDateString()}
+
+                              </p>
+
+                            </div>
+
+                          </div>
+
+
+                          {/* TIME */}
+                          <div className="flex items-center gap-3 p-3 rounded-xl bg-muted/30">
+
+                            <Clock className="h-5 w-5 text-accent" />
+
+                            <div>
+
+                              <p className="text-xs text-muted-foreground">
+
+                                Time
+
+                              </p>
+
+                              <p className="font-medium">
+
+                                {event.time ||
+                                  "Not specified"}
+
+                              </p>
+
+                            </div>
+
+                          </div>
+
+
+                          {/* LOCATION */}
+                          <div className="flex items-center gap-3 p-3 rounded-xl bg-muted/30">
+
+                            <MapPin className="h-5 w-5 text-green-600" />
+
+                            <div>
+
+                              <p className="text-xs text-muted-foreground">
+
+                                Location
+
+                              </p>
+
+                              <p className="font-medium">
+
+                                {event.location ||
+                                  "Online"}
+
+                              </p>
+
+                            </div>
+
+                          </div>
+
+
+                          {/* MODE */}
+                          <div className="flex items-center gap-3 p-3 rounded-xl bg-muted/30">
+
+                            <Video className="h-5 w-5 text-yellow-600" />
+
+                            <div>
+
+                              <p className="text-xs text-muted-foreground">
+
+                                Mode
+
+                              </p>
+
+                              <p className="font-medium">
+
+                                {event.mode ||
+                                  "Online"}
+
+                              </p>
+
+                            </div>
+
+                          </div>
+
+                        </div>
+
+
+                        {/* ATTENDEES */}
+                        <div className="flex items-center justify-between">
+
+                          <div className="flex items-center gap-2 text-muted-foreground">
+
+                            <Users className="h-4 w-4" />
+
+                            <span className="text-sm">
+
+                              {event.attendees || 0}
+                              {" "}
+                              Registered
+
+                            </span>
+
+                          </div>
+
+
+                          <Badge
+                            variant="outline"
+                            className="bg-green-50 text-green-700"
+                          >
+
+                            <CheckCircle2 className="h-3 w-3 mr-1" />
+
+                            Open Registration
+
+                          </Badge>
+
+                        </div>
+
+
+                        {/* ACTIONS */}
+                        <div className="flex gap-3">
+
+                          <Button
+
+                            className="flex-1 h-11 rounded-xl"
+
+                            onClick={() =>
+                              registerEvent(
+                                event._id
+                              )
+                            }
+
+                            disabled={
+                              registeringId ===
+                              event._id
+                            }
+
+                          >
+
+                            {registeringId ===
+                            event._id ? (
+
+                              <>
+
+                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+
+                                Registering...
+
+                              </>
+
+                            ) : (
+
+                              <>
+
+                                Register Now
+
+                                <ArrowRight className="h-4 w-4 ml-2" />
+
+                              </>
+
+                            )}
+
+                          </Button>
+
+
+                          <Button
+
+                            variant="outline"
+
+                            className="h-11 rounded-xl"
+
+                            onClick={() =>
+                              shareEvent(
+                                event
+                              )
+                            }
+
+                          >
+
+                            <Share2 className="h-4 w-4" />
+
+                          </Button>
+
+                        </div>
+
+                      </CardContent>
+
+                    </Card>
+
+                  )
+                )}
+
+              </div>
+
             )}
 
-          </div>
+          </TabsContent>
 
-        )}
+        </Tabs>
 
       </main>
 

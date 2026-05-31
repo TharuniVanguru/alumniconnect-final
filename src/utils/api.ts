@@ -8,6 +8,7 @@ import axios, {
 // BASE URL
 // ==========================================
 const BASE_URL =
+  import.meta.env.VITE_API_URL ||
   "http://localhost:5000";
 
 
@@ -20,7 +21,7 @@ const api = axios.create({
 
   withCredentials: true,
 
-  timeout: 10000,
+  timeout: 20000,
 
   headers: {
 
@@ -30,6 +31,44 @@ const api = axios.create({
   },
 
 });
+
+
+// ==========================================
+// PUBLIC ROUTES
+// ==========================================
+const publicRoutes = [
+
+  "/login",
+
+  "/register",
+
+  "/forgot-password",
+
+  "/verify-otp",
+
+  "/reset-password",
+
+];
+
+
+// ==========================================
+// CLEAR AUTH DATA
+// ==========================================
+const clearAuthData = () => {
+
+  localStorage.removeItem(
+    "token"
+  );
+
+  localStorage.removeItem(
+    "userInfo"
+  );
+
+  delete api.defaults.headers.common[
+    "Authorization"
+  ];
+
+};
 
 
 // ==========================================
@@ -43,29 +82,18 @@ api.interceptors.request.use(
 
     try {
 
-      // ======================================
-      // GET USER INFO
-      // ======================================
-      const userInfo =
-        JSON.parse(
-
-          localStorage.getItem(
-            "userInfo"
-          ) || "{}"
-
+      // ====================================
+      // GET TOKEN
+      // ====================================
+      const token =
+        localStorage.getItem(
+          "token"
         );
 
 
-      // ======================================
-      // GET TOKEN
-      // ======================================
-      const token =
-        userInfo?.token;
-
-
-      // ======================================
-      // ADD AUTHORIZATION HEADER
-      // ======================================
+      // ====================================
+      // ATTACH TOKEN
+      // ====================================
       if (
 
         token &&
@@ -119,9 +147,9 @@ api.interceptors.response.use(
     error: AxiosError<any>
   ) => {
 
-    // ======================================
+    // ====================================
     // NETWORK ERROR
-    // ======================================
+    // ====================================
     if (!error.response) {
 
       console.log(
@@ -140,43 +168,43 @@ api.interceptors.response.use(
     }
 
 
-    // ======================================
-    // UNAUTHORIZED
-    // ======================================
-    if (
+    // ====================================
+    // STATUS CODE
+    // ====================================
+    const status =
+      error.response.status;
 
-      error.response.status === 401
 
-    ) {
+    // ====================================
+    // 401 UNAUTHORIZED
+    // ====================================
+    if (status === 401) {
 
       console.log(
+
         "TOKEN EXPIRED OR INVALID"
+
       );
 
 
-      // ====================================
-      // CLEAR STORAGE
-      // ====================================
-      localStorage.removeItem(
-        "userInfo"
-      );
+      // ==================================
+      // CLEAR AUTH
+      // ==================================
+      clearAuthData();
 
 
-      // ====================================
-      // REMOVE AUTH HEADER
-      // ====================================
-      delete api.defaults.headers.common[
-        "Authorization"
-      ];
+      // ==================================
+      // REDIRECT
+      // ==================================
+      const currentPath =
+        window.location.pathname;
 
 
-      // ====================================
-      // REDIRECT LOGIN
-      // ====================================
       if (
 
-        window.location.pathname !==
-        "/login"
+        !publicRoutes.includes(
+          currentPath
+        )
 
       ) {
 
@@ -188,14 +216,10 @@ api.interceptors.response.use(
     }
 
 
-    // ======================================
-    // FORBIDDEN
-    // ======================================
-    if (
-
-      error.response.status === 403
-
-    ) {
+    // ====================================
+    // 403 FORBIDDEN
+    // ====================================
+    if (status === 403) {
 
       console.log(
         "ACCESS DENIED"
@@ -204,14 +228,10 @@ api.interceptors.response.use(
     }
 
 
-    // ======================================
-    // NOT FOUND
-    // ======================================
-    if (
-
-      error.response.status === 404
-
-    ) {
+    // ====================================
+    // 404 NOT FOUND
+    // ====================================
+    if (status === 404) {
 
       console.log(
         "RESOURCE NOT FOUND"
@@ -220,17 +240,13 @@ api.interceptors.response.use(
     }
 
 
-    // ======================================
-    // SERVER ERROR
-    // ======================================
-    if (
-
-      error.response.status >= 500
-
-    ) {
+    // ====================================
+    // 500 SERVER ERROR
+    // ====================================
+    if (status >= 500) {
 
       console.log(
-        "INTERNAL SERVER ERROR"
+        "SERVER ERROR"
       );
 
     }
@@ -246,62 +262,104 @@ api.interceptors.response.use(
 
 
 // ==========================================
-// API METHODS
+// API GET
 // ==========================================
-export const apiGet = async (
-  url: string
-) => {
+export const apiGet =
+  async (
+    url: string
+  ) => {
 
-  const response =
-    await api.get(url);
+    const response =
+      await api.get(url);
 
-  return response.data;
+    return response.data;
 
-};
-
-
-export const apiPost = async (
-  url: string,
-  data?: any
-) => {
-
-  const response =
-    await api.post(
-      url,
-      data
-    );
-
-  return response.data;
-
-};
+  };
 
 
-export const apiPut = async (
-  url: string,
-  data?: any
-) => {
+// ==========================================
+// API POST
+// ==========================================
+export const apiPost =
+  async (
 
-  const response =
-    await api.put(
-      url,
-      data
-    );
+    url: string,
 
-  return response.data;
+    data?: any
 
-};
+  ) => {
+
+    const response =
+      await api.post(
+        url,
+        data
+      );
+
+    return response.data;
+
+  };
 
 
-export const apiDelete = async (
-  url: string
-) => {
+// ==========================================
+// API PUT
+// ==========================================
+export const apiPut =
+  async (
 
-  const response =
-    await api.delete(url);
+    url: string,
 
-  return response.data;
+    data?: any
 
-};
+  ) => {
+
+    const response =
+      await api.put(
+        url,
+        data
+      );
+
+    return response.data;
+
+  };
+
+
+// ==========================================
+// API PATCH
+// ==========================================
+export const apiPatch =
+  async (
+
+    url: string,
+
+    data?: any
+
+  ) => {
+
+    const response =
+      await api.patch(
+        url,
+        data
+      );
+
+    return response.data;
+
+  };
+
+
+// ==========================================
+// API DELETE
+// ==========================================
+export const apiDelete =
+  async (
+    url: string
+  ) => {
+
+    const response =
+      await api.delete(url);
+
+    return response.data;
+
+  };
 
 
 // ==========================================

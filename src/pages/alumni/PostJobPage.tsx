@@ -2,8 +2,7 @@ import {
   useState,
 } from "react";
 
-import axios from "axios";
-
+import api, { apiGet, apiPost, apiPut, apiPatch, apiDelete } from "@/utils/api";
 import { Header }
   from "@/components/layout/Header";
 
@@ -47,6 +46,13 @@ import {
   Clock3,
   Loader2,
   CheckCircle2,
+  Sparkles,
+  CalendarDays,
+  Users,
+  ShieldCheck,
+  Rocket,
+  GraduationCap,
+  Code2,
 
 } from "lucide-react";
 
@@ -200,9 +206,9 @@ const PostJobPage:
 
           setLoading(true);
 
-          await axios.post(
+          await api.post(
 
-            "http://localhost:5000/jobs",
+            "/jobs",
 
             {
 
@@ -254,7 +260,7 @@ const PostJobPage:
           toast({
 
             title:
-              "Job Posted Successfully",
+              "Job Posted Successfully 🚀",
 
             description:
               "Your job posting is now live.",
@@ -318,6 +324,22 @@ const PostJobPage:
 
 
     // ======================================
+    // SKILL ARRAY
+    // ======================================
+    const skillArray =
+      skills
+
+        .split(",")
+
+        .map(
+          (skill) =>
+            skill.trim()
+        )
+
+        .filter(Boolean);
+
+
+    // ======================================
     // UI
     // ======================================
     return (
@@ -326,63 +348,174 @@ const PostJobPage:
 
         <Header />
 
-        <main className="max-w-5xl mx-auto p-6">
+        <main className="max-w-6xl mx-auto px-4 py-8">
 
-          {/* HEADER */}
 
-          <div className="mb-8">
+          {/* HERO SECTION */}
 
-            <div className="flex items-center gap-3 mb-2">
+          <div className="mb-10">
 
-              <Briefcase className="h-8 w-8 text-primary" />
+            <div className="rounded-3xl overflow-hidden bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-700 text-white shadow-2xl">
 
-              <h1 className="text-4xl font-bold">
+              <div className="p-8 md:p-10">
 
-                Post a Job
+                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8">
 
-              </h1>
+                  <div>
+
+                    <div className="flex items-center gap-4 mb-5">
+
+                      <div className="h-20 w-20 rounded-3xl bg-white/20 flex items-center justify-center">
+
+                        <Briefcase className="h-10 w-10" />
+
+                      </div>
+
+
+                      <div>
+
+                        <h1 className="text-4xl md:text-5xl font-bold">
+
+                          Post a Job
+
+                        </h1>
+
+                        <p className="text-white/90 mt-2 text-lg">
+
+                          Create career opportunities for students and alumni
+
+                        </p>
+
+                      </div>
+
+                    </div>
+
+
+                    <div className="flex flex-wrap gap-3">
+
+                      <Badge className="bg-white/20 border-0 text-white">
+
+                        <GraduationCap className="h-3 w-3 mr-1" />
+
+                        Student Hiring
+
+                      </Badge>
+
+                      <Badge className="bg-white/20 border-0 text-white">
+
+                        <ShieldCheck className="h-3 w-3 mr-1" />
+
+                        Verified Alumni
+
+                      </Badge>
+
+                      <Badge className="bg-white/20 border-0 text-white">
+
+                        <Rocket className="h-3 w-3 mr-1" />
+
+                        Career Growth
+
+                      </Badge>
+
+                    </div>
+
+                  </div>
+
+
+                  <div className="bg-white/10 backdrop-blur-md rounded-3xl p-6 w-full lg:w-[320px]">
+
+                    <h3 className="font-bold text-2xl mb-5">
+
+                      Hiring Benefits
+
+                    </h3>
+
+
+                    <div className="space-y-4">
+
+                      <div className="flex items-center gap-3">
+
+                        <Users className="h-5 w-5" />
+
+                        <span>
+
+                          Connect with talented students
+
+                        </span>
+
+                      </div>
+
+
+                      <div className="flex items-center gap-3">
+
+                        <Sparkles className="h-5 w-5" />
+
+                        <span>
+
+                          Reach skilled developers quickly
+
+                        </span>
+
+                      </div>
+
+
+                      <div className="flex items-center gap-3">
+
+                        <CheckCircle2 className="h-5 w-5" />
+
+                        <span>
+
+                          Verified platform applicants
+
+                        </span>
+
+                      </div>
+
+                    </div>
+
+                  </div>
+
+                </div>
+
+              </div>
 
             </div>
-
-            <p className="text-muted-foreground">
-
-              Create job opportunities for students and alumni
-
-            </p>
 
           </div>
 
 
-          {/* CARD */}
+          {/* MAIN CARD */}
 
           <Card className="shadow-2xl rounded-3xl border-0">
 
-            <CardHeader>
+            <CardHeader className="pb-2">
 
-              <CardTitle className="text-2xl">
+              <CardTitle className="text-3xl">
 
                 Job Details
 
               </CardTitle>
 
-              <CardDescription>
+              <CardDescription className="text-base">
 
-                Fill in the information below to publish a job opening.
+                Fill in the information below to publish your job opening.
 
               </CardDescription>
 
             </CardHeader>
 
 
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-8">
+
 
               {/* ROW 1 */}
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
 
                 {/* TITLE */}
 
-                <div className="space-y-2">
+                <div className="space-y-3">
 
                   <Label>
 
@@ -392,7 +525,7 @@ const PostJobPage:
 
                   <div className="relative">
 
-                    <Briefcase className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Briefcase className="absolute left-4 top-4 h-5 w-5 text-muted-foreground" />
 
                     <Input
 
@@ -406,7 +539,7 @@ const PostJobPage:
                         )
                       }
 
-                      className="pl-10"
+                      className="pl-12 h-14 rounded-2xl"
 
                     />
 
@@ -417,7 +550,7 @@ const PostJobPage:
 
                 {/* COMPANY */}
 
-                <div className="space-y-2">
+                <div className="space-y-3">
 
                   <Label>
 
@@ -427,7 +560,7 @@ const PostJobPage:
 
                   <div className="relative">
 
-                    <Building2 className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Building2 className="absolute left-4 top-4 h-5 w-5 text-muted-foreground" />
 
                     <Input
 
@@ -441,7 +574,7 @@ const PostJobPage:
                         )
                       }
 
-                      className="pl-10"
+                      className="pl-12 h-14 rounded-2xl"
 
                     />
 
@@ -454,11 +587,12 @@ const PostJobPage:
 
               {/* ROW 2 */}
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
 
                 {/* LOCATION */}
 
-                <div className="space-y-2">
+                <div className="space-y-3">
 
                   <Label>
 
@@ -468,7 +602,7 @@ const PostJobPage:
 
                   <div className="relative">
 
-                    <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <MapPin className="absolute left-4 top-4 h-5 w-5 text-muted-foreground" />
 
                     <Input
 
@@ -482,7 +616,7 @@ const PostJobPage:
                         )
                       }
 
-                      className="pl-10"
+                      className="pl-12 h-14 rounded-2xl"
 
                     />
 
@@ -493,7 +627,7 @@ const PostJobPage:
 
                 {/* SALARY */}
 
-                <div className="space-y-2">
+                <div className="space-y-3">
 
                   <Label>
 
@@ -503,7 +637,7 @@ const PostJobPage:
 
                   <div className="relative">
 
-                    <IndianRupee className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <IndianRupee className="absolute left-4 top-4 h-5 w-5 text-muted-foreground" />
 
                     <Input
 
@@ -517,7 +651,7 @@ const PostJobPage:
                         )
                       }
 
-                      className="pl-10"
+                      className="pl-12 h-14 rounded-2xl"
 
                     />
 
@@ -530,11 +664,12 @@ const PostJobPage:
 
               {/* ROW 3 */}
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+
 
                 {/* TYPE */}
 
-                <div className="space-y-2">
+                <div className="space-y-3">
 
                   <Label>
 
@@ -552,7 +687,7 @@ const PostJobPage:
                       )
                     }
 
-                    className="w-full h-10 px-3 rounded-md border border-input bg-background"
+                    className="w-full h-14 px-4 rounded-2xl border border-input bg-background"
 
                   >
 
@@ -587,7 +722,7 @@ const PostJobPage:
 
                 {/* EXPERIENCE */}
 
-                <div className="space-y-2">
+                <div className="space-y-3">
 
                   <Label>
 
@@ -607,6 +742,8 @@ const PostJobPage:
                       )
                     }
 
+                    className="h-14 rounded-2xl"
+
                   />
 
                 </div>
@@ -614,7 +751,7 @@ const PostJobPage:
 
                 {/* DEADLINE */}
 
-                <div className="space-y-2">
+                <div className="space-y-3">
 
                   <Label>
 
@@ -622,19 +759,27 @@ const PostJobPage:
 
                   </Label>
 
-                  <Input
+                  <div className="relative">
 
-                    type="date"
+                    <CalendarDays className="absolute left-4 top-4 h-5 w-5 text-muted-foreground" />
 
-                    value={deadline}
+                    <Input
 
-                    onChange={(e) =>
-                      setDeadline(
-                        e.target.value
-                      )
-                    }
+                      type="date"
 
-                  />
+                      value={deadline}
+
+                      onChange={(e) =>
+                        setDeadline(
+                          e.target.value
+                        )
+                      }
+
+                      className="pl-12 h-14 rounded-2xl"
+
+                    />
+
+                  </div>
 
                 </div>
 
@@ -643,7 +788,7 @@ const PostJobPage:
 
               {/* SKILLS */}
 
-              <div className="space-y-2">
+              <div className="space-y-3">
 
                 <Label>
 
@@ -651,51 +796,53 @@ const PostJobPage:
 
                 </Label>
 
-                <Input
+                <div className="relative">
 
-                  placeholder="React, Node.js, MongoDB"
+                  <Code2 className="absolute left-4 top-4 h-5 w-5 text-muted-foreground" />
 
-                  value={skills}
+                  <Input
 
-                  onChange={(e) =>
-                    setSkills(
-                      e.target.value
-                    )
-                  }
+                    placeholder="React, Node.js, MongoDB"
 
-                />
+                    value={skills}
+
+                    onChange={(e) =>
+                      setSkills(
+                        e.target.value
+                      )
+                    }
+
+                    className="pl-12 h-14 rounded-2xl"
+
+                  />
+
+                </div>
 
 
                 {/* SKILL BADGES */}
 
                 <div className="flex flex-wrap gap-2 pt-2">
 
-                  {skills
-                    .split(",")
+                  {skillArray.map(
+                    (
+                      skill,
+                      index
+                    ) => (
 
-                    .filter(
-                      Boolean
+                      <Badge
+                        key={index}
+                        className="rounded-xl px-3 py-1"
+
+                      >
+
+                        {
+                          skill
+                        }
+
+                      </Badge>
+
                     )
-
-                    .map(
-                      (
-                        skill,
-                        index
-                      ) => (
-
-                        <Badge
-                          key={index}
-                          variant="secondary"
-                        >
-
-                          {
-                            skill.trim()
-                          }
-
-                        </Badge>
-
-                      )
-                    )}
+                  )}
 
                 </div>
 
@@ -704,7 +851,7 @@ const PostJobPage:
 
               {/* DESCRIPTION */}
 
-              <div className="space-y-2">
+              <div className="space-y-3">
 
                 <Label>
 
@@ -714,7 +861,7 @@ const PostJobPage:
 
                 <div className="relative">
 
-                  <FileText className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <FileText className="absolute left-4 top-4 h-5 w-5 text-muted-foreground" />
 
                   <Textarea
 
@@ -730,7 +877,7 @@ const PostJobPage:
 
                     rows={8}
 
-                    className="pl-10"
+                    className="pl-12 rounded-2xl resize-none"
 
                   />
 
@@ -741,21 +888,21 @@ const PostJobPage:
 
               {/* INFO CARD */}
 
-              <div className="rounded-2xl bg-primary/5 border border-primary/10 p-5">
+              <div className="rounded-3xl bg-primary/5 border border-primary/10 p-6">
 
-                <div className="flex items-start gap-3">
+                <div className="flex items-start gap-4">
 
-                  <Clock3 className="h-5 w-5 text-primary mt-1" />
+                  <Clock3 className="h-6 w-6 text-primary mt-1" />
 
                   <div>
 
-                    <h3 className="font-semibold mb-1">
+                    <h3 className="font-semibold text-lg mb-2">
 
                       Job Approval Process
 
                     </h3>
 
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-muted-foreground leading-7">
 
                       Your job posting may be reviewed by administrators before becoming publicly visible on the platform.
 
@@ -778,7 +925,7 @@ const PostJobPage:
 
                   disabled={loading}
 
-                  className="min-w-[180px] h-12 rounded-xl"
+                  className="min-w-[220px] h-14 rounded-2xl text-lg font-semibold"
 
                 >
 
@@ -786,7 +933,7 @@ const PostJobPage:
 
                     <>
 
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      <Loader2 className="h-5 w-5 mr-2 animate-spin" />
 
                       Posting...
 
@@ -796,7 +943,7 @@ const PostJobPage:
 
                     <>
 
-                      <CheckCircle2 className="h-4 w-4 mr-2" />
+                      <CheckCircle2 className="h-5 w-5 mr-2" />
 
                       Post Job
 

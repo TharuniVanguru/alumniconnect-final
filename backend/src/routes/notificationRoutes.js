@@ -15,28 +15,43 @@ const {
 
   getNotificationAnalytics,
 
+  getUnreadCount,
+
 } = require(
   "../controllers/notificationController"
 );
 
 const {
+
   protect,
+
 } = require(
   "../middleware/authMiddleware"
 );
 
+
+// ==========================================
+// ROUTER
+// ==========================================
 const router =
   express.Router();
 
 
 // ==========================================
+// ALL ROUTES PROTECTED
+// ==========================================
+router.use(
+  protect
+);
+
+
+// ==========================================
 // GET ALL NOTIFICATIONS
+// GET /api/notifications
 // ==========================================
 router.get(
 
   "/",
-
-  protect,
 
   getNotifications
 
@@ -44,13 +59,27 @@ router.get(
 
 
 // ==========================================
+// GET UNREAD COUNT
+// GET /api/notifications/unread-count
+// IMPORTANT:
+// KEEP ABOVE /:id ROUTES
+// ==========================================
+router.get(
+
+  "/unread-count",
+
+  getUnreadCount
+
+);
+
+
+// ==========================================
 // NOTIFICATION ANALYTICS
+// GET /api/notifications/analytics
 // ==========================================
 router.get(
 
   "/analytics",
-
-  protect,
 
   getNotificationAnalytics
 
@@ -59,12 +88,11 @@ router.get(
 
 // ==========================================
 // MARK ALL AS READ
+// PUT /api/notifications/read-all
 // ==========================================
 router.put(
 
   "/read-all",
-
-  protect,
 
   markAllNotificationsRead
 
@@ -72,13 +100,12 @@ router.put(
 
 
 // ==========================================
-// MARK SINGLE AS READ
+// MARK SINGLE NOTIFICATION AS READ
+// PUT /api/notifications/:id/read
 // ==========================================
 router.put(
 
   "/:id/read",
-
-  protect,
 
   markNotificationRead
 
@@ -87,12 +114,11 @@ router.put(
 
 // ==========================================
 // DELETE SINGLE NOTIFICATION
+// DELETE /api/notifications/:id
 // ==========================================
 router.delete(
 
   "/:id",
-
-  protect,
 
   deleteNotification
 
@@ -101,12 +127,11 @@ router.delete(
 
 // ==========================================
 // DELETE ALL NOTIFICATIONS
+// DELETE /api/notifications
 // ==========================================
 router.delete(
 
   "/",
-
-  protect,
 
   deleteAllNotifications
 

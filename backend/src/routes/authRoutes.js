@@ -1,3 +1,6 @@
+// ==========================================
+// IMPORTS
+// ==========================================
 const express =
   require("express");
 
@@ -19,6 +22,8 @@ const {
 
   resetPassword,
 
+  getMe,
+
 } = require(
   "../controllers/authController"
 );
@@ -31,8 +36,36 @@ const {
   "../middleware/authMiddleware"
 );
 
+
+// ==========================================
+// ROUTER
+// ==========================================
 const router =
   express.Router();
+
+
+// ==========================================
+// TEST ROUTE
+// GET /api/auth/test
+// ==========================================
+router.get(
+
+  "/test",
+
+  (req, res) => {
+
+    return res.status(200).json({
+
+      success: true,
+
+      message:
+        "Auth Route Working Properly",
+
+    });
+
+  }
+
+);
 
 
 // ==========================================
@@ -40,7 +73,10 @@ const router =
 // ==========================================
 
 
-// REGISTER
+// ==========================================
+// REGISTER USER
+// POST /api/auth/register
+// ==========================================
 router.post(
 
   "/register",
@@ -50,7 +86,10 @@ router.post(
 );
 
 
-// LOGIN
+// ==========================================
+// LOGIN USER
+// POST /api/auth/login
+// ==========================================
 router.post(
 
   "/login",
@@ -60,7 +99,10 @@ router.post(
 );
 
 
+// ==========================================
 // FORGOT PASSWORD
+// POST /api/auth/forgot-password
+// ==========================================
 router.post(
 
   "/forgot-password",
@@ -70,7 +112,10 @@ router.post(
 );
 
 
+// ==========================================
 // RESEND OTP
+// POST /api/auth/resend-otp
+// ==========================================
 router.post(
 
   "/resend-otp",
@@ -80,7 +125,10 @@ router.post(
 );
 
 
+// ==========================================
 // VERIFY OTP
+// POST /api/auth/verify-otp
+// ==========================================
 router.post(
 
   "/verify-otp",
@@ -90,7 +138,10 @@ router.post(
 );
 
 
+// ==========================================
 // RESET PASSWORD
+// POST /api/auth/reset-password
+// ==========================================
 router.post(
 
   "/reset-password",
@@ -105,7 +156,25 @@ router.post(
 // ==========================================
 
 
+// ==========================================
+// GET CURRENT USER
+// GET /api/auth/me
+// ==========================================
+router.get(
+
+  "/me",
+
+  protect,
+
+  getMe
+
+);
+
+
+// ==========================================
 // CHANGE PASSWORD
+// PUT /api/auth/change-password
+// ==========================================
 router.put(
 
   "/change-password",
@@ -117,12 +186,15 @@ router.put(
 );
 
 
-// LOGOUT
+// ==========================================
+// LOGOUT USER
+// POST /api/auth/logout
+// ==========================================
+// protect intentionally removed
+// allows logout even after token expiry
 router.post(
 
   "/logout",
-
-  protect,
 
   logoutUser
 
@@ -130,7 +202,60 @@ router.post(
 
 
 // ==========================================
-// EXPORT
+// CHECK AUTH
+// GET /api/auth/check-auth
+// ==========================================
+router.get(
+
+  "/check-auth",
+
+  protect,
+
+  (req, res) => {
+
+    return res.status(200).json({
+
+      success: true,
+
+      authenticated: true,
+
+      user: {
+
+        _id:
+          req.user._id,
+
+        identifier:
+          req.user.identifier,
+
+        name:
+          req.user.name,
+
+        email:
+          req.user.email,
+
+        role:
+          req.user.role,
+
+        profileImage:
+          req.user.profileImage || "",
+
+        isOnline:
+          req.user.isOnline,
+
+        isFirstLogin:
+          req.user.isFirstLogin,
+
+      },
+
+    });
+
+  }
+
+);
+
+
+// ==========================================
+// EXPORT ROUTER
 // ==========================================
 module.exports =
   router;

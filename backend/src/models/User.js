@@ -1,5 +1,15 @@
+// ==========================================
+// IMPORTS
+// ==========================================
 const mongoose =
   require("mongoose");
+
+
+// ==========================================
+// URL VALIDATOR
+// ==========================================
+const urlRegex =
+  /^(https?:\/\/)?([\w\-])+\.{1}[a-zA-Z]{2,}(\/.*)?$/;
 
 
 // ==========================================
@@ -22,6 +32,12 @@ const userSchema =
         unique: true,
 
         trim: true,
+
+        lowercase: true,
+
+        minlength: 3,
+
+        maxlength: 50,
 
         index: true,
 
@@ -53,6 +69,9 @@ const userSchema =
 
         lowercase: true,
 
+        match:
+          /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+
         index: true,
 
       },
@@ -67,6 +86,10 @@ const userSchema =
 
       },
 
+
+      // ====================================
+      // PASSWORD
+      // ====================================
       password: {
 
         type: String,
@@ -90,8 +113,11 @@ const userSchema =
         enum: [
 
           "student",
+
           "alumni",
+
           "faculty",
+
           "admin",
 
         ],
@@ -112,13 +138,7 @@ const userSchema =
 
         default: true,
 
-      },
-
-      isVerified: {
-
-        type: Boolean,
-
-        default: false,
+        index: true,
 
       },
 
@@ -127,6 +147,8 @@ const userSchema =
         type: Boolean,
 
         default: false,
+
+        index: true,
 
       },
 
@@ -160,7 +182,7 @@ const userSchema =
 
 
       // ====================================
-      // PROFILE INFO
+      // EDUCATION / PROFESSIONAL
       // ====================================
       branch: {
 
@@ -183,16 +205,6 @@ const userSchema =
         trim: true,
 
         index: true,
-
-      },
-
-      collegeName: {
-
-        type: String,
-
-        default: "",
-
-        trim: true,
 
       },
 
@@ -230,16 +242,6 @@ const userSchema =
 
       },
 
-      experience: {
-
-        type: Number,
-
-        default: 0,
-
-        min: 0,
-
-      },
-
       bio: {
 
         type: String,
@@ -252,7 +254,7 @@ const userSchema =
 
 
       // ====================================
-      // SKILLS & INTERESTS
+      // SKILLS
       // ====================================
       skills: [
 
@@ -262,10 +264,16 @@ const userSchema =
 
           trim: true,
 
+          lowercase: true,
+
         },
 
       ],
 
+
+      // ====================================
+      // INTERESTS
+      // ====================================
       interests: [
 
         {
@@ -273,6 +281,8 @@ const userSchema =
           type: String,
 
           trim: true,
+
+          lowercase: true,
 
         },
 
@@ -290,6 +300,22 @@ const userSchema =
 
         trim: true,
 
+        validate: {
+
+          validator: function (v) {
+
+            return (
+              !v ||
+              urlRegex.test(v)
+            );
+
+          },
+
+          message:
+            "Invalid LinkedIn URL",
+
+        },
+
       },
 
       githubUrl: {
@@ -300,6 +326,22 @@ const userSchema =
 
         trim: true,
 
+        validate: {
+
+          validator: function (v) {
+
+            return (
+              !v ||
+              urlRegex.test(v)
+            );
+
+          },
+
+          message:
+            "Invalid GitHub URL",
+
+        },
+
       },
 
       portfolioUrl: {
@@ -309,6 +351,22 @@ const userSchema =
         default: "",
 
         trim: true,
+
+        validate: {
+
+          validator: function (v) {
+
+            return (
+              !v ||
+              urlRegex.test(v)
+            );
+
+          },
+
+          message:
+            "Invalid Portfolio URL",
+
+        },
 
       },
 
@@ -348,17 +406,9 @@ const userSchema =
 
       },
 
-      mentorshipCount: {
-
-        type: Number,
-
-        default: 0,
-
-      },
-
 
       // ====================================
-      // TRUST & RATINGS
+      // PROFILE ANALYTICS
       // ====================================
       trustScore: {
 
@@ -372,15 +422,41 @@ const userSchema =
 
       },
 
+      isVerified: {
+
+        type: Boolean,
+
+        default: false,
+
+        index: true,
+
+      },
+
+      profileCompleted: {
+
+        type: Number,
+
+        default: 0,
+
+        min: 0,
+
+        max: 100,
+
+      },
+
       averageRating: {
 
         type: Number,
 
         default: 0,
 
+        min: 0,
+
+        max: 5,
+
       },
 
-      totalRatings: {
+      mentorshipCount: {
 
         type: Number,
 
@@ -388,10 +464,6 @@ const userSchema =
 
       },
 
-
-      // ====================================
-      // PROFILE STRENGTH
-      // ====================================
       profileStrength: {
 
         type: String,
@@ -399,8 +471,11 @@ const userSchema =
         enum: [
 
           "Beginner",
+
           "Intermediate",
+
           "Strong",
+
           "Excellent",
 
         ],
@@ -421,11 +496,27 @@ const userSchema =
 
       },
 
+      lastLogin: {
+
+        type: Date,
+
+        default: null,
+
+      },
+
       lastActive: {
 
         type: Date,
 
         default: Date.now,
+
+      },
+
+      passwordChangedAt: {
+
+        type: Date,
+
+        default: null,
 
       },
 
@@ -453,7 +544,7 @@ userSchema.index({
 
   jobRole: "text",
 
-  bio: "text",
+  skills: "text",
 
 });
 
@@ -464,19 +555,30 @@ userSchema.index({
 userSchema.index({
 
   role: 1,
+
   domain: 1,
 
 });
 
 userSchema.index({
 
-  skills: 1,
+  branch: 1,
+
+  batch: 1,
+
+});
+
+userSchema.index({
+
+  isOnline: 1,
+
+  lastActive: -1,
 
 });
 
 
 // ==========================================
-// VIRTUAL
+// ACCOUNT LOCK VIRTUAL
 // ==========================================
 userSchema.virtual(
   "isLocked"
@@ -494,7 +596,87 @@ userSchema.virtual(
 
 
 // ==========================================
-// REMOVE PASSWORD IN RESPONSE
+// PROFILE COMPLETION METHOD
+// ==========================================
+userSchema.methods.calculateProfileStrength =
+  function () {
+
+    let score = 0;
+
+    if (this.profileImage)
+      score += 10;
+
+    if (this.bio)
+      score += 10;
+
+    if (this.skills?.length)
+      score += 20;
+
+    if (this.interests?.length)
+      score += 10;
+
+    if (this.company)
+      score += 15;
+
+    if (this.githubUrl)
+      score += 10;
+
+    if (this.linkedinUrl)
+      score += 10;
+
+    if (this.resumeUrl)
+      score += 15;
+
+    this.trustScore = score;
+
+    if (score < 30) {
+
+      this.profileStrength =
+        "Beginner";
+
+    }
+
+    else if (score < 60) {
+
+      this.profileStrength =
+        "Intermediate";
+
+    }
+
+    else if (score < 85) {
+
+      this.profileStrength =
+        "Strong";
+
+    }
+
+    else {
+
+      this.profileStrength =
+        "Excellent";
+
+    }
+
+  };
+
+
+// ==========================================
+// PRE SAVE MIDDLEWARE
+// ==========================================
+userSchema.pre(
+
+  "save",
+
+  function () {
+
+    this.calculateProfileStrength();
+
+  }
+
+);
+
+// ==========================================
+// REMOVE PASSWORD
 // ==========================================
 userSchema.methods.toJSON =
   function () {

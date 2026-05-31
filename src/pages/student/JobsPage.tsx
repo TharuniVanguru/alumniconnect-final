@@ -1,9 +1,10 @@
 import {
   useEffect,
+  useMemo,
   useState,
 } from "react";
 
-import axios from "axios";
+import api from "@/utils/api";
 
 import { Header }
   from "@/components/layout/Header";
@@ -43,13 +44,16 @@ import {
   Sparkles,
   GraduationCap,
   Filter,
+  ArrowRight,
+  Bookmark,
+  TrendingUp,
 
 } from "lucide-react";
 
 
-// =======================================
-// INTERFACE
-// =======================================
+// ==========================================
+// TYPES
+// ==========================================
 interface Job {
 
   _id: string;
@@ -71,18 +75,15 @@ interface Job {
 }
 
 
-// =======================================
+// ==========================================
 // COMPONENT
-// =======================================
+// ==========================================
 const JobsPage = () => {
 
-  // =====================================
+  // ========================================
   // STATES
-  // =====================================
+  // ========================================
   const [jobs, setJobs] =
-    useState<Job[]>([]);
-
-  const [filteredJobs, setFilteredJobs] =
     useState<Job[]>([]);
 
   const [loading, setLoading] =
@@ -91,20 +92,23 @@ const JobsPage = () => {
   const [searchQuery, setSearchQuery] =
     useState("");
 
+  const [selectedType, setSelectedType] =
+    useState("All");
+
   const [applyingId, setApplyingId] =
     useState("");
 
-  const [selectedType, setSelectedType] =
-    useState("All");
+  const [savedJobs, setSavedJobs] =
+    useState<string[]>([]);
 
 
   const { toast } =
     useToast();
 
 
-  // =====================================
+  // ========================================
   // FETCH JOBS
-  // =====================================
+  // ========================================
   const fetchJobs =
     async () => {
 
@@ -112,53 +116,39 @@ const JobsPage = () => {
 
         setLoading(true);
 
-        const userInfo =
-          JSON.parse(
-
-            localStorage.getItem(
-              "userInfo"
-            ) || "{}"
-
-          );
-
-
         const response =
-          await axios.get(
-
-            "http://localhost:5000/jobs",
-
-            {
-
-              headers: {
-
-                Authorization:
-                  `Bearer ${userInfo.token}`,
-
-              },
-
-            }
-
+          await api.get(
+            "/jobs"
           );
 
+        const jobsData =
+
+          response.data?.jobs ||
+
+          response.data ||
+
+          [];
 
         setJobs(
-          response.data || []
-        );
-
-        setFilteredJobs(
-          response.data || []
+          jobsData
         );
 
       }
 
       catch (error) {
 
-        console.log(error);
+        console.log(
+          "FETCH JOBS ERROR:",
+          error
+        );
 
         toast({
 
           title:
             "Failed to load jobs",
+
+          description:
+            "Please try again later.",
 
           variant:
             "destructive",
@@ -176,9 +166,9 @@ const JobsPage = () => {
     };
 
 
-  // =====================================
+  // ========================================
   // APPLY JOB
-  // =====================================
+  // ========================================
   const applyJob =
     async (
       jobId: string
@@ -190,36 +180,11 @@ const JobsPage = () => {
           jobId
         );
 
+        await api.post(
 
-        const userInfo =
-          JSON.parse(
-
-            localStorage.getItem(
-              "userInfo"
-            ) || "{}"
-
-          );
-
-
-        await axios.post(
-
-          `http://localhost:5000/jobs/${jobId}/apply`,
-
-          {},
-
-          {
-
-            headers: {
-
-              Authorization:
-                `Bearer ${userInfo.token}`,
-
-            },
-
-          }
+          `/jobs/${jobId}/apply`
 
         );
-
 
         toast({
 
@@ -227,7 +192,7 @@ const JobsPage = () => {
             "Application Submitted 🚀",
 
           description:
-            "Your application has been sent successfully.",
+            "Your application was submitted successfully.",
 
         });
 
@@ -242,7 +207,7 @@ const JobsPage = () => {
 
           description:
 
-            error.response?.data
+            error?.response?.data
               ?.message ||
 
             "Something went wrong",
@@ -263,74 +228,103 @@ const JobsPage = () => {
     };
 
 
-  // =====================================
-  // FILTER JOBS
-  // =====================================
-  useEffect(() => {
+  // ========================================
+  // SAVE JOB
+  // ========================================
+  const toggleSaveJob =
+    (
+      jobId: string
+    ) => {
 
-    let updated =
-      [...jobs];
+      setSavedJobs((prev) => {
 
+        if (
+          prev.includes(jobId)
+        ) {
 
-    // SEARCH FILTER
-    updated =
-      updated.filter(
+          return prev.filter(
+            (id) =>
+              id !== jobId
+          );
 
-        (job) =>
+        }
 
-          job.title
-            .toLowerCase()
-            .includes(
-              searchQuery.toLowerCase()
-            ) ||
+        return [
+          ...prev,
+          jobId,
+        ];
 
-          job.company
-            .toLowerCase()
-            .includes(
-              searchQuery.toLowerCase()
-            ) ||
+      });
 
-          job.location
-            .toLowerCase()
-            .includes(
-              searchQuery.toLowerCase()
-            )
-
-      );
+    };
 
 
-    // TYPE FILTER
-    if (
-      selectedType !==
-      "All"
-    ) {
+  // ========================================
+  // FILTERED JOBS
+  // ========================================
+  const filteredJobs =
+    useMemo(() => {
 
+      let updated =
+        [...jobs];
+
+
+      // SEARCH
       updated =
         updated.filter(
+
           (job) =>
-            job.type ===
-            selectedType
+
+            job.title
+              .toLowerCase()
+              .includes(
+                searchQuery.toLowerCase()
+              ) ||
+
+            job.company
+              .toLowerCase()
+              .includes(
+                searchQuery.toLowerCase()
+              ) ||
+
+            job.location
+              .toLowerCase()
+              .includes(
+                searchQuery.toLowerCase()
+              )
+
         );
 
-    }
+
+      // TYPE
+      if (
+        selectedType !==
+        "All"
+      ) {
+
+        updated =
+          updated.filter(
+            (job) =>
+              job.type ===
+              selectedType
+          );
+
+      }
+
+      return updated;
+
+    }, [
+
+      jobs,
+      searchQuery,
+      selectedType,
+
+    ]);
 
 
-    setFilteredJobs(
-      updated
-    );
-
-  }, [
-
-    searchQuery,
-    selectedType,
-    jobs,
-
-  ]);
-
-
-  // =====================================
+  // ========================================
   // INITIAL LOAD
-  // =====================================
+  // ========================================
   useEffect(() => {
 
     fetchJobs();
@@ -338,9 +332,9 @@ const JobsPage = () => {
   }, []);
 
 
-  // =====================================
+  // ========================================
   // UI
-  // =====================================
+  // ========================================
   return (
 
     <div className="min-h-screen bg-background">
@@ -350,59 +344,111 @@ const JobsPage = () => {
       <main className="container mx-auto px-4 py-6">
 
         {/* ================================= */}
-        {/* HERO SECTION */}
+        {/* HERO */}
         {/* ================================= */}
         <div className="mb-8">
 
-          <div className="rounded-3xl overflow-hidden bg-gradient-to-r from-primary via-purple-600 to-pink-500 text-white shadow-2xl">
+          <div className="rounded-3xl overflow-hidden bg-gradient-to-r from-primary via-violet-600 to-indigo-600 text-white shadow-2xl">
 
             <div className="p-8 md:p-10">
 
-              <div className="flex items-center gap-4 mb-4">
-
-                <div className="h-16 w-16 rounded-2xl bg-white/20 flex items-center justify-center">
-
-                  <Briefcase className="h-8 w-8" />
-
-                </div>
-
+              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8">
 
                 <div>
 
-                  <h1 className="text-4xl font-bold">
+                  <div className="flex items-center gap-3 mb-4">
 
-                    Alumni Job Board
+                    <div className="h-16 w-16 rounded-2xl bg-white/20 flex items-center justify-center">
 
-                  </h1>
+                      <Briefcase className="h-8 w-8" />
 
-                  <p className="text-white/90 mt-1">
+                    </div>
 
-                    Discover internships & job opportunities from alumni
+                    <div>
 
-                  </p>
+                      <h1 className="text-4xl font-bold">
+
+                        Alumni Job Board
+
+                      </h1>
+
+                      <p className="text-white/90 mt-2">
+
+                        Explore internships and jobs shared by alumni mentors
+
+                      </p>
+
+                    </div>
+
+                  </div>
+
+                  <div className="flex flex-wrap gap-3 mt-6">
+
+                    <Badge className="bg-white/20 text-white border-0 px-4 py-2">
+
+                      <Sparkles className="h-4 w-4 mr-2" />
+
+                      Smart Opportunities
+
+                    </Badge>
+
+                    <Badge className="bg-white/20 text-white border-0 px-4 py-2">
+
+                      <GraduationCap className="h-4 w-4 mr-2" />
+
+                      Student Friendly
+
+                    </Badge>
+
+                    <Badge className="bg-white/20 text-white border-0 px-4 py-2">
+
+                      <TrendingUp className="h-4 w-4 mr-2" />
+
+                      Career Growth
+
+                    </Badge>
+
+                  </div>
 
                 </div>
 
-              </div>
 
+                {/* STATS */}
+                <div className="grid grid-cols-2 gap-4">
 
-              <div className="flex flex-wrap gap-3 mt-6">
+                  <div className="bg-white/10 backdrop-blur-md rounded-2xl p-5 text-center">
 
-                <Badge className="bg-white/20 text-white border-0 px-4 py-2">
+                    <h2 className="text-3xl font-bold">
 
-                  <Sparkles className="h-4 w-4 mr-2" />
+                      {jobs.length}
 
-                  Career Opportunities
+                    </h2>
 
-                </Badge>
+                    <p className="text-white/80 text-sm">
 
-                <Badge className="bg-white/20 text-white border-0 px-4 py-2">
+                      Total Jobs
 
-                  <GraduationCap className="h-4 w-4 mr-2" />
+                    </p>
 
-                  Student Friendly
+                  </div>
 
-                </Badge>
+                  <div className="bg-white/10 backdrop-blur-md rounded-2xl p-5 text-center">
+
+                    <h2 className="text-3xl font-bold">
+
+                      {savedJobs.length}
+
+                    </h2>
+
+                    <p className="text-white/80 text-sm">
+
+                      Saved Jobs
+
+                    </p>
+
+                  </div>
+
+                </div>
 
               </div>
 
@@ -421,7 +467,7 @@ const JobsPage = () => {
           {/* SEARCH */}
           <div className="md:col-span-3 relative">
 
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
 
             <Input
 
@@ -435,7 +481,7 @@ const JobsPage = () => {
                 )
               }
 
-              className="pl-11 h-12 rounded-2xl"
+              className="pl-12 h-12 rounded-2xl"
 
             />
 
@@ -445,7 +491,7 @@ const JobsPage = () => {
           {/* FILTER */}
           <div className="relative">
 
-            <Filter className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+            <Filter className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
 
             <select
 
@@ -457,38 +503,28 @@ const JobsPage = () => {
                 )
               }
 
-              className="w-full border border-input bg-background rounded-2xl h-12 pl-10 pr-4"
+              className="w-full border border-input bg-background rounded-2xl h-12 pl-11 pr-4"
 
             >
 
               <option>
-
                 All
-
               </option>
 
               <option>
-
                 Internship
-
               </option>
 
               <option>
-
                 Full-Time
-
               </option>
 
               <option>
-
                 Part-Time
-
               </option>
 
               <option>
-
                 Remote
-
               </option>
 
             </select>
@@ -503,7 +539,7 @@ const JobsPage = () => {
         {/* ================================= */}
         {loading ? (
 
-          <div className="flex items-center justify-center py-20">
+          <div className="flex items-center justify-center py-24">
 
             <Loader2 className="h-10 w-10 animate-spin text-primary" />
 
@@ -511,13 +547,13 @@ const JobsPage = () => {
 
         ) : filteredJobs.length === 0 ? (
 
-          <Card className="rounded-3xl shadow-xl">
+          <Card className="rounded-3xl shadow-xl border-0">
 
-            <CardContent className="py-20 text-center">
+            <CardContent className="py-24 text-center">
 
-              <Briefcase className="h-16 w-16 mx-auto text-muted-foreground mb-5" />
+              <Briefcase className="h-20 w-20 mx-auto text-muted-foreground mb-6" />
 
-              <h2 className="text-3xl font-bold mb-2">
+              <h2 className="text-3xl font-bold mb-3">
 
                 No Jobs Found
 
@@ -525,7 +561,7 @@ const JobsPage = () => {
 
               <p className="text-muted-foreground">
 
-                Try searching with different keywords.
+                Try searching with different keywords or filters.
 
               </p>
 
@@ -544,13 +580,13 @@ const JobsPage = () => {
 
                   key={job._id}
 
-                  className="rounded-3xl shadow-xl border-0 hover:scale-[1.01] transition-all"
+                  className="rounded-3xl shadow-xl border-0 hover:shadow-2xl hover:-translate-y-1 transition-all"
 
                 >
 
                   <CardHeader>
 
-                    <div className="flex items-start justify-between">
+                    <div className="flex items-start justify-between gap-4">
 
                       <div>
 
@@ -560,8 +596,7 @@ const JobsPage = () => {
 
                         </CardTitle>
 
-
-                        <CardDescription className="mt-2 flex items-center gap-2 text-sm">
+                        <CardDescription className="mt-3 flex items-center gap-2 text-sm">
 
                           <Building2 className="h-4 w-4" />
 
@@ -572,11 +607,39 @@ const JobsPage = () => {
                       </div>
 
 
-                      <Badge className="px-3 py-1 rounded-xl">
+                      <div className="flex items-center gap-2">
 
-                        {job.type}
+                        <Badge className="px-3 py-1 rounded-xl">
 
-                      </Badge>
+                          {job.type}
+
+                        </Badge>
+
+                        <button
+
+                          onClick={() =>
+                            toggleSaveJob(
+                              job._id
+                            )
+                          }
+
+                          className={`h-10 w-10 rounded-xl flex items-center justify-center transition ${
+                            savedJobs.includes(
+                              job._id
+                            )
+
+                              ? "bg-primary text-white"
+
+                              : "bg-muted"
+                          }`}
+
+                        >
+
+                          <Bookmark className="h-4 w-4" />
+
+                        </button>
+
+                      </div>
 
                     </div>
 
@@ -600,7 +663,7 @@ const JobsPage = () => {
 
 
                     {/* DESCRIPTION */}
-                    <p className="leading-7 text-muted-foreground">
+                    <p className="leading-7 text-muted-foreground line-clamp-4">
 
                       {job.description}
 
@@ -621,7 +684,7 @@ const JobsPage = () => {
                     </div>
 
 
-                    {/* POSTED */}
+                    {/* DATE */}
                     {job.createdAt && (
 
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -675,6 +738,8 @@ const JobsPage = () => {
                           <CheckCircle2 className="h-5 w-5" />
 
                           Apply Now
+
+                          <ArrowRight className="h-4 w-4" />
 
                         </div>
 

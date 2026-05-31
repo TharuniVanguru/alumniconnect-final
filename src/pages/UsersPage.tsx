@@ -3,11 +3,13 @@ import {
   useState,
 } from "react";
 
-import axios from "axios";
-
+import api, { apiGet, apiPost, apiPut, apiPatch, apiDelete } from "@/utils/api";
 import {
   useNavigate,
 } from "react-router-dom";
+
+import { motion }
+  from "framer-motion";
 
 import { Header }
   from "@/components/layout/Header";
@@ -23,13 +25,24 @@ import { Input }
 import { Button }
   from "@/components/ui/button";
 
+import { Badge }
+  from "@/components/ui/badge";
+
 import {
+
   Users,
   Search,
   Mail,
   MessageCircle,
   GraduationCap,
   Sparkles,
+  Loader2,
+  Building2,
+  Code2,
+  Star,
+  ArrowRight,
+  UserCircle2,
+
 } from "lucide-react";
 
 
@@ -49,6 +62,10 @@ interface User {
   domain?: string;
 
   skills?: string[];
+
+  company?: string;
+
+  profileImage?: string;
 
 }
 
@@ -85,9 +102,11 @@ const UsersPage = () => {
   // USER INFO
   const userInfo =
     JSON.parse(
+
       localStorage.getItem(
         "userInfo"
       ) || "{}"
+
     );
 
 
@@ -102,9 +121,9 @@ const UsersPage = () => {
         setLoading(true);
 
         const response =
-          await axios.get(
+          await api.get(
 
-            "http://localhost:5000/profile/alumni",
+            "/profile/alumni",
 
             {
 
@@ -168,6 +187,12 @@ const UsersPage = () => {
           .toLowerCase()
           .includes(
             search.toLowerCase()
+          ) ||
+
+        user.domain
+          ?.toLowerCase()
+          .includes(
+            search.toLowerCase()
           )
 
       );
@@ -194,52 +219,157 @@ const UsersPage = () => {
   // =========================
   return (
 
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background relative overflow-hidden">
+
+
+      {/* BACKGROUND EFFECTS */}
+
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+
+        <div className="absolute top-0 left-0 h-[400px] w-[400px] bg-violet-500/10 rounded-full blur-3xl" />
+
+        <div className="absolute bottom-0 right-0 h-[450px] w-[450px] bg-indigo-500/10 rounded-full blur-3xl" />
+
+      </div>
+
 
       <Header />
 
-      <div className="max-w-7xl mx-auto p-6">
 
+      <main className="max-w-7xl mx-auto px-4 py-8 relative z-10">
+
+
+        {/* ========================= */}
         {/* HEADER */}
-        <div className="mb-8">
+        {/* ========================= */}
 
-          <div className="flex items-center gap-4">
+        <motion.div
 
-            <div className="h-16 w-16 rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 flex items-center justify-center shadow-lg">
+          initial={{
+            opacity: 0,
+            y: 20,
+          }}
 
-              <Users className="h-8 w-8 text-white" />
+          animate={{
+            opacity: 1,
+            y: 0,
+          }}
+
+          transition={{
+            duration: 0.5,
+          }}
+
+          className="mb-10"
+
+        >
+
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+
+
+            {/* LEFT */}
+
+            <div className="flex items-center gap-5">
+
+              <div className="h-20 w-20 rounded-3xl bg-gradient-to-r from-violet-600 to-indigo-600 flex items-center justify-center shadow-2xl">
+
+                <Users className="h-10 w-10 text-white" />
+
+              </div>
+
+
+              <div>
+
+                <div className="flex items-center gap-3 mb-2">
+
+                  <Badge className="bg-gradient-to-r from-violet-600 to-indigo-600 text-white px-4 py-1 rounded-full">
+
+                    <Sparkles className="h-3 w-3 mr-1" />
+
+                    Alumni Network
+
+                  </Badge>
+
+                </div>
+
+
+                <h1 className="text-5xl font-bold leading-tight">
+
+                  Connect With
+
+                  <span className="bg-gradient-to-r from-violet-600 to-indigo-600 bg-clip-text text-transparent">
+
+                    {" "}Alumni
+
+                  </span>
+
+                </h1>
+
+
+                <p className="text-muted-foreground text-lg mt-2">
+
+                  Discover mentors, professionals,
+                  and industry experts from your network.
+
+                </p>
+
+              </div>
 
             </div>
 
-            <div>
 
-              <h1 className="text-4xl font-bold">
+            {/* RIGHT */}
 
-                Alumni Users
+            <div className="rounded-3xl border bg-background/80 backdrop-blur-xl p-5 shadow-xl min-w-[220px]">
 
-              </h1>
+              <p className="text-sm text-muted-foreground mb-1">
 
-              <p className="text-muted-foreground text-lg">
-
-                Connect with alumni mentors and professionals
+                Total Alumni
 
               </p>
+
+              <h2 className="text-4xl font-bold text-primary">
+
+                {filteredUsers.length}
+
+              </h2>
 
             </div>
 
           </div>
 
-        </div>
+        </motion.div>
 
 
-        {/* SEARCH BAR */}
-        <div className="relative mb-8">
+        {/* ========================= */}
+        {/* SEARCH */}
+        {/* ========================= */}
 
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+        <motion.div
+
+          initial={{
+            opacity: 0,
+            y: 20,
+          }}
+
+          animate={{
+            opacity: 1,
+            y: 0,
+          }}
+
+          transition={{
+            delay: 0.1,
+          }}
+
+          className="relative mb-10"
+
+        >
+
+          <Search className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+
 
           <Input
 
-            placeholder="Search alumni by name, email, or role..."
+            placeholder="Search alumni by name, email, role, or domain..."
 
             value={search}
 
@@ -249,21 +379,24 @@ const UsersPage = () => {
               )
             }
 
-            className="pl-12 h-12 rounded-2xl"
+            className="pl-14 h-14 rounded-3xl text-base shadow-lg border-0 bg-background/80 backdrop-blur"
 
           />
 
-        </div>
+        </motion.div>
 
 
+        {/* ========================= */}
         {/* LOADING */}
+        {/* ========================= */}
+
         {loading ? (
 
-          <div className="text-center py-20">
+          <div className="text-center py-24">
 
-            <Sparkles className="h-10 w-10 animate-pulse mx-auto mb-4 text-primary" />
+            <Loader2 className="h-12 w-12 animate-spin mx-auto mb-5 text-primary" />
 
-            <h2 className="text-2xl font-bold">
+            <h2 className="text-3xl font-bold mb-2">
 
               Loading Alumni...
 
@@ -279,15 +412,17 @@ const UsersPage = () => {
 
         ) : filteredUsers.length === 0 ? (
 
-          <div className="text-center py-20">
+          <div className="text-center py-24">
 
-            <h2 className="text-2xl font-bold mb-2">
+            <Sparkles className="h-14 w-14 mx-auto mb-5 text-primary" />
 
-              No Users Found
+            <h2 className="text-3xl font-bold mb-3">
+
+              No Alumni Found
 
             </h2>
 
-            <p className="text-muted-foreground">
+            <p className="text-muted-foreground text-lg">
 
               Try searching with another keyword
 
@@ -297,117 +432,298 @@ const UsersPage = () => {
 
         ) : (
 
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
 
-            {filteredUsers.map((user) => (
 
-              <Card
+            {filteredUsers.map(
+              (
+                user,
+                index
+              ) => (
 
-                key={user._id}
+                <motion.div
 
-                className="rounded-3xl shadow-xl border-0 overflow-hidden hover:scale-[1.02] transition-all duration-300"
+                  key={user._id}
 
-              >
+                  initial={{
+                    opacity: 0,
+                    y: 20,
+                  }}
 
-                {/* TOP */}
-                <div className="bg-gradient-to-r from-violet-600 to-indigo-600 text-white p-6">
+                  animate={{
+                    opacity: 1,
+                    y: 0,
+                  }}
 
-                  <div className="flex items-center justify-between">
+                  transition={{
+                    delay:
+                      index * 0.05,
+                  }}
 
-                    <div>
+                >
 
-                      <h2 className="text-2xl font-bold">
+                  <Card className="rounded-[32px] overflow-hidden border-0 shadow-2xl bg-background/90 backdrop-blur-xl hover:scale-[1.02] transition-all duration-300 group">
 
-                        {user.name}
 
-                      </h2>
+                    {/* TOP */}
 
-                      <p className="text-white/90 capitalize">
+                    <div className="relative overflow-hidden bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 text-white p-7">
 
-                        {user.role}
 
-                      </p>
+                      <div className="absolute inset-0 bg-black/10" />
+
+
+                      <div className="relative flex items-center justify-between">
+
+
+                        <div className="flex items-center gap-4">
+
+
+                          {/* PROFILE */}
+
+                          {
+
+                            user.profileImage ? (
+
+                              <img
+
+                                src={user.profileImage}
+
+                                alt={user.name}
+
+                                className="h-20 w-20 rounded-full object-cover border-4 border-white/30"
+
+                              />
+
+                            ) : (
+
+                              <div className="h-20 w-20 rounded-full bg-white/20 flex items-center justify-center border border-white/20">
+
+                                <UserCircle2 className="h-10 w-10" />
+
+                              </div>
+
+                            )
+
+                          }
+
+
+                          <div>
+
+                            <h2 className="text-2xl font-bold">
+
+                              {user.name}
+
+                            </h2>
+
+
+                            <p className="text-white/90 capitalize">
+
+                              {user.role}
+
+                            </p>
+
+                          </div>
+
+                        </div>
+
+
+                        <div className="h-14 w-14 rounded-2xl bg-white/20 flex items-center justify-center">
+
+                          <GraduationCap className="h-7 w-7" />
+
+                        </div>
+
+                      </div>
 
                     </div>
 
-                    <div className="h-14 w-14 rounded-full bg-white/20 flex items-center justify-center">
 
-                      <GraduationCap className="h-7 w-7" />
+                    {/* CONTENT */}
 
-                    </div>
-
-                  </div>
-
-                </div>
+                    <CardContent className="p-7">
 
 
-                {/* CONTENT */}
-                <CardContent className="p-6">
+                      {/* EMAIL */}
 
-                  {/* EMAIL */}
-                  <div className="flex items-center gap-2 text-sm mb-4">
+                      <div className="flex items-center gap-3 mb-4 text-sm">
 
-                    <Mail className="h-4 w-4 text-primary" />
+                        <div className="h-9 w-9 rounded-xl bg-primary/10 flex items-center justify-center">
 
-                    <span>
+                          <Mail className="h-4 w-4 text-primary" />
 
-                      {user.email}
-
-                    </span>
-
-                  </div>
+                        </div>
 
 
-                  {/* ROLE */}
-                  <div className="mb-5">
+                        <span className="truncate">
 
-                    <span className="text-sm text-muted-foreground">
+                          {user.email}
 
-                      Role
+                        </span>
 
-                    </span>
-
-                    <p className="font-semibold capitalize">
-
-                      {user.role}
-
-                    </p>
-
-                  </div>
+                      </div>
 
 
-                  {/* BUTTON */}
-                  <Button
+                      {/* DOMAIN */}
 
-                    className="w-full rounded-xl"
+                      {
 
-                    onClick={() =>
+                        user.domain && (
 
-                      navigate(
-                        `/student/chat/${user._id}`
-                      )
+                          <div className="flex items-center gap-3 mb-4 text-sm">
 
-                    }
+                            <div className="h-9 w-9 rounded-xl bg-violet-100 flex items-center justify-center">
 
-                  >
+                              <Building2 className="h-4 w-4 text-violet-600" />
 
-                    <MessageCircle className="h-4 w-4 mr-2" />
+                            </div>
 
-                    Start Chat
 
-                  </Button>
+                            <span>
 
-                </CardContent>
+                              {user.domain}
 
-              </Card>
+                            </span>
 
-            ))}
+                          </div>
+
+                        )
+
+                      }
+
+
+                      {/* SKILLS */}
+
+                      {
+
+                        user.skills &&
+                        user.skills.length > 0 && (
+
+                          <div className="mb-5">
+
+                            <div className="flex items-center gap-2 mb-3">
+
+                              <Code2 className="h-4 w-4 text-primary" />
+
+                              <span className="font-medium text-sm">
+
+                                Skills
+
+                              </span>
+
+                            </div>
+
+
+                            <div className="flex flex-wrap gap-2">
+
+                              {user.skills
+                                .slice(0, 4)
+                                .map(
+                                  (
+                                    skill,
+                                    i
+                                  ) => (
+
+                                    <Badge
+
+                                      key={i}
+
+                                      variant="secondary"
+
+                                      className="rounded-full px-3 py-1"
+
+                                    >
+
+                                      {skill}
+
+                                    </Badge>
+
+                                  )
+                                )}
+
+                            </div>
+
+                          </div>
+
+                        )
+
+                      }
+
+
+                      {/* ROLE */}
+
+                      <div className="flex items-center justify-between mb-6">
+
+                        <div>
+
+                          <p className="text-xs text-muted-foreground">
+
+                            Role
+
+                          </p>
+
+                          <p className="font-semibold capitalize">
+
+                            {user.role}
+
+                          </p>
+
+                        </div>
+
+
+                        <div className="flex items-center gap-1 text-yellow-500">
+
+                          <Star className="h-4 w-4 fill-yellow-500" />
+
+                          <span className="font-medium text-sm">
+
+                            Verified
+
+                          </span>
+
+                        </div>
+
+                      </div>
+
+
+                      {/* BUTTON */}
+
+                      <Button
+
+                        className="w-full rounded-2xl h-11 bg-gradient-to-r from-violet-600 to-indigo-600 hover:opacity-90 shadow-lg"
+
+                        onClick={() =>
+
+                          navigate(
+                            `/student/chat/${user._id}`
+                          )
+
+                        }
+
+                      >
+
+                        <MessageCircle className="h-4 w-4 mr-2" />
+
+                        Start Chat
+
+                        <ArrowRight className="h-4 w-4 ml-2" />
+
+                      </Button>
+
+                    </CardContent>
+
+                  </Card>
+
+                </motion.div>
+
+              )
+            )}
 
           </div>
 
         )}
 
-      </div>
+      </main>
 
     </div>
 

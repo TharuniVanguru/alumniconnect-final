@@ -4,7 +4,7 @@ import {
   useState,
 } from "react";
 
-import axios from "axios";
+import api from "@/utils/api";
 
 import { Header }
   from "@/components/layout/Header";
@@ -33,12 +33,14 @@ import {
   User,
   Trash2,
   Clock3,
+  Copy,
+  CheckCircle2,
 
 } from "lucide-react";
 
 
 // ==========================================
-// INTERFACE
+// TYPES
 // ==========================================
 interface ChatMessage {
 
@@ -56,122 +58,220 @@ interface ChatMessage {
 // ==========================================
 // COMPONENT
 // ==========================================
-const AIChatPage =
-  () => {
+const AIChatPage = () => {
 
-    // ======================================
-    // STATES
-    // ======================================
-    const [
+  // ========================================
+  // STATES
+  // ========================================
+  const [
 
-      messages,
-      setMessages,
+    messages,
+    setMessages,
 
-    ] = useState<
-      ChatMessage[]
-    >([]);
+  ] = useState<
+    ChatMessage[]
+  >([]);
+
+  const [
+
+    newMessage,
+    setNewMessage,
+
+  ] = useState("");
+
+  const [
+
+    isSending,
+    setIsSending,
+
+  ] = useState(false);
+
+  const [
+
+    error,
+    setError,
+
+  ] = useState("");
+
+  const [
+
+    copiedIndex,
+    setCopiedIndex,
+
+  ] = useState<number | null>(
+    null
+  );
 
 
-    const [
+  // ========================================
+  // REFS
+  // ========================================
+  const inputRef =
+    useRef<HTMLInputElement | null>(
+      null
+    );
 
-      newMessage,
-      setNewMessage,
-
-    ] = useState("");
-
-
-    const [
-
-      isSending,
-      setIsSending,
-
-    ] = useState(false);
+  const bottomRef =
+    useRef<HTMLDivElement | null>(
+      null
+    );
 
 
-    const [
+  // ========================================
+  // USER INFO
+  // ========================================
+  const userInfo =
+    JSON.parse(
 
-      error,
-      setError,
+      localStorage.getItem(
+        "userInfo"
+      ) || "{}"
 
-    ] = useState("");
+    );
 
 
-    // ======================================
-    // REFS
-    // ======================================
-    const inputRef =
-      useRef<HTMLInputElement | null>(
-        null
+  // ========================================
+  // AUTO FOCUS
+  // ========================================
+  useEffect(() => {
+
+    inputRef.current?.focus();
+
+  }, []);
+
+
+  // ========================================
+  // LOAD CHAT HISTORY
+  // ========================================
+  useEffect(() => {
+
+    const saved =
+      localStorage.getItem(
+        "ai_chat_history"
       );
 
-    const bottomRef =
-      useRef<HTMLDivElement | null>(
-        null
+    if (saved) {
+
+      setMessages(
+        JSON.parse(saved)
       );
 
+    }
 
-    // ======================================
-    // USER INFO
-    // ======================================
-    const userInfo =
-      JSON.parse(
+  }, []);
 
-        localStorage.getItem(
-          "userInfo"
-        ) || "{}"
 
+  // ========================================
+  // SAVE CHAT HISTORY
+  // ========================================
+  useEffect(() => {
+
+    localStorage.setItem(
+
+      "ai_chat_history",
+
+      JSON.stringify(messages)
+
+    );
+
+  }, [messages]);
+
+
+  // ========================================
+  // AUTO SCROLL
+  // ========================================
+  useEffect(() => {
+
+    bottomRef.current?.scrollIntoView({
+
+      behavior:
+        "smooth",
+
+    });
+
+  }, [messages]);
+
+
+  // ========================================
+  // SEND MESSAGE
+  // ========================================
+  const sendMessage =
+    async () => {
+
+      if (
+        !newMessage.trim()
+      ) return;
+
+
+      const userMessage:
+        ChatMessage = {
+
+        role: "user",
+
+        content:
+          newMessage.trim(),
+
+        createdAt:
+          new Date().toISOString(),
+
+      };
+
+
+      // ====================================
+      // UPDATE UI
+      // ====================================
+      setMessages(
+        (prev) => [
+
+          ...prev,
+
+          userMessage,
+
+        ]
       );
 
+      setNewMessage("");
 
-    // ======================================
-    // AUTO FOCUS
-    // ======================================
-    useEffect(() => {
+      setIsSending(true);
 
-      inputRef.current?.focus();
-
-    }, []);
+      setError("");
 
 
-    // ======================================
-    // AUTO SCROLL
-    // ======================================
-    useEffect(() => {
+      try {
 
-      bottomRef.current?.scrollIntoView({
+        // ==================================
+        // AI API
+        // ==================================
+        const response =
+          await api.post(
 
-        behavior:
-          "smooth",
+            "/ai/ask",
 
-      });
+            {
 
-    }, [messages]);
+              message:
+                userMessage.content,
 
+            }
 
-    // ======================================
-    // SEND MESSAGE
-    // ======================================
-    const sendMessage =
-      async () => {
-
-        if (
-          !newMessage.trim()
-        ) return;
+          );
 
 
-        setIsSending(true);
-
-        setError("");
-
-
-        // USER MESSAGE
-        const userMessage:
+        // ==================================
+        // RESPONSE
+        // ==================================
+        const aiMessage:
           ChatMessage = {
 
-          role: "user",
+          role:
+            "assistant",
 
           content:
-            newMessage.trim(),
+
+            response.data
+              ?.reply ||
+
+            "No response from AI.",
 
           createdAt:
             new Date().toISOString(),
@@ -179,353 +279,371 @@ const AIChatPage =
         };
 
 
-        // ADD TO UI
+        // ==================================
+        // UPDATE CHAT
+        // ==================================
         setMessages(
           (prev) => [
 
             ...prev,
 
-            userMessage,
+            aiMessage,
 
           ]
         );
 
+      }
 
-        // CLEAR INPUT
-        setNewMessage("");
+      catch (error: any) {
 
+        console.log(
+          "AI CHAT ERROR:",
+          error
+        );
 
-        try {
+        setError(
 
-          // API CALL
-          const response =
-            await axios.post(
+          error?.response?.data
+            ?.message ||
 
-              "http://localhost:5000/ai/ask",
+          "Failed to connect with AI assistant."
 
-              {
+        );
 
-                message:
-                  userMessage.content,
+      }
 
-              },
+      finally {
 
-              {
+        setIsSending(false);
 
-                headers: {
+      }
 
-                  Authorization:
-                    `Bearer ${userInfo.token}`,
+    };
 
-                  "Content-Type":
-                    "application/json",
 
-                },
+  // ========================================
+  // ENTER KEY
+  // ========================================
+  const handleKeyDown =
+    (
+      event:
+        React.KeyboardEvent<HTMLInputElement>
+    ) => {
 
-              }
+      if (
 
-            );
+        event.key === "Enter" &&
 
+        !event.shiftKey
 
-          // AI RESPONSE
-          const aiMessage:
-            ChatMessage = {
+      ) {
 
-            role:
-              "assistant",
+        event.preventDefault();
 
-            content:
+        sendMessage();
 
-              response.data
-                ?.reply ||
+      }
 
-              "No response received.",
+    };
 
-            createdAt:
-              new Date().toISOString(),
 
-          };
+  // ========================================
+  // CLEAR CHAT
+  // ========================================
+  const clearChat =
+    () => {
 
+      setMessages([]);
 
-          // UPDATE UI
-          setMessages(
-            (prev) => [
+      localStorage.removeItem(
+        "ai_chat_history"
+      );
 
-              ...prev,
+    };
 
-              aiMessage,
 
-            ]
-          );
+  // ========================================
+  // COPY MESSAGE
+  // ========================================
+  const copyMessage =
+    async (
+      text: string,
+      index: number
+    ) => {
 
-        }
+      try {
 
-        catch (err) {
+        await navigator.clipboard.writeText(
+          text
+        );
 
-          console.error(err);
+        setCopiedIndex(index);
 
-          setError(
+        setTimeout(() => {
 
-            "Unable to get response from AI assistant."
+          setCopiedIndex(null);
 
-          );
+        }, 2000);
 
-        }
+      }
 
-        finally {
+      catch (error) {
 
-          setIsSending(false);
+        console.log(error);
 
-        }
+      }
 
-      };
+    };
 
 
-    // ======================================
-    // ENTER KEY
-    // ======================================
-    const handleKeyDown =
-      (
-        event:
-          React.KeyboardEvent<HTMLInputElement>
-      ) => {
+  // ========================================
+  // QUICK PROMPTS
+  // ========================================
+  const suggestions = [
 
-        if (
+    "How do I improve my resume?",
 
-          event.key === "Enter" &&
+    "Give me DSA interview roadmap",
 
-          !event.shiftKey
+    "Suggest MERN stack project ideas",
 
-        ) {
+    "How can I crack placements?",
 
-          event.preventDefault();
+    "Teach me system design basics",
 
-          sendMessage();
+    "Generate LinkedIn summary",
 
-        }
+  ];
 
-      };
 
+  // ========================================
+  // UI
+  // ========================================
+  return (
 
-    // ======================================
-    // CLEAR CHAT
-    // ======================================
-    const clearChat =
-      () => {
+    <div className="min-h-screen bg-background">
 
-        setMessages([]);
+      <Header />
 
-      };
+      <main className="container mx-auto px-4 py-6">
 
+        {/* ================================= */}
+        {/* HEADER */}
+        {/* ================================= */}
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
 
-    // ======================================
-    // SUGGESTIONS
-    // ======================================
-    const suggestions = [
+          <div>
 
-      "How do I improve my resume?",
+            <div className="flex items-center gap-3 mb-3">
 
-      "Give me interview preparation tips",
+              <div className="h-14 w-14 rounded-full bg-gradient-to-r from-violet-600 to-indigo-600 flex items-center justify-center shadow-lg">
 
-      "Suggest final year project ideas",
+                <Bot className="h-7 w-7 text-white" />
 
-      "How can I prepare for placements?",
+              </div>
 
-    ];
+              <div>
 
+                <h1 className="text-3xl font-bold">
 
-    // ======================================
-    // UI
-    // ======================================
-    return (
+                  AI Career Assistant
 
-      <div className="min-h-screen bg-background">
+                </h1>
 
-        <Header />
+                <p className="text-muted-foreground">
 
-        <main className="container mx-auto px-4 py-6">
+                  Smart career guidance powered by AI
 
-          {/* HEADER */}
-          <div className="mb-6 flex items-center justify-between">
-
-            <div>
-
-              <div className="flex items-center gap-3 mb-2">
-
-                <div className="h-12 w-12 rounded-full bg-gradient-primary flex items-center justify-center">
-
-                  <Bot className="h-6 w-6 text-white" />
-
-                </div>
-
-
-                <div>
-
-                  <h1 className="text-3xl font-bold text-foreground">
-
-                    AI Career Assistant
-
-                  </h1>
-
-                  <p className="text-muted-foreground">
-
-                    Ask career questions, placement tips, resume guidance, and more.
-
-                  </p>
-
-                </div>
+                </p>
 
               </div>
 
             </div>
 
+            <div className="flex flex-wrap gap-2">
 
-            {/* CLEAR BUTTON */}
-            {messages.length > 0 && (
+              <Badge variant="secondary">
 
-              <Button
+                Resume Help
 
-                variant="outline"
+              </Badge>
 
-                onClick={clearChat}
+              <Badge variant="secondary">
 
-              >
+                Interview Prep
 
-                <Trash2 className="h-4 w-4 mr-2" />
+              </Badge>
 
-                Clear Chat
+              <Badge variant="secondary">
 
-              </Button>
+                Career Guidance
 
-            )}
+              </Badge>
+
+              <Badge variant="secondary">
+
+                Coding Support
+
+              </Badge>
+
+            </div>
 
           </div>
 
 
-          {/* ERROR */}
-          {error && (
+          {messages.length > 0 && (
 
-            <div className="mb-4 rounded-xl bg-red-100 px-4 py-3 text-sm text-red-700">
+            <Button
 
-              {error}
+              variant="outline"
 
-            </div>
+              onClick={clearChat}
+
+            >
+
+              <Trash2 className="h-4 w-4 mr-2" />
+
+              Clear Chat
+
+            </Button>
 
           )}
 
-
-          {/* MAIN CARD */}
-          <Card className="shadow-2xl rounded-3xl border-0 overflow-hidden">
-
-            <CardContent className="flex flex-col h-[78vh] p-0">
-
-              {/* CHAT AREA */}
-              <div className="flex-1 overflow-y-auto p-5 bg-muted/20">
-
-                {messages.length === 0 ? (
-
-                  <div className="h-full flex flex-col items-center justify-center text-center">
-
-                    <div className="h-20 w-20 rounded-full bg-primary/10 flex items-center justify-center mb-5">
-
-                      <Sparkles className="h-10 w-10 text-primary" />
-
-                    </div>
+        </div>
 
 
-                    <h2 className="text-2xl font-bold mb-2">
+        {/* ================================= */}
+        {/* ERROR */}
+        {/* ================================= */}
+        {error && (
 
-                      Start Your AI Conversation
+          <div className="mb-4 bg-red-100 text-red-700 px-4 py-3 rounded-xl">
 
-                    </h2>
+            {error}
 
+          </div>
 
-                    <p className="text-muted-foreground max-w-xl mb-8">
-
-                      Ask about placements, interview preparation, coding, resume building, career growth, or project ideas.
-
-                    </p>
+        )}
 
 
-                    {/* SUGGESTIONS */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 w-full max-w-3xl">
+        {/* ================================= */}
+        {/* CHAT CARD */}
+        {/* ================================= */}
+        <Card className="border-0 shadow-2xl rounded-3xl overflow-hidden">
 
-                      {suggestions.map(
-                        (
-                          suggestion,
-                          index
-                        ) => (
+          <CardContent className="p-0 flex flex-col h-[80vh]">
 
-                          <button
+            {/* ============================= */}
+            {/* CHAT AREA */}
+            {/* ============================= */}
+            <div className="flex-1 overflow-y-auto bg-muted/20 p-6">
 
-                            key={index}
+              {messages.length === 0 ? (
 
-                            onClick={() =>
-                              setNewMessage(
-                                suggestion
-                              )
-                            }
+                <div className="h-full flex flex-col items-center justify-center text-center">
 
-                            className="p-4 rounded-2xl border bg-background hover:bg-primary/5 transition text-left"
+                  <div className="h-24 w-24 rounded-full bg-primary/10 flex items-center justify-center mb-6">
 
-                          >
-
-                            <p className="text-sm font-medium">
-
-                              {suggestion}
-
-                            </p>
-
-                          </button>
-
-                        )
-                      )}
-
-                    </div>
+                    <Sparkles className="h-12 w-12 text-primary" />
 
                   </div>
 
-                ) : (
+                  <h2 className="text-3xl font-bold mb-3">
 
-                  <div className="space-y-5">
+                    Welcome {userInfo?.name || "Student"} 👋
 
-                    {messages.map(
+                  </h2>
+
+                  <p className="text-muted-foreground max-w-2xl mb-10 leading-7">
+
+                    Ask anything related to placements,
+                    resumes, coding interviews, projects,
+                    internships, career guidance,
+                    system design, or higher studies.
+
+                  </p>
+
+                  {/* QUICK PROMPTS */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-4xl">
+
+                    {suggestions.map(
                       (
-                        msg,
+                        suggestion,
                         index
                       ) => (
 
-                        <div
+                        <button
 
                           key={index}
 
-                          className={`flex ${
-                            msg.role ===
-                            "user"
+                          onClick={() =>
+                            setNewMessage(
+                              suggestion
+                            )
+                          }
 
-                              ? "justify-end"
-
-                              : "justify-start"
-                          }`}
+                          className="p-5 rounded-2xl bg-background border hover:border-primary hover:bg-primary/5 transition-all text-left"
 
                         >
 
-                          <div
-                            className={`max-w-3xl rounded-3xl px-5 py-4 shadow-sm ${
-                              msg.role ===
-                              "user"
+                          <p className="font-medium">
 
-                                ? "bg-primary text-white rounded-br-none"
+                            {suggestion}
 
-                                : "bg-background border rounded-bl-none"
-                            }`}
-                          >
+                          </p>
 
-                            {/* TOP */}
-                            <div className="flex items-center gap-2 mb-2">
+                        </button>
+
+                      )
+                    )}
+
+                  </div>
+
+                </div>
+
+              ) : (
+
+                <div className="space-y-6">
+
+                  {messages.map(
+                    (
+                      msg,
+                      index
+                    ) => (
+
+                      <div
+
+                        key={index}
+
+                        className={`flex ${
+                          msg.role ===
+                          "user"
+
+                            ? "justify-end"
+
+                            : "justify-start"
+                        }`}
+
+                      >
+
+                        <div
+                          className={`max-w-3xl rounded-3xl px-5 py-4 shadow-sm ${
+                            msg.role ===
+                            "user"
+
+                              ? "bg-primary text-white rounded-br-none"
+
+                              : "bg-background border rounded-bl-none"
+                          }`}
+                        >
+
+                          {/* TOP */}
+                          <div className="flex items-center justify-between mb-3">
+
+                            <div className="flex items-center gap-2">
 
                               <div
-                                className={`h-8 w-8 rounded-full flex items-center justify-center ${
+                                className={`h-9 w-9 rounded-full flex items-center justify-center ${
                                   msg.role ===
                                   "user"
 
@@ -548,10 +666,9 @@ const AIChatPage =
 
                               </div>
 
-
                               <div>
 
-                                <p className="text-sm font-semibold">
+                                <p className="font-semibold text-sm">
 
                                   {msg.role ===
                                   "user"
@@ -561,7 +678,6 @@ const AIChatPage =
                                     : "AI Assistant"}
 
                                 </p>
-
 
                                 <div className="flex items-center gap-1 text-xs opacity-70">
 
@@ -589,130 +705,168 @@ const AIChatPage =
                             </div>
 
 
-                            {/* MESSAGE */}
-                            <p className="whitespace-pre-wrap break-words leading-7 text-sm">
+                            {/* COPY */}
+                            {msg.role ===
+                              "assistant" && (
 
-                              {msg.content}
+                              <button
 
-                            </p>
+                                onClick={() =>
+                                  copyMessage(
+                                    msg.content,
+                                    index
+                                  )
+                                }
+
+                                className="opacity-70 hover:opacity-100 transition"
+
+                              >
+
+                                {copiedIndex ===
+                                index ? (
+
+                                  <CheckCircle2 className="h-4 w-4 text-green-500" />
+
+                                ) : (
+
+                                  <Copy className="h-4 w-4" />
+
+                                )}
+
+                              </button>
+
+                            )}
+
+                          </div>
+
+
+                          {/* MESSAGE */}
+                          <div className="whitespace-pre-wrap break-words leading-7 text-sm">
+
+                            {msg.content}
 
                           </div>
 
                         </div>
 
-                      )
-                    )}
+                      </div>
 
-                  </div>
-
-                )}
-
-
-                {/* LOADING */}
-                {isSending && (
-
-                  <div className="flex justify-start mt-4">
-
-                    <div className="bg-background border rounded-3xl rounded-bl-none px-5 py-4 shadow-sm flex items-center gap-3">
-
-                      <Loader2 className="h-5 w-5 animate-spin text-primary" />
-
-                      <span className="text-sm text-muted-foreground">
-
-                        AI is thinking...
-
-                      </span>
-
-                    </div>
-
-                  </div>
-
-                )}
-
-
-                {/* BOTTOM */}
-                <div ref={bottomRef} />
-
-              </div>
-
-
-              {/* INPUT AREA */}
-              <div className="border-t bg-background p-4">
-
-                <div className="flex gap-3 items-center">
-
-                  <Input
-
-                    ref={inputRef}
-
-                    value={newMessage}
-
-                    onChange={(e) =>
-                      setNewMessage(
-                        e.target.value
-                      )
-                    }
-
-                    onKeyDown={
-                      handleKeyDown
-                    }
-
-                    placeholder="Ask something about placements, coding, interviews..."
-
-                    className="h-12 rounded-xl"
-
-                  />
-
-
-                  <Button
-
-                    onClick={
-                      sendMessage
-                    }
-
-                    disabled={
-                      isSending ||
-
-                      !newMessage.trim()
-                    }
-
-                    className="h-12 px-6 rounded-xl"
-
-                  >
-
-                    {isSending ? (
-
-                      <Loader2 className="h-4 w-4 animate-spin" />
-
-                    ) : (
-
-                      <>
-
-                        <Send className="h-4 w-4 mr-2" />
-
-                        Send
-
-                      </>
-
-                    )}
-
-                  </Button>
+                    )
+                  )}
 
                 </div>
 
+              )}
+
+
+              {/* ============================= */}
+              {/* LOADING */}
+              {/* ============================= */}
+              {isSending && (
+
+                <div className="flex justify-start mt-5">
+
+                  <div className="bg-background border rounded-3xl rounded-bl-none px-5 py-4 shadow-sm flex items-center gap-3">
+
+                    <Loader2 className="h-5 w-5 animate-spin text-primary" />
+
+                    <span className="text-sm text-muted-foreground">
+
+                      AI is generating response...
+
+                    </span>
+
+                  </div>
+
+                </div>
+
+              )}
+
+              <div ref={bottomRef} />
+
+            </div>
+
+
+            {/* ============================= */}
+            {/* INPUT */}
+            {/* ============================= */}
+            <div className="border-t bg-background p-4">
+
+              <div className="flex gap-3">
+
+                <Input
+
+                  ref={inputRef}
+
+                  value={newMessage}
+
+                  onChange={(e) =>
+                    setNewMessage(
+                      e.target.value
+                    )
+                  }
+
+                  onKeyDown={
+                    handleKeyDown
+                  }
+
+                  placeholder="Ask anything about careers, coding, placements..."
+
+                  className="h-12 rounded-xl"
+
+                />
+
+                <Button
+
+                  onClick={
+                    sendMessage
+                  }
+
+                  disabled={
+
+                    isSending ||
+
+                    !newMessage.trim()
+
+                  }
+
+                  className="h-12 px-6 rounded-xl"
+
+                >
+
+                  {isSending ? (
+
+                    <Loader2 className="h-4 w-4 animate-spin" />
+
+                  ) : (
+
+                    <>
+
+                      <Send className="h-4 w-4 mr-2" />
+
+                      Send
+
+                    </>
+
+                  )}
+
+                </Button>
+
               </div>
 
-            </CardContent>
+            </div>
 
-          </Card>
+          </CardContent>
 
-        </main>
+        </Card>
 
-      </div>
+      </main>
 
-    );
+    </div>
 
-  };
+  );
+
+};
 
 
 export default AIChatPage;

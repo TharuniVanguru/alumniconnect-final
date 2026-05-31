@@ -4,7 +4,8 @@
 export type UserRole =
   | "admin"
   | "alumni"
-  | "student";
+  | "student"
+  | "faculty";
 
 
 // ==========================================
@@ -14,7 +15,9 @@ export type RequestStatus =
   | "Pending"
   | "Accepted"
   | "Rejected"
-  | "Completed";
+  | "Scheduled"
+  | "Completed"
+  | "Cancelled";
 
 export type MessageStatus =
   | "sent"
@@ -68,6 +71,8 @@ export interface User {
 
   company?: string;
 
+  companyName?: string;
+
   jobRole?: string;
 
   bio?: string;
@@ -88,7 +93,23 @@ export interface User {
 
   mentorshipAvailable?: boolean;
 
+  mentorshipCount?: number;
+
+  averageRating?: number;
+
   aiScore?: number;
+
+  experience?: string;
+
+  profileCompleted?: boolean;
+
+  resumePath?: string;
+
+  resumeFileName?: string;
+
+  resumeSummary?: string;
+
+  lastResumeUpload?: string;
 
   createdAt?: string;
 
@@ -113,6 +134,22 @@ export interface Project {
   githubUrl?: string;
 
   projectUrl?: string;
+
+}
+
+
+// ==========================================
+// CERTIFICATE
+// ==========================================
+export interface Certificate {
+
+  _id?: string;
+
+  title: string;
+
+  issuer: string;
+
+  certificateUrl?: string;
 
 }
 
@@ -144,6 +181,8 @@ export interface Profile {
 
   batch?: string;
 
+  cgpa?: string;
+
   domain?: string;
 
   skills?: string[];
@@ -158,9 +197,15 @@ export interface Profile {
 
   bio?: string;
 
+  resumeUrl?: string;
+
   projects?: Project[];
 
+  certificates?: Certificate[];
+
   company?: string;
+
+  companyName?: string;
 
   jobRole?: string;
 
@@ -168,15 +213,37 @@ export interface Profile {
 
   mentorshipAvailable?: boolean;
 
+  mentorshipCount?: number;
+
+  canPostJobs?: boolean;
+
   profileCompleted?: boolean;
 
-  profileStrength?: string;
+  profileCompletion?: number;
+
+  profileStrength?:
+    | "Beginner"
+    | "Intermediate"
+    | "Strong"
+    | "Excellent";
 
   trustScore?: number;
 
+  averageRating?: number;
+
+  totalRatings?: number;
+
   isVerified?: boolean;
 
+  isOnline?: boolean;
+
+  lastActive?: string;
+
   lastProfileUpdate?: string;
+
+  createdAt?: string;
+
+  updatedAt?: string;
 
 }
 
@@ -215,6 +282,8 @@ export interface Job {
   isActive?: boolean;
 
   createdAt?: string;
+
+  updatedAt?: string;
 
 }
 
@@ -292,6 +361,8 @@ export interface Event {
 
   createdAt?: string;
 
+  updatedAt?: string;
+
 }
 
 
@@ -302,9 +373,9 @@ export interface Message {
 
   _id?: string;
 
-  sender?: string;
+  sender?: User | string;
 
-  receiver?: string;
+  receiver?: User | string;
 
   senderId?: string;
 
@@ -331,7 +402,11 @@ export interface Message {
 
   delivered?: boolean;
 
+  seenAt?: string;
+
   createdAt?: string;
+
+  updatedAt?: string;
 
 }
 
@@ -363,9 +438,13 @@ export interface MentorshipRequest {
 
   _id?: string;
 
-  studentId: string;
+  studentId?: string;
 
-  alumniId: string;
+  student?: string;
+
+  alumniId?: string;
+
+  alumni?: string;
 
   alumniName?: string;
 
@@ -375,9 +454,29 @@ export interface MentorshipRequest {
 
   message?: string;
 
+  mentorshipType?: string;
+
   status?: RequestStatus;
 
+  meetingLink?: string;
+
+  scheduledDate?: string;
+
+  duration?: number;
+
+  mentorNotes?: string;
+
+  studentNotes?: string;
+
+  feedback?: string;
+
+  rating?: number;
+
+  cancellationReason?: string;
+
   createdAt?: string;
+
+  updatedAt?: string;
 
 }
 
@@ -395,6 +494,8 @@ export interface GuidanceRequest {
 
   alumniName?: string;
 
+  studentName?: string;
+
   domain: string;
 
   topic: string;
@@ -406,6 +507,8 @@ export interface GuidanceRequest {
     | "Medium"
     | "High";
 
+  category?: string;
+
   status?: RequestStatus;
 
   meetingLink?: string;
@@ -414,9 +517,17 @@ export interface GuidanceRequest {
 
   feedback?: string;
 
+  mentorNotes?: string;
+
+  sessionNotes?: string;
+
   rating?: number;
 
+  completedAt?: string;
+
   createdAt?: string;
+
+  updatedAt?: string;
 
 }
 
@@ -450,7 +561,11 @@ export interface Notification {
 
   isRead?: boolean;
 
+  relatedId?: string;
+
   createdAt?: string;
+
+  updatedAt?: string;
 
 }
 
@@ -474,12 +589,40 @@ export interface AIChatMessage {
 // ==========================================
 export interface Recommendation {
 
-  user: User;
+  _id?: string;
 
-  aiScore: number;
+  name?: string;
+
+  email?: string;
+
+  domain?: string;
+
+  company?: string;
+
+  jobRole?: string;
+
+  bio?: string;
+
+  linkedinUrl?: string;
+
+  githubUrl?: string;
+
+  profileStrength?: string;
+
+  trustScore?: number;
+
+  mentorshipAvailable?: boolean;
 
   matchedSkills?: string[];
 
-  matchedDomain?: boolean;
+  aiScore: number;
+
+  mentorLevel?: string;
+
+  profileCompletion?: number;
+
+  reasons?: string[];
+
+  smartTags?: string[];
 
 }

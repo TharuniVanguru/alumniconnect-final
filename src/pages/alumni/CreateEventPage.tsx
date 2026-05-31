@@ -2,8 +2,7 @@ import {
   useState,
 } from "react";
 
-import axios from "axios";
-
+import api, { apiGet, apiPost, apiPut, apiPatch, apiDelete } from "@/utils/api";
 import { Header }
   from "@/components/layout/Header";
 
@@ -37,6 +36,18 @@ import {
 } from "@/components/ui/select";
 
 import {
+  Badge,
+} from "@/components/ui/badge";
+
+import {
+  useToast,
+} from "@/hooks/use-toast";
+
+import {
+  useNavigate,
+} from "react-router-dom";
+
+import {
 
   CalendarDays,
   Clock,
@@ -44,15 +55,14 @@ import {
   Loader2,
   Video,
   ImagePlus,
+  Sparkles,
+  Users,
+  Globe,
+  Rocket,
+  Calendar,
+  CheckCircle2,
 
 } from "lucide-react";
-
-import { useToast }
-  from "@/hooks/use-toast";
-
-import {
-  useNavigate,
-} from "react-router-dom";
 
 
 // ==========================================
@@ -308,9 +318,9 @@ React.FC = () => {
         }
 
 
-        await axios.post(
+        await api.post(
 
-          "http://localhost:5000/events",
+          "/events",
 
           formData,
 
@@ -334,17 +344,15 @@ React.FC = () => {
         toast({
 
           title:
-            "Event Created",
+            "Event Created 🎉",
 
           description:
-            "Your event has been created successfully",
+            "Your event has been published successfully",
 
         });
 
 
-        // ====================================
-        // RESET FORM
-        // ====================================
+        // RESET
         setTitle("");
 
         setDescription("");
@@ -368,9 +376,7 @@ React.FC = () => {
         );
 
 
-        // ====================================
         // REDIRECT
-        // ====================================
         navigate(
           "/alumni/dashboard"
         );
@@ -410,6 +416,21 @@ React.FC = () => {
 
 
   // ========================================
+  // EVENT TYPES
+  // ========================================
+  const eventTypes = [
+
+    "Workshop",
+    "Webinar",
+    "Hackathon",
+    "Networking",
+    "Seminar",
+    "Bootcamp",
+
+  ];
+
+
+  // ========================================
   // UI
   // ========================================
   return (
@@ -418,38 +439,142 @@ React.FC = () => {
 
       <Header />
 
-      <main className="container mx-auto px-4 py-6">
+      <main className="max-w-6xl mx-auto px-4 py-8">
 
-        {/* ================================= */}
-        {/* PAGE HEADER */}
-        {/* ================================= */}
 
-        <div className="mb-8">
+        {/* HERO */}
 
-          <h1 className="text-3xl font-bold text-foreground mb-2">
+        <div className="mb-10">
 
-            Create Event
+          <div className="rounded-3xl overflow-hidden bg-gradient-to-r from-primary via-purple-600 to-indigo-700 text-white shadow-2xl">
 
-          </h1>
+            <div className="p-8 md:p-10">
 
-          <p className="text-muted-foreground">
+              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8">
 
-            Organize workshops, webinars, hackathons and alumni events
+                <div>
 
-          </p>
+                  <div className="flex items-center gap-4 mb-5">
+
+                    <div className="h-20 w-20 rounded-3xl bg-white/20 flex items-center justify-center">
+
+                      <Rocket className="h-10 w-10" />
+
+                    </div>
+
+
+                    <div>
+
+                      <h1 className="text-4xl md:text-5xl font-bold">
+
+                        Create Event
+
+                      </h1>
+
+                      <p className="text-white/90 mt-2 text-lg">
+
+                        Organize impactful alumni events and inspire students
+
+                      </p>
+
+                    </div>
+
+                  </div>
+
+
+                  <div className="flex flex-wrap gap-3">
+
+                    <Badge className="bg-white/20 border-0 text-white">
+
+                      <Users className="h-3 w-3 mr-1" />
+
+                      Alumni Network
+
+                    </Badge>
+
+                    <Badge className="bg-white/20 border-0 text-white">
+
+                      <Globe className="h-3 w-3 mr-1" />
+
+                      Global Reach
+
+                    </Badge>
+
+                    <Badge className="bg-white/20 border-0 text-white">
+
+                      <Sparkles className="h-3 w-3 mr-1" />
+
+                      Premium Experience
+
+                    </Badge>
+
+                  </div>
+
+                </div>
+
+
+                <div className="bg-white/10 backdrop-blur-md rounded-3xl p-6 w-full lg:w-[320px]">
+
+                  <h3 className="font-bold text-xl mb-4">
+
+                    Event Tips
+
+                  </h3>
+
+                  <div className="space-y-3 text-sm text-white/90">
+
+                    <div className="flex items-start gap-2">
+
+                      <CheckCircle2 className="h-4 w-4 mt-0.5" />
+
+                      Add clear event title
+
+                    </div>
+
+                    <div className="flex items-start gap-2">
+
+                      <CheckCircle2 className="h-4 w-4 mt-0.5" />
+
+                      Mention agenda & benefits
+
+                    </div>
+
+                    <div className="flex items-start gap-2">
+
+                      <CheckCircle2 className="h-4 w-4 mt-0.5" />
+
+                      Share valid meeting links
+
+                    </div>
+
+                    <div className="flex items-start gap-2">
+
+                      <CheckCircle2 className="h-4 w-4 mt-0.5" />
+
+                      Upload attractive banner
+
+                    </div>
+
+                  </div>
+
+                </div>
+
+              </div>
+
+            </div>
+
+          </div>
 
         </div>
 
 
-        {/* ================================= */}
-        {/* FORM CARD */}
-        {/* ================================= */}
+        {/* FORM */}
 
-        <Card className="max-w-3xl mx-auto shadow-soft">
+        <Card className="rounded-3xl shadow-2xl border-0">
 
           <CardHeader>
 
-            <CardTitle>
+            <CardTitle className="text-3xl">
 
               Event Details
 
@@ -457,7 +582,7 @@ React.FC = () => {
 
             <CardDescription>
 
-              Fill in the details to publish your event
+              Fill all required details to publish your event
 
             </CardDescription>
 
@@ -466,13 +591,14 @@ React.FC = () => {
 
           <CardContent>
 
-            <div className="grid gap-5">
+            <div className="grid gap-6">
+
 
               {/* TITLE */}
 
               <div>
 
-                <label className="text-sm font-medium mb-2 block">
+                <label className="text-sm font-semibold mb-3 block">
 
                   Event Title *
 
@@ -480,7 +606,7 @@ React.FC = () => {
 
                 <Input
 
-                  placeholder="Enter event title"
+                  placeholder="Ex: AI Workshop 2026"
 
                   value={title}
 
@@ -492,6 +618,8 @@ React.FC = () => {
 
                   }
 
+                  className="h-14 rounded-2xl"
+
                 />
 
               </div>
@@ -501,7 +629,7 @@ React.FC = () => {
 
               <div>
 
-                <label className="text-sm font-medium mb-2 block">
+                <label className="text-sm font-semibold mb-3 block">
 
                   Event Type
 
@@ -514,7 +642,7 @@ React.FC = () => {
                   }
                 >
 
-                  <SelectTrigger>
+                  <SelectTrigger className="h-14 rounded-2xl">
 
                     <SelectValue />
 
@@ -522,35 +650,20 @@ React.FC = () => {
 
                   <SelectContent>
 
-                    <SelectItem value="Workshop">
+                    {eventTypes.map(
+                      (type) => (
 
-                      Workshop
+                        <SelectItem
+                          key={type}
+                          value={type}
+                        >
 
-                    </SelectItem>
+                          {type}
 
-                    <SelectItem value="Webinar">
+                        </SelectItem>
 
-                      Webinar
-
-                    </SelectItem>
-
-                    <SelectItem value="Hackathon">
-
-                      Hackathon
-
-                    </SelectItem>
-
-                    <SelectItem value="Networking">
-
-                      Networking
-
-                    </SelectItem>
-
-                    <SelectItem value="Seminar">
-
-                      Seminar
-
-                    </SelectItem>
+                      )
+                    )}
 
                   </SelectContent>
 
@@ -559,17 +672,17 @@ React.FC = () => {
               </div>
 
 
-              {/* DATE & TIME */}
+              {/* DATE + TIME */}
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
                 <div>
 
-                  <label className="text-sm font-medium mb-2 flex items-center gap-2">
+                  <label className="text-sm font-semibold mb-3 flex items-center gap-2">
 
                     <CalendarDays className="h-4 w-4" />
 
-                    Date *
+                    Event Date *
 
                   </label>
 
@@ -587,6 +700,8 @@ React.FC = () => {
 
                     }
 
+                    className="h-14 rounded-2xl"
+
                   />
 
                 </div>
@@ -594,11 +709,11 @@ React.FC = () => {
 
                 <div>
 
-                  <label className="text-sm font-medium mb-2 flex items-center gap-2">
+                  <label className="text-sm font-semibold mb-3 flex items-center gap-2">
 
                     <Clock className="h-4 w-4" />
 
-                    Time *
+                    Event Time *
 
                   </label>
 
@@ -616,6 +731,8 @@ React.FC = () => {
 
                     }
 
+                    className="h-14 rounded-2xl"
+
                   />
 
                 </div>
@@ -627,7 +744,7 @@ React.FC = () => {
 
               <div>
 
-                <label className="text-sm font-medium mb-2 block">
+                <label className="text-sm font-semibold mb-3 block">
 
                   Event Mode
 
@@ -640,7 +757,7 @@ React.FC = () => {
                   }
                 >
 
-                  <SelectTrigger>
+                  <SelectTrigger className="h-14 rounded-2xl">
 
                     <SelectValue />
 
@@ -683,17 +800,17 @@ React.FC = () => {
 
                 <div>
 
-                  <label className="text-sm font-medium mb-2 flex items-center gap-2">
+                  <label className="text-sm font-semibold mb-3 flex items-center gap-2">
 
                     <MapPin className="h-4 w-4" />
 
-                    Location *
+                    Event Location *
 
                   </label>
 
                   <Input
 
-                    placeholder="Enter event location"
+                    placeholder="Ex: Hyderabad Campus Auditorium"
 
                     value={location}
 
@@ -704,6 +821,8 @@ React.FC = () => {
                       )
 
                     }
+
+                    className="h-14 rounded-2xl"
 
                   />
 
@@ -722,7 +841,7 @@ React.FC = () => {
 
                 <div>
 
-                  <label className="text-sm font-medium mb-2 flex items-center gap-2">
+                  <label className="text-sm font-semibold mb-3 flex items-center gap-2">
 
                     <Video className="h-4 w-4" />
 
@@ -744,6 +863,8 @@ React.FC = () => {
 
                     }
 
+                    className="h-14 rounded-2xl"
+
                   />
 
                 </div>
@@ -755,7 +876,7 @@ React.FC = () => {
 
               <div>
 
-                <label className="text-sm font-medium mb-2 block">
+                <label className="text-sm font-semibold mb-3 block">
 
                   Event Description *
 
@@ -763,9 +884,9 @@ React.FC = () => {
 
                 <Textarea
 
-                  placeholder="Describe your event..."
+                  placeholder="Explain event agenda, speakers, benefits, learning outcomes..."
 
-                  rows={6}
+                  rows={8}
 
                   value={description}
 
@@ -777,16 +898,18 @@ React.FC = () => {
 
                   }
 
+                  className="rounded-2xl resize-none"
+
                 />
 
               </div>
 
 
-              {/* BANNER IMAGE */}
+              {/* BANNER */}
 
               <div>
 
-                <label className="text-sm font-medium mb-2 flex items-center gap-2">
+                <label className="text-sm font-semibold mb-3 flex items-center gap-2">
 
                   <ImagePlus className="h-4 w-4" />
 
@@ -799,6 +922,8 @@ React.FC = () => {
                   type="file"
 
                   accept="image/*"
+
+                  className="rounded-2xl h-14"
 
                   onChange={(e) => {
 
@@ -817,12 +942,93 @@ React.FC = () => {
 
                 />
 
+
+                {bannerImage && (
+
+                  <p className="text-sm text-muted-foreground mt-3">
+
+                    Selected:
+                    {" "}
+                    {bannerImage.name}
+
+                  </p>
+
+                )}
+
+              </div>
+
+
+              {/* SUMMARY */}
+
+              <div className="rounded-3xl bg-muted/40 p-6 border">
+
+                <div className="flex items-center gap-3 mb-4">
+
+                  <Calendar className="h-5 w-5 text-primary" />
+
+                  <h3 className="font-bold text-lg">
+
+                    Event Preview
+
+                  </h3>
+
+                </div>
+
+
+                <div className="space-y-2 text-sm">
+
+                  <p>
+
+                    <span className="font-semibold">
+
+                      Title:
+                    </span>
+                    {" "}
+                    {title || "Not added"}
+
+                  </p>
+
+                  <p>
+
+                    <span className="font-semibold">
+
+                      Type:
+                    </span>
+                    {" "}
+                    {eventType}
+
+                  </p>
+
+                  <p>
+
+                    <span className="font-semibold">
+
+                      Mode:
+                    </span>
+                    {" "}
+                    {mode}
+
+                  </p>
+
+                  <p>
+
+                    <span className="font-semibold">
+
+                      Date:
+                    </span>
+                    {" "}
+                    {date || "Not selected"}
+
+                  </p>
+
+                </div>
+
               </div>
 
 
               {/* BUTTON */}
 
-              <div className="flex justify-end pt-4">
+              <div className="flex justify-end pt-2">
 
                 <Button
 
@@ -832,7 +1038,7 @@ React.FC = () => {
 
                   disabled={loading}
 
-                  className="min-w-[180px]"
+                  className="h-14 px-10 rounded-2xl text-lg font-semibold"
 
                 >
 
@@ -840,15 +1046,21 @@ React.FC = () => {
 
                     <>
 
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
 
-                      Creating...
+                      Creating Event...
 
                     </>
 
                   ) : (
 
-                    "Create Event"
+                    <>
+
+                      <Rocket className="mr-2 h-5 w-5" />
+
+                      Create Event
+
+                    </>
 
                   )}
 

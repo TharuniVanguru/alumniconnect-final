@@ -13,74 +13,41 @@ const calculateProfileCompletion =
 
     let completed = 0;
 
-    const totalFields = 12;
+    const totalFields = 10;
 
     if (profile.name) completed++;
+
     if (profile.branch) completed++;
+
+    if (profile.batch) completed++;
+
     if (profile.domain) completed++;
+
     if (profile.bio) completed++;
-    if (profile.skills?.length > 0) completed++;
-    if (profile.interests?.length > 0) completed++;
-    if (profile.linkedinUrl) completed++;
-    if (profile.githubUrl) completed++;
-    if (profile.portfolioUrl) completed++;
-    if (profile.company) completed++;
-    if (profile.jobRole) completed++;
-    if (profile.experience) completed++;
+
+    if (
+      profile.skills &&
+      profile.skills.length > 0
+    )
+      completed++;
+
+    if (profile.linkedinUrl)
+      completed++;
+
+    if (profile.githubUrl)
+      completed++;
+
+    if (profile.company)
+      completed++;
+
+    if (profile.profileImage)
+      completed++;
 
     return Math.floor(
 
-      (completed / totalFields) * 100
+      (completed / totalFields) *
+        100
 
-    );
-
-  };
-
-
-// ==========================================
-// TRUST SCORE CALCULATOR
-// ==========================================
-const calculateTrustScore =
-  (profile) => {
-
-    let score = 40;
-
-
-    // VERIFIED LINKS
-    if (profile.linkedinUrl)
-      score += 20;
-
-    if (profile.githubUrl)
-      score += 10;
-
-    if (profile.portfolioUrl)
-      score += 10;
-
-
-    // PROFILE DETAILS
-    if (profile.bio)
-      score += 10;
-
-    if (
-      profile.skills?.length > 0
-    )
-      score += 10;
-
-
-    // EXPERIENCE BONUS
-    if (
-
-      profile.company ||
-
-      profile.jobRole
-
-    )
-      score += 10;
-
-
-    return Math.min(
-      score,
-      100
     );
 
   };
@@ -90,29 +57,18 @@ const calculateTrustScore =
 // PROFILE STRENGTH
 // ==========================================
 const getProfileStrength =
-  (
-    completion,
-    trustScore
-  ) => {
+  (completion) => {
 
-    const total =
-
-      (
-        completion +
-        trustScore
-      ) / 2;
-
-
-    if (total >= 85)
+    if (completion >= 85)
       return "Excellent";
 
-    if (total >= 70)
+    if (completion >= 70)
       return "Strong";
 
-    if (total >= 50)
-      return "Good";
+    if (completion >= 50)
+      return "Intermediate";
 
-    return "Needs Improvement";
+    return "Beginner";
 
   };
 
@@ -146,55 +102,16 @@ const getMyProfile =
               req.user._id,
 
             name:
-              req.user.name,
+              req.user.name || "",
 
             email:
-              req.user.email,
+              req.user.email || "",
 
             role:
-              req.user.role,
+              req.user.role || "",
 
             identifier:
-              req.user.identifier,
-
-            branch:
-              req.user.branch || "",
-
-            batch:
-              req.user.batch || "",
-
-            domain:
-              req.user.domain || "",
-
-            bio:
-              req.user.bio || "",
-
-            skills:
-              req.user.skills || [],
-
-            interests:
-              req.user.interests || [],
-
-            linkedinUrl:
-              req.user.linkedinUrl || "",
-
-            githubUrl:
-              req.user.githubUrl || "",
-
-            portfolioUrl:
-              req.user.portfolioUrl || "",
-
-            company:
-              req.user.companyName || "",
-
-            experience:
-              req.user.experience || "",
-
-            profileCompleted:
-              false,
-
-            trustScore:
-              40,
+              req.user.identifier || "",
 
           });
 
@@ -210,59 +127,20 @@ const getMyProfile =
           profile
         );
 
-      const trustScore =
-
-        calculateTrustScore(
-          profile
-        );
-
       const profileStrength =
 
         getProfileStrength(
-
-          profileCompletion,
-
-          trustScore
-
+          profileCompletion
         );
 
 
       // ====================================
-      // QUARTERLY REMINDER
+      // UPDATE PROFILE STATUS
       // ====================================
-      let needsProfileUpdate =
-        false;
+      profile.profileCompleted =
+        profileCompletion >= 60;
 
-
-      if (
-        profile.lastProfileUpdate
-      ) {
-
-        const diffDays =
-          Math.floor(
-
-            (
-              new Date() -
-
-              new Date(
-                profile.lastProfileUpdate
-              )
-
-            ) /
-
-            (1000 * 60 * 60 * 24)
-
-          );
-
-
-        if (diffDays > 90) {
-
-          needsProfileUpdate =
-            true;
-
-        }
-
-      }
+      await profile.save();
 
 
       // ====================================
@@ -278,11 +156,7 @@ const getMyProfile =
 
           profileCompletion,
 
-          trustScore,
-
           profileStrength,
-
-          needsProfileUpdate,
 
         },
 
@@ -328,6 +202,9 @@ const updateProfile =
         });
 
 
+      // ====================================
+      // PROFILE NOT FOUND
+      // ====================================
       if (!profile) {
 
         return res.status(404).json({
@@ -343,14 +220,16 @@ const updateProfile =
 
 
       // ====================================
-      // UPDATE PROFILE FIELDS
+      // UPDATE FIELDS
       // ====================================
       const fields = [
 
         "name",
+        "phone",
         "branch",
         "year",
         "batch",
+        "cgpa",
         "domain",
         "skills",
         "interests",
@@ -361,6 +240,7 @@ const updateProfile =
         "company",
         "jobRole",
         "experience",
+        "profileImage",
 
       ];
 
@@ -410,25 +290,15 @@ const updateProfile =
           profile
         );
 
-      const trustScore =
-
-        calculateTrustScore(
-          profile
-        );
-
       const profileStrength =
 
         getProfileStrength(
-
-          profileCompletion,
-
-          trustScore
-
+          profileCompletion
         );
 
 
       // ====================================
-      // UPDATE ANALYTICS
+      // UPDATE STATUS
       // ====================================
       profile.lastProfileUpdate =
         new Date();
@@ -436,12 +306,6 @@ const updateProfile =
       profile.profileCompleted =
 
         profileCompletion >= 60;
-
-      profile.trustScore =
-        trustScore;
-
-      profile.profileStrength =
-        profileStrength;
 
 
       // ====================================
@@ -463,35 +327,8 @@ const updateProfile =
           name:
             updatedProfile.name,
 
-          branch:
-            updatedProfile.branch,
-
-          domain:
-            updatedProfile.domain,
-
-          bio:
-            updatedProfile.bio,
-
-          skills:
-            updatedProfile.skills,
-
-          interests:
-            updatedProfile.interests,
-
-          linkedinUrl:
-            updatedProfile.linkedinUrl,
-
-          githubUrl:
-            updatedProfile.githubUrl,
-
-          portfolioUrl:
-            updatedProfile.portfolioUrl,
-
-          experience:
-            updatedProfile.experience,
-
-          trustScore:
-            updatedProfile.trustScore,
+          profileImage:
+            updatedProfile.profileImage,
 
         }
 
@@ -514,8 +351,6 @@ const updateProfile =
         analytics: {
 
           profileCompletion,
-
-          trustScore,
 
           profileStrength,
 
@@ -567,13 +402,12 @@ const getAllAlumni =
           domain
           company
           jobRole
-          trustScore
-          profileStrength
           mentorshipAvailable
           skills
-          interests
+          profileImage
+          linkedinUrl
+          experience
           `
-
         );
 
 
@@ -639,29 +473,16 @@ const getProfileById =
       }
 
 
-      // ====================================
-      // ANALYTICS
-      // ====================================
       const profileCompletion =
 
         calculateProfileCompletion(
           profile
         );
 
-      const trustScore =
-
-        calculateTrustScore(
-          profile
-        );
-
       const profileStrength =
 
         getProfileStrength(
-
-          profileCompletion,
-
-          trustScore
-
+          profileCompletion
         );
 
 
@@ -674,8 +495,6 @@ const getProfileById =
         analytics: {
 
           profileCompletion,
-
-          trustScore,
 
           profileStrength,
 
@@ -737,12 +556,11 @@ const getChatUsers =
           role
           email
           domain
-          companyName
+          company
+          jobRole
           isOnline
-          trustScore
           profileImage
           `
-
         );
 
 

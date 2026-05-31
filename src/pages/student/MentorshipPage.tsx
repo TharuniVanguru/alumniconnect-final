@@ -4,7 +4,9 @@ import {
   useState,
 } from "react";
 
-import axios from "axios";
+import api, { apiGet, apiPost, apiPut, apiPatch, apiDelete } from "@/utils/api";
+import { motion }
+  from "framer-motion";
 
 import { Header }
   from "@/components/layout/Header";
@@ -36,6 +38,10 @@ import {
 } from "@/components/ui/badge";
 
 import {
+  Progress,
+} from "@/components/ui/progress";
+
+import {
   useToast,
 } from "@/hooks/use-toast";
 
@@ -47,10 +53,17 @@ import {
   Sparkles,
   Send,
   Search,
-  Star,
   ShieldCheck,
   Loader2,
   MessageCircle,
+  Star,
+  Users,
+  Award,
+  TrendingUp,
+  Clock3,
+  ArrowRight,
+  GraduationCap,
+  CheckCircle2,
 
 } from "lucide-react";
 
@@ -95,35 +108,85 @@ const MentorshipPage = () => {
   const navigate =
     useNavigate();
 
-  const [alumni, setAlumni] =
-    useState<Alumni[]>([]);
-
-  const [search, setSearch] =
-    useState("");
-
-  const [selectedDomain, setSelectedDomain] =
-    useState("All");
-
-  const [selectedMentor, setSelectedMentor] =
-    useState<Alumni | null>(null);
-
-  const [message, setMessage] =
-    useState("");
-
-  const [domain, setDomain] =
-    useState("");
-
-  const [loading, setLoading] =
-    useState(false);
-
-  const [sending, setSending] =
-    useState(false);
-
-  const [error, setError] =
-    useState("");
-
   const { toast } =
     useToast();
+
+
+  // =====================================
+  // STATES
+  // =====================================
+  const [
+
+    alumni,
+    setAlumni,
+
+  ] = useState<Alumni[]>([]);
+
+
+  const [
+
+    search,
+    setSearch,
+
+  ] = useState("");
+
+
+  const [
+
+    selectedDomain,
+    setSelectedDomain,
+
+  ] = useState("All");
+
+
+  const [
+
+    selectedMentor,
+    setSelectedMentor,
+
+  ] = useState<Alumni | null>(
+    null
+  );
+
+
+  const [
+
+    message,
+    setMessage,
+
+  ] = useState("");
+
+
+  const [
+
+    domain,
+    setDomain,
+
+  ] = useState("");
+
+
+  const [
+
+    loading,
+    setLoading,
+
+  ] = useState(false);
+
+
+  const [
+
+    sending,
+    setSending,
+
+  ] = useState(false);
+
+
+  const [
+
+    error,
+    setError,
+
+  ] = useState("");
 
 
   // =====================================
@@ -137,9 +200,10 @@ const MentorshipPage = () => {
         setLoading(true);
 
         const response =
-          await axios.get(
-            "http://localhost:5000/profile/alumni"
+          await api.get(
+            "/profile/alumni"
           );
+
 
         // SORT BY TRUST SCORE
         const sorted =
@@ -166,7 +230,7 @@ const MentorshipPage = () => {
         console.log(error);
 
         setError(
-          "Failed to load alumni"
+          "Failed to load mentors"
         );
 
       }
@@ -285,9 +349,9 @@ const MentorshipPage = () => {
 
           );
 
-        await axios.post(
+        await api.post(
 
-          "http://localhost:5000/mentorship/request",
+          "/mentorship/request",
 
           {
 
@@ -388,38 +452,183 @@ const MentorshipPage = () => {
 
       <Header />
 
-      <div className="max-w-7xl mx-auto p-6">
+      <div className="max-w-7xl mx-auto px-4 py-8">
+
 
         {/* ================================= */}
         {/* HERO */}
         {/* ================================= */}
-        <div className="mb-10">
+        <motion.div
 
-          <div className="rounded-3xl overflow-hidden bg-gradient-to-r from-primary via-purple-600 to-pink-500 text-white shadow-2xl">
+          initial={{
+            opacity: 0,
+            y: 20,
+          }}
 
-            <div className="p-8 md:p-10">
+          animate={{
+            opacity: 1,
+            y: 0,
+          }}
 
-              <div className="flex items-center gap-5">
+          transition={{
+            duration: 0.5,
+          }}
 
-                <div className="h-20 w-20 rounded-3xl bg-white/20 flex items-center justify-center">
+          className="mb-10"
 
-                  <Brain className="h-10 w-10" />
+        >
+
+          <div className="rounded-[32px] overflow-hidden bg-gradient-to-r from-primary via-violet-600 to-pink-500 text-white shadow-2xl relative">
+
+            <div className="absolute inset-0 bg-black/10" />
+
+            <div className="relative p-8 md:p-12">
+
+              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-10">
+
+                {/* LEFT */}
+                <div className="max-w-3xl">
+
+                  <div className="flex items-center gap-5 mb-6">
+
+                    <div className="h-20 w-20 rounded-3xl bg-white/20 backdrop-blur-md flex items-center justify-center">
+
+                      <Brain className="h-10 w-10" />
+
+                    </div>
+
+
+                    <div>
+
+                      <h1 className="text-4xl md:text-5xl font-bold">
+
+                        Alumni Mentorship
+
+                      </h1>
+
+                      <p className="text-white/90 text-lg mt-2">
+
+                        Connect with expert alumni mentors and accelerate your career growth
+
+                      </p>
+
+                    </div>
+
+                  </div>
+
+
+                  <p className="text-white/90 text-lg leading-8">
+
+                    Get personalized mentorship for placements,
+                    interviews, resume building, projects,
+                    startups, higher studies, and career guidance.
+
+                  </p>
+
+
+                  {/* BADGES */}
+                  <div className="flex flex-wrap gap-3 mt-8">
+
+                    <Badge className="bg-white/20 border-0 text-white px-4 py-2">
+
+                      <Users className="h-4 w-4 mr-2" />
+
+                      Expert Mentors
+
+                    </Badge>
+
+
+                    <Badge className="bg-white/20 border-0 text-white px-4 py-2">
+
+                      <GraduationCap className="h-4 w-4 mr-2" />
+
+                      Alumni Network
+
+                    </Badge>
+
+
+                    <Badge className="bg-white/20 border-0 text-white px-4 py-2">
+
+                      <ShieldCheck className="h-4 w-4 mr-2" />
+
+                      Verified Profiles
+
+                    </Badge>
+
+                  </div>
 
                 </div>
 
-                <div>
 
-                  <h1 className="text-4xl md:text-5xl font-bold">
+                {/* RIGHT */}
+                <div className="grid grid-cols-2 gap-4">
 
-                    Alumni Mentorship
+                  <div className="bg-white/10 backdrop-blur-md rounded-3xl p-6 text-center">
 
-                  </h1>
+                    <h2 className="text-3xl font-bold">
 
-                  <p className="text-white/90 text-lg mt-2">
+                      {alumni.length}
 
-                    Connect with expert alumni mentors and accelerate your career growth
+                    </h2>
 
-                  </p>
+                    <p className="text-white/80 text-sm mt-1">
+
+                      Mentors
+
+                    </p>
+
+                  </div>
+
+
+                  <div className="bg-white/10 backdrop-blur-md rounded-3xl p-6 text-center">
+
+                    <h2 className="text-3xl font-bold">
+
+                      24h
+
+                    </h2>
+
+                    <p className="text-white/80 text-sm mt-1">
+
+                      Avg Response
+
+                    </p>
+
+                  </div>
+
+
+                  <div className="bg-white/10 backdrop-blur-md rounded-3xl p-6 text-center">
+
+                    <h2 className="text-3xl font-bold">
+
+                      10k+
+
+                    </h2>
+
+                    <p className="text-white/80 text-sm mt-1">
+
+                      Students Guided
+
+                    </p>
+
+                  </div>
+
+
+                  <div className="bg-white/10 backdrop-blur-md rounded-3xl p-6 text-center">
+
+                    <h2 className="text-3xl font-bold">
+
+                      98%
+
+                    </h2>
+
+                    <p className="text-white/80 text-sm mt-1">
+
+                      Success Rate
+
+                    </p>
+
+                  </div>
 
                 </div>
 
@@ -429,24 +638,24 @@ const MentorshipPage = () => {
 
           </div>
 
-        </div>
+        </motion.div>
 
 
         {/* ================================= */}
         {/* SEARCH + FILTER */}
         {/* ================================= */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-10">
 
           {/* SEARCH */}
           <div className="md:col-span-3 relative">
 
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
 
             <Input
 
               placeholder="Search mentors by name, domain, or skills..."
 
-              className="pl-10 h-12 rounded-2xl"
+              className="pl-12 h-14 rounded-2xl"
 
               value={search}
 
@@ -461,10 +670,10 @@ const MentorshipPage = () => {
           </div>
 
 
-          {/* DOMAIN FILTER */}
+          {/* FILTER */}
           <select
 
-            className="border border-input rounded-2xl h-12 px-4 bg-background"
+            className="border border-input rounded-2xl h-14 px-4 bg-background"
 
             value={selectedDomain}
 
@@ -500,7 +709,7 @@ const MentorshipPage = () => {
         {/* ================================= */}
         {error && (
 
-          <div className="bg-red-100 text-red-600 p-4 rounded-xl mb-6">
+          <div className="bg-red-100 text-red-600 p-4 rounded-2xl mb-6">
 
             {error}
 
@@ -528,11 +737,11 @@ const MentorshipPage = () => {
 
         ) : filteredAlumni.length === 0 ? (
 
-          <div className="text-center py-20">
+          <div className="text-center py-24">
 
-            <Sparkles className="h-16 w-16 mx-auto text-primary mb-4" />
+            <Sparkles className="h-16 w-16 mx-auto text-primary mb-5" />
 
-            <h2 className="text-3xl font-bold mb-2">
+            <h2 className="text-3xl font-bold mb-3">
 
               No Mentors Found
 
@@ -548,73 +757,140 @@ const MentorshipPage = () => {
 
         ) : (
 
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
 
             {filteredAlumni.map(
-              (mentor) => (
+              (
+                mentor,
+                index
+              ) => (
 
-                <Card
+                <motion.div
 
                   key={mentor._id}
 
-                  className="rounded-3xl shadow-xl border-0 overflow-hidden hover:scale-[1.02] transition-all duration-300"
+                  initial={{
+                    opacity: 0,
+                    y: 20,
+                  }}
+
+                  animate={{
+                    opacity: 1,
+                    y: 0,
+                  }}
+
+                  transition={{
+                    duration: 0.4,
+                    delay: index * 0.05,
+                  }}
 
                 >
 
-                  {/* TOP */}
-                  <div className="bg-gradient-to-r from-primary to-purple-600 text-white p-6">
+                  <Card className="rounded-[32px] shadow-2xl border-0 overflow-hidden hover:-translate-y-1 transition-all duration-300">
 
-                    <div className="flex items-start justify-between">
+                    {/* TOP */}
+                    <div className="bg-gradient-to-r from-primary to-purple-600 text-white p-7">
 
-                      <div>
+                      <div className="flex items-start justify-between">
 
-                        <h2 className="text-2xl font-bold">
+                        <div>
 
-                          {mentor.name}
+                          <h2 className="text-2xl font-bold">
 
-                        </h2>
+                            {mentor.name}
 
-                        <p className="text-white/90 mt-1">
+                          </h2>
 
-                          {mentor.company ||
+                          <p className="text-white/90 mt-1">
 
-                            mentor.domain ||
+                            {mentor.company ||
 
-                            "Mentor"}
+                              mentor.domain ||
 
-                        </p>
+                              "Mentor"}
 
-                      </div>
+                          </p>
+
+                        </div>
 
 
-                      <div className="h-14 w-14 rounded-2xl bg-white/20 flex items-center justify-center">
+                        <div className="h-16 w-16 rounded-3xl bg-white/20 flex items-center justify-center">
 
-                        <Briefcase className="h-7 w-7" />
+                          <Briefcase className="h-8 w-8" />
+
+                        </div>
 
                       </div>
 
                     </div>
 
-                  </div>
+
+                    {/* CONTENT */}
+                    <CardContent className="p-7">
+
+                      {/* BIO */}
+                      <p className="text-muted-foreground mb-6 leading-7 line-clamp-4">
+
+                        {mentor.bio ||
+
+                          "Experienced alumni mentor helping students achieve career success."}
+
+                      </p>
 
 
-                  {/* CONTENT */}
-                  <CardContent className="p-6">
+                      {/* STATS */}
+                      <div className="grid grid-cols-2 gap-4 mb-6">
 
-                    {/* BIO */}
-                    <p className="text-muted-foreground mb-5 line-clamp-3">
+                        <div className="rounded-2xl bg-primary/5 p-4">
 
-                      {mentor.bio ||
+                          <div className="flex items-center gap-2 mb-2">
 
-                        "Experienced alumni mentor helping students build successful careers."}
+                            <ShieldCheck className="h-4 w-4 text-green-600" />
 
-                    </p>
+                            <span className="text-sm">
+
+                              Trust Score
+
+                            </span>
+
+                          </div>
+
+                          <p className="text-2xl font-bold text-green-600">
+
+                            {mentor.trustScore || 80}
+
+                          </p>
+
+                        </div>
 
 
-                    {/* DETAILS */}
-                    <div className="space-y-3 mb-5">
+                        <div className="rounded-2xl bg-primary/5 p-4">
 
-                      <div className="flex items-center gap-2 text-sm">
+                          <div className="flex items-center gap-2 mb-2">
+
+                            <TrendingUp className="h-4 w-4 text-primary" />
+
+                            <span className="text-sm">
+
+                              Experience
+
+                            </span>
+
+                          </div>
+
+                          <p className="font-bold">
+
+                            {mentor.experience || "5+ Years"}
+
+                          </p>
+
+                        </div>
+
+                      </div>
+
+
+                      {/* EMAIL */}
+                      <div className="flex items-center gap-2 text-sm mb-4">
 
                         <Mail className="h-4 w-4 text-primary" />
 
@@ -627,9 +903,10 @@ const MentorshipPage = () => {
                       </div>
 
 
-                      <div className="flex items-center gap-2 text-sm">
+                      {/* DOMAIN */}
+                      <div className="flex items-center gap-2 text-sm mb-6">
 
-                        <Briefcase className="h-4 w-4 text-primary" />
+                        <Award className="h-4 w-4 text-primary" />
 
                         <span>
 
@@ -647,187 +924,267 @@ const MentorshipPage = () => {
                       </div>
 
 
-                      {/* TRUST SCORE */}
-                      <div className="flex items-center gap-2 text-sm">
+                      {/* SKILLS */}
+                      <div className="flex flex-wrap gap-2 mb-7">
 
-                        <ShieldCheck className="h-4 w-4 text-green-600" />
+                        {mentor.skills?.slice(0, 5).map(
 
-                        <span>
+                          (skill) => (
 
-                          Trust Score:
-                          {" "}
+                            <Badge
+                              key={skill}
+                              variant="secondary"
+                            >
 
-                          <span className="font-semibold text-green-600">
+                              {skill}
 
-                            {mentor.trustScore || 80}
+                            </Badge>
 
-                          </span>
+                          )
 
-                        </span>
+                        )}
 
                       </div>
 
-                    </div>
+
+                      {/* PROGRESS */}
+                      <div className="mb-7">
+
+                        <div className="flex items-center justify-between mb-2">
+
+                          <span className="text-sm">
+
+                            Mentor Rating
+
+                          </span>
+
+                          <span className="text-sm font-semibold">
+
+                            {mentor.trustScore || 80}%
+
+                          </span>
+
+                        </div>
+
+                        <Progress
+                          value={mentor.trustScore || 80}
+                          className="h-2"
+                        />
+
+                      </div>
 
 
-                    {/* SKILLS */}
-                    <div className="flex flex-wrap gap-2 mb-6">
+                      {/* BUTTONS */}
+                      <div className="grid grid-cols-2 gap-3">
 
-                      {mentor.skills?.slice(0, 5).map(
+                        <Button
 
-                        (skill) => (
+                          variant="outline"
 
-                          <Badge
-                            key={skill}
-                            variant="secondary"
-                          >
+                          className="rounded-2xl h-12"
 
-                            {skill}
+                          onClick={() =>
 
-                          </Badge>
+                            navigate(
+                              `/student/chat/${mentor._id}`
+                            )
 
-                        )
+                          }
 
-                      )}
+                        >
 
-                    </div>
+                          <MessageCircle className="h-4 w-4 mr-2" />
 
+                          Chat
 
-                    {/* BUTTONS */}
-                    <div className="grid grid-cols-2 gap-3">
-
-                      <Button
-
-                        variant="outline"
-
-                        onClick={() =>
-
-                          navigate(
-                            `/student/chat/${mentor._id}`
-                          )
-
-                        }
-
-                      >
-
-                        <MessageCircle className="h-4 w-4 mr-2" />
-
-                        Chat
-
-                      </Button>
+                        </Button>
 
 
-                      <Dialog>
+                        <Dialog>
 
-                        <DialogTrigger asChild>
-
-                          <Button
-                            onClick={() =>
-                              setSelectedMentor(
-                                mentor
-                              )
-                            }
-                          >
-
-                            Request
-
-                          </Button>
-
-                        </DialogTrigger>
-
-
-                        <DialogContent className="rounded-3xl">
-
-                          <DialogHeader>
-
-                            <DialogTitle className="text-2xl">
-
-                              Send Mentorship Request
-
-                            </DialogTitle>
-
-                          </DialogHeader>
-
-
-                          <div className="space-y-4">
-
-                            <Input
-
-                              placeholder="Your interested domain"
-
-                              value={domain}
-
-                              onChange={(e) =>
-                                setDomain(
-                                  e.target.value
-                                )
-                              }
-
-                            />
-
-
-                            <Textarea
-
-                              placeholder="Write your mentorship request..."
-
-                              value={message}
-
-                              onChange={(e) =>
-                                setMessage(
-                                  e.target.value
-                                )
-                              }
-
-                              className="min-h-[140px]"
-
-                            />
-
+                          <DialogTrigger asChild>
 
                             <Button
 
-                              className="w-full"
+                              className="rounded-2xl h-12"
 
-                              disabled={sending}
-
-                              onClick={sendRequest}
+                              onClick={() =>
+                                setSelectedMentor(
+                                  mentor
+                                )
+                              }
 
                             >
 
-                              {sending ? (
+                              Request
 
-                                <>
-
-                                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-
-                                  Sending...
-
-                                </>
-
-                              ) : (
-
-                                <>
-
-                                  <Send className="h-4 w-4 mr-2" />
-
-                                  Send Request
-
-                                </>
-
-                              )}
+                              <ArrowRight className="h-4 w-4 ml-2" />
 
                             </Button>
 
-                          </div>
+                          </DialogTrigger>
 
-                        </DialogContent>
 
-                      </Dialog>
+                          <DialogContent className="rounded-[32px]">
 
-                    </div>
+                            <DialogHeader>
 
-                  </CardContent>
+                              <DialogTitle className="text-2xl">
 
-                </Card>
+                                Send Mentorship Request
+
+                              </DialogTitle>
+
+                            </DialogHeader>
+
+
+                            <div className="space-y-5">
+
+                              {/* MENTOR */}
+                              <div className="rounded-2xl bg-primary/5 p-4">
+
+                                <div className="flex items-center gap-3">
+
+                                  <div className="h-12 w-12 rounded-2xl bg-primary text-white flex items-center justify-center">
+
+                                    <Star className="h-5 w-5" />
+
+                                  </div>
+
+                                  <div>
+
+                                    <h3 className="font-bold">
+
+                                      {mentor.name}
+
+                                    </h3>
+
+                                    <p className="text-sm text-muted-foreground">
+
+                                      {mentor.domain}
+
+                                    </p>
+
+                                  </div>
+
+                                </div>
+
+                              </div>
+
+
+                              {/* DOMAIN */}
+                              <Input
+
+                                placeholder="Your interested domain"
+
+                                value={domain}
+
+                                onChange={(e) =>
+                                  setDomain(
+                                    e.target.value
+                                  )
+                                }
+
+                                className="h-12 rounded-2xl"
+
+                              />
+
+
+                              {/* MESSAGE */}
+                              <Textarea
+
+                                placeholder="Write your mentorship request..."
+
+                                value={message}
+
+                                onChange={(e) =>
+                                  setMessage(
+                                    e.target.value
+                                  )
+                                }
+
+                                className="min-h-[180px] rounded-2xl"
+
+                              />
+
+
+                              {/* INFO */}
+                              <div className="rounded-2xl bg-muted/40 p-4 border">
+
+                                <div className="flex items-start gap-3">
+
+                                  <CheckCircle2 className="h-5 w-5 text-green-600 mt-1" />
+
+                                  <div>
+
+                                    <h3 className="font-semibold mb-1">
+
+                                      Tips
+
+                                    </h3>
+
+                                    <p className="text-sm text-muted-foreground leading-6">
+
+                                      Clearly explain your goals, current skills,
+                                      and what type of mentorship you need.
+
+                                    </p>
+
+                                  </div>
+
+                                </div>
+
+                              </div>
+
+
+                              {/* BUTTON */}
+                              <Button
+
+                                className="w-full h-12 rounded-2xl"
+
+                                disabled={sending}
+
+                                onClick={sendRequest}
+
+                              >
+
+                                {sending ? (
+
+                                  <>
+
+                                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+
+                                    Sending...
+
+                                  </>
+
+                                ) : (
+
+                                  <>
+
+                                    <Send className="h-4 w-4 mr-2" />
+
+                                    Send Request
+
+                                  </>
+
+                                )}
+
+                              </Button>
+
+                            </div>
+
+                          </DialogContent>
+
+                        </Dialog>
+
+                      </div>
+
+                    </CardContent>
+
+                  </Card>
+
+                </motion.div>
 
               )
             )}

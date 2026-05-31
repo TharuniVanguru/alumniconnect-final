@@ -23,6 +23,8 @@ const otpRequestSchema =
 
         trim: true,
 
+        lowercase: true,
+
         index: true,
 
       },
@@ -57,7 +59,7 @@ const otpRequestSchema =
 
 
       // ====================================
-      // ATTEMPTS
+      // OTP ATTEMPTS
       // ====================================
       attempts: {
 
@@ -81,17 +83,33 @@ const otpRequestSchema =
 
         default: 0,
 
+        min: 0,
+
       },
 
 
       // ====================================
-      // DEVICE INFO (OPTIONAL)
+      // LAST SENT TIME
+      // ====================================
+      lastSentAt: {
+
+        type: Date,
+
+        default: Date.now,
+
+      },
+
+
+      // ====================================
+      // DEVICE INFO
       // ====================================
       ipAddress: {
 
         type: String,
 
         default: "",
+
+        trim: true,
 
       },
 
@@ -100,6 +118,20 @@ const otpRequestSchema =
         type: String,
 
         default: "",
+
+        trim: true,
+
+      },
+
+
+      // ====================================
+      // OTP STATUS
+      // ====================================
+      isVerified: {
+
+        type: Boolean,
+
+        default: false,
 
       },
 
@@ -132,6 +164,18 @@ otpRequestSchema.index(
   }
 
 );
+
+
+// ==========================================
+// IDENTIFIER + OTP INDEX
+// ==========================================
+otpRequestSchema.index({
+
+  identifier: 1,
+
+  otp: 1,
+
+});
 
 
 // ==========================================

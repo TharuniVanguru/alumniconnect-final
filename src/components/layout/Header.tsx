@@ -1,94 +1,156 @@
 import {
-  User,
-  LogOut,
-  Bell,
-  Trophy,
-  Award,
-  Crown
-} from 'lucide-react';
 
-import axios from "axios";
+  User,
+
+  LogOut,
+
+  Bell,
+
+  Trophy,
+
+  Award,
+
+  Crown,
+
+  Menu,
+
+  X,
+
+  Circle,
+
+} from "lucide-react";
 
 import {
+
   useEffect,
-  useState
+
+  useState,
+
 } from "react";
 
-import { Button } from '@/components/ui/button';
-
 import {
+
   Link,
-  useNavigate
-} from 'react-router-dom';
+
+  useNavigate,
+
+} from "react-router-dom";
+
+import { Button } from "@/components/ui/button";
 
 import {
+
   DropdownMenu,
+
   DropdownMenuContent,
+
   DropdownMenuItem,
+
   DropdownMenuLabel,
+
   DropdownMenuSeparator,
+
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+
+} from "@/components/ui/dropdown-menu";
+
+import {
+
+  Sheet,
+
+  SheetContent,
+
+  SheetTrigger,
+
+} from "@/components/ui/sheet";
+
+import api from "@/utils/api";
+
+import {
+
+  useAuth,
+
+} from "@/contexts/AuthContext";
 
 
+// ==========================================
+// COMPONENT
+// ==========================================
 export const Header = () => {
 
+  // ========================================
+  // NAVIGATION
+  // ========================================
   const navigate =
     useNavigate();
 
-  // GET USER FROM LOCAL STORAGE
-  const userInfo =
-    localStorage.getItem(
-      "userInfo"
-    );
 
-  const user =
-    userInfo
-      ? JSON.parse(userInfo)
-      : null;
+  // ========================================
+  // AUTH
+  // ========================================
+  const {
+
+    user,
+
+    logout,
+
+  } = useAuth();
 
 
-  // =========================
-  // NOTIFICATIONS
-  // =========================
+  // ========================================
+  // STATES
+  // ========================================
   const [
+
     unreadCount,
+
     setUnreadCount,
+
   ] = useState(0);
 
+  const [
 
-  // =========================
+    mobileOpen,
+
+    setMobileOpen,
+
+  ] = useState(false);
+
+
+  // ========================================
   // FETCH NOTIFICATIONS
-  // =========================
+  // ========================================
   const fetchNotifications =
     async () => {
 
       try {
 
-        if (!user?.token)
+        if (!user?._id)
           return;
 
+
         const response =
-          await axios.get(
-
-            "http://localhost:5000/notifications",
-
-            {
-              headers: {
-                Authorization:
-                  `Bearer ${user.token}`,
-              },
-            }
-
+          await api.get(
+            "/notifications"
           );
+
+
+        const notifications =
+
+          response.data?.notifications ||
+
+          response.data ||
+
+          [];
+
 
         const unread =
-          response.data.filter(
-            (
-              notification: any
-            ) =>
-              !notification.isRead
+
+          notifications.filter(
+            (n: any) =>
+              !n.isRead
           );
+
 
         setUnreadCount(
           unread.length
@@ -98,115 +160,119 @@ export const Header = () => {
 
       catch (error) {
 
-        console.log(error);
+        console.log(
+          "NOTIFICATION ERROR:",
+          error
+        );
 
       }
 
     };
 
 
-  // =========================
+  // ========================================
   // INITIAL LOAD
-  // =========================
+  // ========================================
   useEffect(() => {
-    fetchNotifications();
-  }, [user?.token]);
 
+    if (user?._id) {
 
-  // =========================
-  // LOGOUT FUNCTION
-  // =========================
-  const logout = async () => {
-
-    try {
-
-      await axios.post(
-
-        "http://localhost:5000/auth/logout",
-
-        {},
-
-        {
-          headers: {
-            Authorization:
-              `Bearer ${user.token}`,
-          },
-        }
-
-      );
+      fetchNotifications();
 
     }
 
-    catch (error) {
-
-      console.log(error);
-
-    }
-
-    finally {
-
-      localStorage.removeItem(
-        "userInfo"
-      );
-
-      navigate("/login");
-
-    }
-
-  };
+  }, [user?._id]);
 
 
-  // =========================
+  // ========================================
+  // HANDLE LOGOUT
+  // ========================================
+  const handleLogout =
+    async () => {
+
+      try {
+
+        await logout();
+
+        navigate("/login");
+
+      }
+
+      catch (error) {
+
+        console.log(
+          "LOGOUT ERROR:",
+          error
+        );
+
+      }
+
+    };
+
+
+  // ========================================
   // ROLE COLOR
-  // =========================
+  // ========================================
   const getRoleColor = (
-    role: string
+    role?: string
   ) => {
 
     switch (role) {
 
-      case 'admin':
-        return 'text-warning';
+      case "admin":
 
-      case 'alumni':
-        return 'text-primary';
+        return "text-red-500";
 
-      case 'student':
-        return 'text-accent';
+      case "alumni":
+
+        return "text-primary";
+
+      case "student":
+
+        return "text-green-600";
+
+      case "faculty":
+
+        return "text-purple-600";
 
       default:
-        return 'text-foreground';
+
+        return "text-foreground";
 
     }
 
   };
 
 
-  // =========================
+  // ========================================
   // ROLE ICON
-  // =========================
-  const getRoleBadgeIcon = (
-    role: string
+  // ========================================
+  const getRoleIcon = (
+    role?: string
   ) => {
 
     switch (role) {
 
-      case 'admin':
+      case "admin":
+
         return (
           <Trophy className="h-3 w-3" />
         );
 
-      case 'alumni':
+      case "alumni":
+
         return (
           <Award className="h-3 w-3" />
         );
 
-      case 'student':
+      case "student":
+
         return (
           <User className="h-3 w-3" />
         );
 
       default:
+
         return (
           <User className="h-3 w-3" />
         );
@@ -216,58 +282,87 @@ export const Header = () => {
   };
 
 
+  // ========================================
+  // DASHBOARD LINK
+  // ========================================
+  const dashboardLink =
+
+    user?.role === "student"
+
+      ? "/student/dashboard"
+
+      : user?.role === "alumni"
+
+      ? "/alumni/dashboard"
+
+      : user?.role === "admin"
+
+      ? "/admin/dashboard"
+
+      : "/";
+
+
   return (
 
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur">
 
-      <div className="container flex h-16 items-center justify-between">
+      <div className="container h-16 flex items-center justify-between">
 
+
+        {/* ================================== */}
         {/* LOGO */}
+        {/* ================================== */}
         <Link
-          to="/"
-          className="flex items-center space-x-2"
+          to={dashboardLink}
+          className="flex items-center gap-3"
         >
 
-          <div className="h-8 w-8 rounded-lg bg-gradient-hero flex items-center justify-center">
+          <div className="h-9 w-9 rounded-xl bg-gradient-to-r from-primary to-purple-600 flex items-center justify-center shadow-lg">
 
             <Award className="h-4 w-4 text-white" />
 
           </div>
 
-          <span className="font-bold text-xl bg-gradient-hero bg-clip-text text-transparent">
+          <div>
 
-            AlumniConnect
+            <h1 className="font-bold text-xl bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
 
-          </span>
+              AlumniConnect
+
+            </h1>
+
+          </div>
 
         </Link>
 
 
-        {/* USER SECTION */}
+        {/* ================================== */}
+        {/* DESKTOP MENU */}
+        {/* ================================== */}
         {user && (
 
-          <div className="flex items-center space-x-4">
+          <div className="hidden md:flex items-center gap-3">
+
 
             {/* PREMIUM */}
             <Button
               variant="outline"
               size="sm"
               asChild
-              className="hidden sm:flex"
             >
 
               <Link to="/premium">
 
-                <Crown className="h-4 w-4 mr-2 text-accent" />
+                <Crown className="h-4 w-4 mr-2 text-yellow-500" />
 
-                Go Premium
+                Premium
 
               </Link>
 
             </Button>
 
 
-            {/* NOTIFICATION */}
+            {/* NOTIFICATIONS */}
             <Button
               variant="ghost"
               size="icon"
@@ -277,11 +372,11 @@ export const Header = () => {
 
               <Link to="/notifications">
 
-                <Bell className="h-4 w-4" />
+                <Bell className="h-5 w-5" />
 
                 {unreadCount > 0 && (
 
-                  <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-red-500 rounded-full text-[10px] flex items-center justify-center text-white font-bold">
+                  <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-red-500 rounded-full text-[10px] text-white flex items-center justify-center font-bold">
 
                     {unreadCount}
 
@@ -294,35 +389,40 @@ export const Header = () => {
             </Button>
 
 
-            {/* PROFILE DROPDOWN */}
+            {/* PROFILE */}
             <DropdownMenu>
 
               <DropdownMenuTrigger asChild>
 
                 <Button
                   variant="ghost"
-                  className="flex items-center space-x-2"
+                  className="flex items-center gap-3 h-auto py-2 px-3"
                 >
 
-                  <div className="h-8 w-8 rounded-full bg-gradient-primary flex items-center justify-center">
+                  <div className="relative">
 
-                    <User className="h-4 w-4 text-white" />
+                    <div className="h-10 w-10 rounded-full bg-gradient-to-r from-primary to-purple-600 flex items-center justify-center text-white">
+
+                      <User className="h-5 w-5" />
+
+                    </div>
+
+                    <Circle className="absolute bottom-0 right-0 h-3 w-3 fill-green-500 text-green-500" />
 
                   </div>
 
 
-                  <div className="flex flex-col items-start">
+                  <div className="text-left">
 
-                    <span className="text-sm font-medium">
+                    <p className="text-sm font-semibold leading-none">
 
                       {user.name}
 
-                    </span>
+                    </p>
 
+                    <div className={`flex items-center gap-1 text-xs mt-1 ${getRoleColor(user.role)}`}>
 
-                    <div className={`flex items-center space-x-1 ${getRoleColor(user.role)} text-xs`}>
-
-                      {getRoleBadgeIcon(user.role)}
+                      {getRoleIcon(user.role)}
 
                       <span className="capitalize">
 
@@ -341,7 +441,7 @@ export const Header = () => {
 
               <DropdownMenuContent
                 align="end"
-                className="w-56"
+                className="w-60"
               >
 
                 <DropdownMenuLabel>
@@ -353,13 +453,9 @@ export const Header = () => {
                 <DropdownMenuSeparator />
 
 
-                {/* PROFILE */}
                 <DropdownMenuItem asChild>
 
-                  <Link
-                    to="/profile/edit"
-                    className="flex items-center"
-                  >
+                  <Link to="/profile/edit">
 
                     <User className="mr-2 h-4 w-4" />
 
@@ -370,13 +466,9 @@ export const Header = () => {
                 </DropdownMenuItem>
 
 
-                {/* NOTIFICATIONS */}
                 <DropdownMenuItem asChild>
 
-                  <Link
-                    to="/notifications"
-                    className="flex items-center"
-                  >
+                  <Link to="/notifications">
 
                     <Bell className="mr-2 h-4 w-4" />
 
@@ -387,15 +479,11 @@ export const Header = () => {
                 </DropdownMenuItem>
 
 
-                {/* ALUMNI */}
-                {user.role === 'alumni' && (
+                {user.role === "alumni" && (
 
                   <DropdownMenuItem asChild>
 
-                    <Link
-                      to="/alumni/fundraising"
-                      className="flex items-center"
-                    >
+                    <Link to="/alumni/fundraising">
 
                       <Award className="mr-2 h-4 w-4" />
 
@@ -408,33 +496,12 @@ export const Header = () => {
                 )}
 
 
-                {/* MOBILE PREMIUM */}
-                <DropdownMenuItem
-                  asChild
-                  className="sm:hidden"
-                >
-
-                  <Link
-                    to="/premium"
-                    className="flex items-center"
-                  >
-
-                    <Crown className="mr-2 h-4 w-4" />
-
-                    Go Premium
-
-                  </Link>
-
-                </DropdownMenuItem>
-
-
                 <DropdownMenuSeparator />
 
 
-                {/* LOGOUT */}
                 <DropdownMenuItem
-                  onClick={logout}
-                  className="text-destructive"
+                  onClick={handleLogout}
+                  className="text-red-500"
                 >
 
                   <LogOut className="mr-2 h-4 w-4" />
@@ -451,6 +518,152 @@ export const Header = () => {
 
         )}
 
+
+        {/* ================================== */}
+        {/* MOBILE MENU */}
+        {/* ================================== */}
+        {user && (
+
+          <div className="md:hidden">
+
+            <Sheet
+              open={mobileOpen}
+              onOpenChange={
+                setMobileOpen
+              }
+            >
+
+              <SheetTrigger asChild>
+
+                <Button
+                  variant="ghost"
+                  size="icon"
+                >
+
+                  <Menu className="h-6 w-6" />
+
+                </Button>
+
+              </SheetTrigger>
+
+
+              <SheetContent side="right">
+
+                <div className="flex flex-col gap-6 mt-8">
+
+
+                  <div className="flex items-center gap-3">
+
+                    <div className="h-12 w-12 rounded-full bg-gradient-to-r from-primary to-purple-600 flex items-center justify-center text-white">
+
+                      <User className="h-5 w-5" />
+
+                    </div>
+
+                    <div>
+
+                      <h2 className="font-bold">
+
+                        {user.name}
+
+                      </h2>
+
+                      <p className={`text-sm capitalize ${getRoleColor(user.role)}`}>
+
+                        {user.role}
+
+                      </p>
+
+                    </div>
+
+                  </div>
+
+
+                  <Link
+                    to="/profile/edit"
+                    onClick={() =>
+                      setMobileOpen(false)
+                    }
+                  >
+
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start"
+                    >
+
+                      <User className="mr-2 h-4 w-4" />
+
+                      Profile
+
+                    </Button>
+
+                  </Link>
+
+
+                  <Link
+                    to="/notifications"
+                    onClick={() =>
+                      setMobileOpen(false)
+                    }
+                  >
+
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start"
+                    >
+
+                      <Bell className="mr-2 h-4 w-4" />
+
+                      Notifications
+
+                    </Button>
+
+                  </Link>
+
+
+                  <Link
+                    to="/premium"
+                    onClick={() =>
+                      setMobileOpen(false)
+                    }
+                  >
+
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start"
+                    >
+
+                      <Crown className="mr-2 h-4 w-4 text-yellow-500" />
+
+                      Premium
+
+                    </Button>
+
+                  </Link>
+
+
+                  <Button
+                    variant="destructive"
+                    onClick={handleLogout}
+                    className="w-full justify-start"
+                  >
+
+                    <LogOut className="mr-2 h-4 w-4" />
+
+                    Logout
+
+                  </Button>
+
+                </div>
+
+              </SheetContent>
+
+            </Sheet>
+
+          </div>
+
+        )}
+
       </div>
 
     </header>
@@ -458,3 +671,9 @@ export const Header = () => {
   );
 
 };
+
+
+// ==========================================
+// EXPORT
+// ==========================================
+export default Header;

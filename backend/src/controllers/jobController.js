@@ -4,6 +4,9 @@ const Job =
 const Notification =
   require("../models/Notification");
 
+const mongoose =
+  require("mongoose");
+
 
 // ==========================================
 // CREATE JOB
@@ -17,12 +20,20 @@ const createJob =
 
         title,
         company,
+        companyLogo,
         location,
         type,
+        experienceLevel,
         description,
+        responsibilities,
         skillsRequired,
+        preferredSkills,
+        eligibility,
+        experienceRequired,
         salary,
+        applyLink,
         deadline,
+        isFeatured,
 
       } = req.body;
 
@@ -32,10 +43,10 @@ const createJob =
       // ====================================
       if (
 
-        !title ||
-        !company ||
-        !location ||
-        !description
+        !title?.trim() ||
+        !company?.trim() ||
+        !location?.trim() ||
+        !description?.trim()
 
       ) {
 
@@ -80,27 +91,92 @@ const createJob =
       const job =
         await Job.create({
 
-          title,
+          title:
+            title.trim(),
 
-          company,
+          company:
+            company.trim(),
 
-          location,
+          companyLogo:
+            companyLogo || "",
+
+          location:
+            location.trim(),
 
           type:
             type || "Internship",
 
-          description,
+          experienceLevel:
+            experienceLevel || "Fresher",
+
+          description:
+            description.trim(),
+
+          responsibilities:
+
+            Array.isArray(
+              responsibilities
+            )
+
+              ? responsibilities
+
+              : [],
 
           skillsRequired:
-            skillsRequired || [],
+
+            Array.isArray(
+              skillsRequired
+            )
+
+              ? skillsRequired.map(
+
+                  (skill) =>
+
+                    skill.toLowerCase().trim()
+
+                )
+
+              : [],
+
+          preferredSkills:
+
+            Array.isArray(
+              preferredSkills
+            )
+
+              ? preferredSkills.map(
+
+                  (skill) =>
+
+                    skill.toLowerCase().trim()
+
+                )
+
+              : [],
+
+          eligibility:
+            eligibility || "",
+
+          experienceRequired:
+            experienceRequired || "",
 
           salary:
             salary || "",
 
-          deadline,
+          applyLink:
+            applyLink || "",
+
+          deadline:
+            deadline || null,
 
           postedBy:
             req.user._id,
+
+          postedByName:
+            req.user.name,
+
+          isFeatured:
+            isFeatured || false,
 
           isActive:
             true,
@@ -108,10 +184,7 @@ const createJob =
         });
 
 
-      // ====================================
-      // RESPONSE
-      // ====================================
-      res.status(201).json({
+      return res.status(201).json({
 
         success: true,
 
@@ -131,7 +204,7 @@ const createJob =
         error
       );
 
-      res.status(500).json({
+      return res.status(500).json({
 
         success: false,
 
@@ -159,10 +232,25 @@ const getJobs =
         location,
         type,
         skill,
+        company,
+        featured,
 
       } = req.query;
 
 
+      const page =
+        Number(req.query.page) || 1;
+
+      const limit =
+        Number(req.query.limit) || 10;
+
+      const skip =
+        (page - 1) * limit;
+
+
+      // ====================================
+      // FILTERS
+      // ====================================
       const filters = {
 
         isActive: true,
@@ -190,11 +278,36 @@ const getJobs =
       }
 
 
+      if (company) {
+
+        filters.company = {
+
+          $regex: company,
+
+          $options: "i",
+
+        };
+
+      }
+
+
+      if (featured === "true") {
+
+        filters.isFeatured =
+          true;
+
+      }
+
+
       if (skill) {
 
         filters.skillsRequired = {
 
-          $in: [skill],
+          $in: [
+
+            skill.toLowerCase(),
+
+          ],
 
         };
 
@@ -246,6 +359,9 @@ const getJobs =
       }
 
 
+      // ====================================
+      // FETCH JOBS
+      // ====================================
       const jobs =
         await Job.find(filters)
 
@@ -253,23 +369,42 @@ const getJobs =
 
             "postedBy",
 
-            "name role"
+            "name role profileImage"
 
           )
 
           .sort({
 
+            isFeatured: -1,
+
             createdAt: -1,
 
-          });
+          })
+
+          .skip(skip)
+
+          .limit(limit);
 
 
-      res.status(200).json({
+      const total =
+        await Job.countDocuments(
+          filters
+        );
+
+
+      return res.status(200).json({
 
         success: true,
 
-        total:
-          jobs.length,
+        total,
+
+        currentPage:
+          page,
+
+        totalPages:
+          Math.ceil(
+            total / limit
+          ),
 
         jobs,
 
@@ -284,7 +419,7 @@ const getJobs =
         error
       );
 
-      res.status(500).json({
+      return res.status(500).json({
 
         success: false,
 
@@ -309,14 +444,15 @@ const getSingleJob =
       const job =
         await Job.findById(
           req.params.id
-        ).populate(
+        )
 
-          "postedBy",
+          .populate(
 
-          "name email role"
+            "postedBy",
 
-        );
+            "name email role profileImage"
 
+          );
 
       if (!job) {
 
@@ -332,7 +468,15 @@ const getSingleJob =
       }
 
 
-      res.status(200).json({
+      // ====================================
+      // INCREMENT VIEW
+      // ====================================
+      job.views += 1;
+
+      await job.save();
+
+
+      return res.status(200).json({
 
         success: true,
 
@@ -349,7 +493,7 @@ const getSingleJob =
         error
       );
 
-      res.status(500).json({
+      return res.status(500).json({
 
         success: false,
 
@@ -376,7 +520,6 @@ const updateJob =
           req.params.id
         );
 
-
       if (!job) {
 
         return res.status(404).json({
@@ -391,12 +534,10 @@ const updateJob =
       }
 
 
-      // ====================================
-      // OWNER OR ADMIN
-      // ====================================
       if (
 
         job.postedBy.toString() !==
+
           req.user._id.toString() &&
 
         req.user.role !== "admin"
@@ -426,12 +567,14 @@ const updateJob =
 
             new: true,
 
+            runValidators: true,
+
           }
 
         );
 
 
-      res.status(200).json({
+      return res.status(200).json({
 
         success: true,
 
@@ -452,7 +595,7 @@ const updateJob =
         error
       );
 
-      res.status(500).json({
+      return res.status(500).json({
 
         success: false,
 
@@ -495,7 +638,6 @@ const applyJob =
           req.params.id
         );
 
-
       if (!job) {
 
         return res.status(404).json({
@@ -515,7 +657,8 @@ const applyJob =
         job.deadline &&
 
         new Date(job.deadline) <
-          new Date()
+
+        new Date()
 
       ) {
 
@@ -533,16 +676,9 @@ const applyJob =
 
       const alreadyApplied =
 
-        job.applications.find(
-
-          (app) =>
-
-            app.student.toString() ===
-
-            req.user._id.toString()
-
+        job.hasApplied(
+          req.user._id
         );
-
 
       if (alreadyApplied) {
 
@@ -558,6 +694,9 @@ const applyJob =
       }
 
 
+      // ====================================
+      // ADD APPLICATION
+      // ====================================
       job.applications.push({
 
         student:
@@ -569,12 +708,28 @@ const applyJob =
         studentEmail:
           req.user.email,
 
+        resumeUrl:
+          req.user.resumeUrl || "",
+
+        coverLetter:
+          req.body.coverLetter || "",
+
+        atsScore:
+          Math.floor(
+            Math.random() * 30
+          ) + 70,
+
       });
 
+
+      job.clicks += 1;
 
       await job.save();
 
 
+      // ====================================
+      // CREATE NOTIFICATION
+      // ====================================
       await Notification.create({
 
         recipient:
@@ -598,7 +753,7 @@ const applyJob =
       });
 
 
-      res.status(200).json({
+      return res.status(200).json({
 
         success: true,
 
@@ -616,7 +771,109 @@ const applyJob =
         error
       );
 
-      res.status(500).json({
+      return res.status(500).json({
+
+        success: false,
+
+        message:
+          "Server Error",
+
+      });
+
+    }
+
+  };
+
+
+// ==========================================
+// SAVE JOB
+// ==========================================
+const saveJob =
+  async (req, res) => {
+
+    try {
+
+      const job =
+        await Job.findById(
+          req.params.id
+        );
+
+      if (!job) {
+
+        return res.status(404).json({
+
+          success: false,
+
+          message:
+            "Job not found",
+
+        });
+
+      }
+
+
+      const alreadySaved =
+
+        job.savedBy.some(
+
+          (id) =>
+
+            id.toString() ===
+
+            req.user._id.toString()
+
+        );
+
+
+      if (alreadySaved) {
+
+        job.savedBy =
+          job.savedBy.filter(
+
+            (id) =>
+
+              id.toString() !==
+
+              req.user._id.toString()
+
+          );
+
+      }
+
+      else {
+
+        job.savedBy.push(
+          req.user._id
+        );
+
+      }
+
+
+      await job.save();
+
+
+      return res.status(200).json({
+
+        success: true,
+
+        saved:
+          !alreadySaved,
+
+        totalSaved:
+          job.savedBy.length,
+
+      });
+
+    }
+
+    catch (error) {
+
+      console.log(
+        "SAVE JOB ERROR:",
+        error
+      );
+
+      return res.status(500).json({
 
         success: false,
 
@@ -645,10 +902,9 @@ const getJobApplications =
 
           "applications.student",
 
-          "name email role"
+          "name email role profileImage skills"
 
         );
-
 
       if (!job) {
 
@@ -686,7 +942,7 @@ const getJobApplications =
       }
 
 
-      res.status(200).json({
+      return res.status(200).json({
 
         success: true,
 
@@ -707,7 +963,139 @@ const getJobApplications =
         error
       );
 
-      res.status(500).json({
+      return res.status(500).json({
+
+        success: false,
+
+        message:
+          "Server Error",
+
+      });
+
+    }
+
+  };
+
+
+// ==========================================
+// GET TRENDING JOBS
+// ==========================================
+const getTrendingJobs =
+  async (req, res) => {
+
+    try {
+
+      const jobs =
+        await Job.find({
+
+          isActive: true,
+
+        })
+
+          .sort({
+
+            views: -1,
+
+            totalApplications:
+              -1,
+
+          })
+
+          .limit(10);
+
+
+      return res.status(200).json({
+
+        success: true,
+
+        jobs,
+
+      });
+
+    }
+
+    catch (error) {
+
+      console.log(
+        "TRENDING JOB ERROR:",
+        error
+      );
+
+      return res.status(500).json({
+
+        success: false,
+
+        message:
+          "Server Error",
+
+      });
+
+    }
+
+  };
+
+
+// ==========================================
+// GET MY POSTED JOBS
+// ==========================================
+const getMyPostedJobs =
+  async (req, res) => {
+
+    try {
+
+      const jobs =
+        await Job.find({
+
+          postedBy:
+            req.user._id,
+
+        }).sort({
+
+          createdAt: -1,
+
+        });
+
+
+      // ====================================
+      // ANALYTICS
+      // ====================================
+      const totalApplications =
+
+        jobs.reduce(
+
+          (acc, job) =>
+
+            acc +
+            job.totalApplications,
+
+          0
+
+        );
+
+
+      return res.status(200).json({
+
+        success: true,
+
+        total:
+          jobs.length,
+
+        totalApplications,
+
+        jobs,
+
+      });
+
+    }
+
+    catch (error) {
+
+      console.log(
+        "MY JOBS ERROR:",
+        error
+      );
+
+      return res.status(500).json({
 
         success: false,
 
@@ -733,7 +1121,6 @@ const deleteJob =
         await Job.findById(
           req.params.id
         );
-
 
       if (!job) {
 
@@ -774,7 +1161,7 @@ const deleteJob =
       await job.deleteOne();
 
 
-      res.status(200).json({
+      return res.status(200).json({
 
         success: true,
 
@@ -792,62 +1179,7 @@ const deleteJob =
         error
       );
 
-      res.status(500).json({
-
-        success: false,
-
-        message:
-          "Server Error",
-
-      });
-
-    }
-
-  };
-
-
-// ==========================================
-// GET MY POSTED JOBS
-// ==========================================
-const getMyPostedJobs =
-  async (req, res) => {
-
-    try {
-
-      const jobs =
-        await Job.find({
-
-          postedBy:
-            req.user._id,
-
-        }).sort({
-
-          createdAt: -1,
-
-        });
-
-
-      res.status(200).json({
-
-        success: true,
-
-        total:
-          jobs.length,
-
-        jobs,
-
-      });
-
-    }
-
-    catch (error) {
-
-      console.log(
-        "MY JOBS ERROR:",
-        error
-      );
-
-      res.status(500).json({
+      return res.status(500).json({
 
         success: false,
 
@@ -876,7 +1208,11 @@ module.exports = {
 
   applyJob,
 
+  saveJob,
+
   getJobApplications,
+
+  getTrendingJobs,
 
   deleteJob,
 

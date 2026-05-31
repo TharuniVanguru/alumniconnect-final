@@ -3,6 +3,9 @@ const Notification =
     "../models/Notification"
   );
 
+const mongoose =
+  require("mongoose");
+
 
 // ==========================================
 // GET NOTIFICATIONS
@@ -28,10 +31,16 @@ const getNotifications =
       // PAGINATION
       // ====================================
       const page =
-        Number(req.query.page) || 1;
+        Math.max(
+          Number(req.query.page) || 1,
+          1
+        );
 
       const limit =
-        Number(req.query.limit) || 20;
+        Math.min(
+          Number(req.query.limit) || 20,
+          100
+        );
 
       const skip =
         (page - 1) * limit;
@@ -45,12 +54,15 @@ const getNotifications =
         recipient:
           req.user._id,
 
+        deleted: false,
+
       };
 
 
       if (type) {
 
-        filters.type = type;
+        filters.type =
+          type;
 
       }
 
@@ -59,7 +71,8 @@ const getNotifications =
         isRead === "true"
       ) {
 
-        filters.isRead = true;
+        filters.isRead =
+          true;
 
       }
 
@@ -67,7 +80,8 @@ const getNotifications =
         isRead === "false"
       ) {
 
-        filters.isRead = false;
+        filters.isRead =
+          false;
 
       }
 
@@ -81,7 +95,7 @@ const getNotifications =
 
 
       // ====================================
-      // FETCH NOTIFICATIONS
+      // GET NOTIFICATIONS
       // ====================================
       const notifications =
         await Notification.find(
@@ -94,12 +108,16 @@ const getNotifications =
           )
 
           .sort({
+
             createdAt: -1,
+
           })
 
           .skip(skip)
 
-          .limit(limit);
+          .limit(limit)
+
+          .lean();
 
 
       // ====================================
@@ -113,6 +131,8 @@ const getNotifications =
 
           isRead: false,
 
+          deleted: false,
+
         });
 
 
@@ -125,7 +145,7 @@ const getNotifications =
       // ====================================
       // RESPONSE
       // ====================================
-      res.status(200).json({
+      return res.status(200).json({
 
         success: true,
 
@@ -154,7 +174,59 @@ const getNotifications =
         error
       );
 
-      res.status(500).json({
+      return res.status(500).json({
+
+        success: false,
+
+        message:
+          "Server Error",
+
+      });
+
+    }
+
+  };
+
+
+// ==========================================
+// GET UNREAD COUNT
+// ==========================================
+const getUnreadCount =
+  async (req, res) => {
+
+    try {
+
+      const unreadCount =
+        await Notification.countDocuments({
+
+          recipient:
+            req.user._id,
+
+          isRead: false,
+
+          deleted: false,
+
+        });
+
+
+      return res.status(200).json({
+
+        success: true,
+
+        unreadCount,
+
+      });
+
+    }
+
+    catch (error) {
+
+      console.log(
+        "UNREAD COUNT ERROR:",
+        error
+      );
+
+      return res.status(500).json({
 
         success: false,
 
@@ -183,6 +255,10 @@ const markNotificationRead =
 
         );
 
+
+      // ====================================
+      // NOT FOUND
+      // ====================================
       if (!notification) {
 
         return res.status(404).json({
@@ -230,19 +306,17 @@ const markNotificationRead =
         new Date();
 
 
-      const updatedNotification =
-        await notification.save();
+      await notification.save();
 
 
       // ====================================
       // RESPONSE
       // ====================================
-      res.status(200).json({
+      return res.status(200).json({
 
         success: true,
 
-        notification:
-          updatedNotification,
+        notification,
 
       });
 
@@ -255,7 +329,7 @@ const markNotificationRead =
         error
       );
 
-      res.status(500).json({
+      return res.status(500).json({
 
         success: false,
 
@@ -270,7 +344,7 @@ const markNotificationRead =
 
 
 // ==========================================
-// MARK ALL AS READ
+// MARK ALL READ
 // ==========================================
 const markAllNotificationsRead =
   async (req, res) => {
@@ -285,6 +359,8 @@ const markAllNotificationsRead =
             req.user._id,
 
           isRead: false,
+
+          deleted: false,
 
         },
 
@@ -304,7 +380,7 @@ const markAllNotificationsRead =
       );
 
 
-      res.status(200).json({
+      return res.status(200).json({
 
         success: true,
 
@@ -323,7 +399,7 @@ const markAllNotificationsRead =
         error
       );
 
-      res.status(500).json({
+      return res.status(500).json({
 
         success: false,
 
@@ -352,6 +428,10 @@ const deleteNotification =
 
         );
 
+
+      // ====================================
+      // NOT FOUND
+      // ====================================
       if (!notification) {
 
         return res.status(404).json({
@@ -390,15 +470,18 @@ const deleteNotification =
 
 
       // ====================================
-      // DELETE
+      // SOFT DELETE
       // ====================================
-      await notification.deleteOne();
+      notification.deleted =
+        true;
+
+      await notification.save();
 
 
       // ====================================
       // RESPONSE
       // ====================================
-      res.status(200).json({
+      return res.status(200).json({
 
         success: true,
 
@@ -416,7 +499,7 @@ const deleteNotification =
         error
       );
 
-      res.status(500).json({
+      return res.status(500).json({
 
         success: false,
 
@@ -438,15 +521,29 @@ const deleteAllNotifications =
 
     try {
 
-      await Notification.deleteMany({
+      await Notification.updateMany(
 
-        recipient:
-          req.user._id,
+        {
 
-      });
+          recipient:
+            req.user._id,
+
+        },
+
+        {
+
+          $set: {
+
+            deleted: true,
+
+          },
+
+        }
+
+      );
 
 
-      res.status(200).json({
+      return res.status(200).json({
 
         success: true,
 
@@ -460,11 +557,11 @@ const deleteAllNotifications =
     catch (error) {
 
       console.log(
-        "DELETE ALL NOTIFICATIONS ERROR:",
+        "DELETE ALL ERROR:",
         error
       );
 
-      res.status(500).json({
+      return res.status(500).json({
 
         success: false,
 
@@ -480,14 +577,13 @@ const deleteAllNotifications =
 
 // ==========================================
 // CREATE NOTIFICATION
-// INTERNAL HELPER
 // ==========================================
 const createNotification =
   async ({
 
     recipient,
 
-    sender,
+    sender = null,
 
     title,
 
@@ -495,9 +591,15 @@ const createNotification =
 
     type = "system",
 
-    priority = "Medium",
+    priority = "medium",
 
     relatedId = null,
+
+    actionLink = "",
+
+    expiresAt = null,
+
+    icon = "🔔",
 
   }) => {
 
@@ -519,7 +621,15 @@ const createNotification =
 
         relatedId,
 
+        actionLink,
+
+        expiresAt,
+
+        icon,
+
         isRead: false,
+
+        delivered: false,
 
       });
 
@@ -535,6 +645,8 @@ const createNotification =
 
       );
 
+      return null;
+
     }
 
   };
@@ -548,11 +660,22 @@ const getNotificationAnalytics =
 
     try {
 
+      const userId =
+        new mongoose.Types.ObjectId(
+          req.user._id
+        );
+
+
+      // ====================================
+      // TOTAL COUNTS
+      // ====================================
       const total =
         await Notification.countDocuments({
 
           recipient:
-            req.user._id,
+            userId,
+
+          deleted: false,
 
         });
 
@@ -560,9 +683,11 @@ const getNotificationAnalytics =
         await Notification.countDocuments({
 
           recipient:
-            req.user._id,
+            userId,
 
           isRead: false,
+
+          deleted: false,
 
         });
 
@@ -570,15 +695,17 @@ const getNotificationAnalytics =
         await Notification.countDocuments({
 
           recipient:
-            req.user._id,
+            userId,
 
           isRead: true,
+
+          deleted: false,
 
         });
 
 
       // ====================================
-      // TYPE ANALYTICS
+      // TYPE STATS
       // ====================================
       const typeStats =
         await Notification.aggregate([
@@ -588,7 +715,9 @@ const getNotificationAnalytics =
             $match: {
 
               recipient:
-                req.user._id,
+                userId,
+
+              deleted: false,
 
             },
 
@@ -611,11 +740,21 @@ const getNotificationAnalytics =
 
           },
 
+          {
+
+            $sort: {
+
+              count: -1,
+
+            },
+
+          },
+
         ]);
 
 
       // ====================================
-      // PRIORITY ANALYTICS
+      // PRIORITY STATS
       // ====================================
       const priorityStats =
         await Notification.aggregate([
@@ -625,7 +764,9 @@ const getNotificationAnalytics =
             $match: {
 
               recipient:
-                req.user._id,
+                userId,
+
+              deleted: false,
 
             },
 
@@ -648,13 +789,23 @@ const getNotificationAnalytics =
 
           },
 
+          {
+
+            $sort: {
+
+              count: -1,
+
+            },
+
+          },
+
         ]);
 
 
       // ====================================
       // RESPONSE
       // ====================================
-      res.status(200).json({
+      return res.status(200).json({
 
         success: true,
 
@@ -683,7 +834,7 @@ const getNotificationAnalytics =
         error
       );
 
-      res.status(500).json({
+      return res.status(500).json({
 
         success: false,
 
@@ -703,6 +854,8 @@ const getNotificationAnalytics =
 module.exports = {
 
   getNotifications,
+
+  getUnreadCount,
 
   markNotificationRead,
 

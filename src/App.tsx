@@ -23,7 +23,14 @@ import {
 
   Route,
 
+  Navigate,
+
 } from "react-router-dom";
+
+import {
+  Suspense,
+  lazy,
+} from "react";
 
 
 // ==========================================
@@ -47,920 +54,1198 @@ import useSocket
 
 
 // ==========================================
+// LOADER
+// ==========================================
+import {
+  Loader2,
+} from "lucide-react";
+
+
+// ==========================================
 // PUBLIC PAGES
 // ==========================================
-import Index
-  from "./pages/Index";
+const Index =
+  lazy(() =>
+    import("./pages/Index")
+  );
 
-import NotFound
-  from "./pages/NotFound";
+const NotFound =
+  lazy(() =>
+    import("./pages/NotFound")
+  );
 
-import Register
-  from "./pages/Register";
+const Register =
+  lazy(() =>
+    import("./pages/Register")
+  );
 
-import { LoginForm }
-  from "@/components/auth/LoginForm";
+const ForgotPassword =
+  lazy(() =>
+    import("./pages/ForgotPassword")
+  );
 
-import ForgotPassword
-  from "@/pages/ForgotPassword";
+const VerifyOtp =
+  lazy(() =>
+    import("./pages/VerifyOtp")
+  );
 
-import VerifyOtp
-  from "@/pages/VerifyOtp";
+const ResetPassword =
+  lazy(() =>
+    import("./pages/ResetPassword")
+  );
 
-import ResetPassword
-  from "@/pages/ResetPassword";
+const ChangePassword =
+  lazy(() =>
+    import("./pages/ChangePassword")
+  );
 
-import ChangePassword
-  from "@/pages/ChangePassword";
+const About =
+  lazy(() =>
+    import("./pages/About")
+  );
 
-import About
-  from "@/pages/About";
+const PremiumUpgrade =
+  lazy(() =>
+    import("./pages/PremiumUpgrade")
+  );
 
-import { PremiumUpgrade }
-  from "@/pages/PremiumUpgrade";
+import {
+  LoginForm,
+} from "@/components/auth/LoginForm";
 
 
 // ==========================================
 // STUDENT PAGES
 // ==========================================
-import {
+const StudentDashboard =
+  lazy(() =>
+    import("@/pages/student/StudentDashboard")
+  );
 
-  StudentDashboard,
+const JobsPage =
+  lazy(() =>
+    import("@/pages/student/JobsPage")
+  );
 
-} from "@/pages/student/StudentDashboard";
+const MentorshipPage =
+  lazy(() =>
+    import("@/pages/student/MentorshipPage")
+  );
 
-import JobsPage
-  from "@/pages/student/JobsPage";
+const AIChatPage =
+  lazy(() =>
+    import("./pages/student/AIChatPage")
+  );
 
-import MentorshipPage
-  from "@/pages/student/MentorshipPage";
+const ChatPage =
+  lazy(() =>
+    import("@/pages/student/ChatPage")
+  );
 
-import AIChatPage
-  from "./pages/student/AIChatPage";
+const EventsPage =
+  lazy(() =>
+    import("@/pages/student/EventsPage")
+  );
 
-import ChatPage
-  from "@/pages/student/ChatPage";
+const AlumniDirectory =
+  lazy(() =>
+    import("@/pages/student/AlumniDirectory")
+  );
 
-import EventsPage
-  from "@/pages/student/EventsPage";
+const SearchUsersPage =
+  lazy(() =>
+    import("@/pages/student/SearchUsersPage")
+  );
 
-import {
+const GuidanceRequestPage =
+  lazy(() =>
+    import("@/pages/student/GuidanceRequestPage")
+  );
 
-  AlumniDirectory,
+const RecommendationsPage =
+  lazy(() =>
+    import("@/pages/student/RecommendationsPage")
+  );
 
-} from "@/pages/student/AlumniDirectory";
+const MyGuidanceRequestsPage =
+  lazy(() =>
+    import("@/pages/student/MyGuidanceRequestsPage")
+  );
 
-import SearchUsersPage
-  from "@/pages/student/SearchUsersPage";
-
-import GuidanceRequestPage
-  from "@/pages/student/GuidanceRequestPage";
-
-import RecommendationsPage
-  from "@/pages/student/RecommendationsPage";
+const RaiseDoubtPage =
+  lazy(() =>
+    import("@/pages/student/RaiseDoubtPage")
+  );
 
 
 // ==========================================
 // ALUMNI PAGES
 // ==========================================
-import {
+const AlumniDashboard =
+  lazy(() =>
+    import("@/pages/alumni/AlumniDashboard")
+  );
 
-  AlumniDashboard,
+const AlumniChatPage =
+  lazy(() =>
+    import("@/pages/alumni/AlumniChatPage")
+  );
 
-} from "@/pages/alumni/AlumniDashboard";
+const FundraisingHub =
+  lazy(() =>
+    import("@/pages/alumni/FundraisingHub")
+  );
 
-import AlumniChatPage
-  from "@/pages/alumni/AlumniChatPage";
+const StudentsDirectory =
+  lazy(() =>
+    import("@/pages/alumni/StudentsDirectory")
+  );
 
-import {
+const GuidanceRequestsPage =
+  lazy(() =>
+    import("@/pages/alumni/GuidanceRequestsPage")
+  );
 
-  FundraisingHub,
+const PostJobPage =
+  lazy(() =>
+    import("@/pages/alumni/PostJobPage")
+  );
 
-} from "@/pages/alumni/FundraisingHub";
+const CreateEventPage =
+  lazy(() =>
+    import("@/pages/alumni/CreateEventPage")
+  );
 
-import {
+const AlumniMentorshipPage =
+  lazy(() =>
+    import("@/pages/alumni/AlumniMentorshipPage")
+  );
 
-  StudentsDirectory,
-
-} from "@/pages/alumni/StudentsDirectory";
-
-import GuidanceRequestsPage
-  from "@/pages/alumni/GuidanceRequestsPage";
-
-import PostJobPage
-  from "@/pages/alumni/PostJobPage";
-
-import CreateEventPage
-  from "@/pages/alumni/CreateEventPage";
-
-import AlumniMentorshipPage
-  from "@/pages/alumni/AlumniMentorshipPage";
-
-import ApplicationsPage
-  from "@/pages/alumni/ApplicationsPage";
+const ApplicationsPage =
+  lazy(() =>
+    import("@/pages/alumni/ApplicationsPage")
+  );
 
 
 // ==========================================
 // ADMIN PAGES
 // ==========================================
-import {
+const AdminDashboard =
+  lazy(() =>
+    import("@/pages/admin/AdminDashboard")
+  );
 
-  AdminDashboard,
+const AdminStudentsDirectory =
+  lazy(() =>
+    import("@/pages/admin/StudentsDirectory")
+  );
 
-} from "@/pages/admin/AdminDashboard";
+const AnalyticsPage =
+  lazy(() =>
+    import("@/pages/admin/AnalyticsPage")
+  );
 
-import {
+const AdminApprovals =
+  lazy(() =>
+    import("@/pages/admin/AdminApprovals")
+  );
 
-  StudentsDirectory as AdminStudentsDirectory,
+const LeaderboardPage =
+  lazy(() =>
+    import("@/pages/admin/LeaderboardPage")
+  );
 
-} from "@/pages/admin/StudentsDirectory";
-
-import {
-
-  AnalyticsPage,
-
-} from "@/pages/admin/AnalyticsPage";
-
-import AdminApprovals
-  from "@/pages/admin/AdminApprovals";
-
-import LeaderboardPage
-  from "@/pages/admin/LeaderboardPage";
+const UploadDatasetPage =
+  lazy(() =>
+    import("@/pages/admin/UploadDatasetPage")
+  );
 
 
 // ==========================================
 // COMMON PAGES
 // ==========================================
-import {
+const ProfileEdit =
+  lazy(() =>
+    import("@/pages/ProfileEdit")
+  );
 
-  ProfileEdit,
-
-} from "@/pages/ProfileEdit";
-
-import NotificationsPage
-  from "@/pages/NotificationsPage";
+const NotificationsPage =
+  lazy(() =>
+    import("@/pages/NotificationsPage")
+  );
 
 
 // ==========================================
 // QUERY CLIENT
 // ==========================================
 const queryClient =
-  new QueryClient();
+  new QueryClient({
+
+    defaultOptions: {
+
+      queries: {
+
+        retry: 1,
+
+        refetchOnWindowFocus:
+          false,
+
+      },
+
+    },
+
+  });
+
+
+// ==========================================
+// PAGE LOADER
+// ==========================================
+const PageLoader =
+  () => (
+
+    <div className="min-h-screen flex items-center justify-center bg-background">
+
+      <div className="text-center">
+
+        <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
+
+        <h2 className="text-2xl font-bold">
+
+          Loading AlumniConnect...
+
+        </h2>
+
+        <p className="text-muted-foreground mt-2">
+
+          Please wait
+
+        </p>
+
+      </div>
+
+    </div>
+
+  );
+
+
+// ==========================================
+// SOCKET INITIALIZER
+// ==========================================
+const SocketInitializer =
+  () => {
+
+    useSocket();
+
+    return null;
+
+  };
 
 
 // ==========================================
 // APP CONTENT
 // ==========================================
-const AppContent = () => {
+const AppContent =
+  () => {
 
-  // ========================================
-  // SOCKET INITIALIZATION
-  // ========================================
-  useSocket();
+    return (
 
-  return (
+      <Suspense
+        fallback={<PageLoader />}
+      >
 
-    <Routes>
+        <Routes>
 
-      {/* ====================================== */}
-      {/* PUBLIC ROUTES */}
-      {/* ====================================== */}
+          {/* ====================================== */}
+          {/* HOME */}
+          {/* ====================================== */}
 
-      <Route
-        path="/"
-        element={<Index />}
-      />
+          <Route
+            path="/"
+            element={<Index />}
+          />
 
 
-      {/* LOGIN */}
-      <Route
+          {/* ====================================== */}
+          {/* PUBLIC ROUTES */}
+          {/* ====================================== */}
 
-        path="/login"
+          <Route
 
-        element={
+            path="/login"
 
-          <PublicRoute>
+            element={
 
-            <LoginForm />
+              <PublicRoute>
 
-          </PublicRoute>
+                <LoginForm />
 
-        }
+              </PublicRoute>
 
-      />
+            }
 
+          />
 
-      {/* REGISTER */}
-      <Route
 
-        path="/register"
+          <Route
 
-        element={
+            path="/register"
 
-          <PublicRoute>
+            element={
 
-            <Register />
+              <PublicRoute>
 
-          </PublicRoute>
+                <Register />
 
-        }
+              </PublicRoute>
 
-      />
+            }
 
+          />
 
-      {/* FORGOT PASSWORD */}
-      <Route
-        path="/forgot-password"
-        element={<ForgotPassword />}
-      />
 
-      <Route
-        path="/verify-otp"
-        element={<VerifyOtp />}
-      />
+          <Route
 
-      <Route
-        path="/reset-password"
-        element={<ResetPassword />}
-      />
+            path="/forgot-password"
 
+            element={
 
-      {/* CHANGE PASSWORD */}
-      <Route
+              <PublicRoute>
 
-        path="/change-password"
+                <ForgotPassword />
 
-        element={
+              </PublicRoute>
 
-          <ProtectedRoute
+            }
 
-            allowedRoles={[
+          />
 
-              "student",
 
-              "alumni",
+          <Route
 
-              "admin",
+            path="/verify-otp"
 
-            ]}
+            element={
 
-          >
+              <PublicRoute>
 
-            <ChangePassword />
+                <VerifyOtp />
 
-          </ProtectedRoute>
+              </PublicRoute>
 
-        }
+            }
 
-      />
+          />
 
 
-      {/* ====================================== */}
-      {/* STUDENT ROUTES */}
-      {/* ====================================== */}
+          <Route
 
-      <Route
+            path="/reset-password"
 
-        path="/student/dashboard"
+            element={
 
-        element={
+              <PublicRoute>
 
-          <ProtectedRoute
-            allowedRoles={["student"]}
-          >
+                <ResetPassword />
 
-            <StudentDashboard />
+              </PublicRoute>
 
-          </ProtectedRoute>
+            }
 
-        }
+          />
 
-      />
 
+          {/* ====================================== */}
+          {/* COMMON PROTECTED */}
+          {/* ====================================== */}
 
-      <Route
+          <Route
 
-        path="/student/alumni-directory"
+            path="/change-password"
 
-        element={
+            element={
 
-          <ProtectedRoute
-            allowedRoles={["student"]}
-          >
+              <ProtectedRoute
 
-            <AlumniDirectory />
+                allowedRoles={[
 
-          </ProtectedRoute>
+                  "student",
 
-        }
+                  "alumni",
 
-      />
+                  "admin",
 
+                  "faculty",
 
-      <Route
+                ]}
 
-        path="/student/search"
+              >
 
-        element={
+                <ChangePassword />
 
-          <ProtectedRoute
-            allowedRoles={["student"]}
-          >
+              </ProtectedRoute>
 
-            <SearchUsersPage />
+            }
 
-          </ProtectedRoute>
+          />
 
-        }
 
-      />
+          <Route
 
+            path="/notifications"
 
-      <Route
+            element={
 
-        path="/student/guidance/:alumniId"
+              <ProtectedRoute
 
-        element={
+                allowedRoles={[
 
-          <ProtectedRoute
-            allowedRoles={["student"]}
-          >
+                  "student",
 
-            <GuidanceRequestPage />
+                  "alumni",
 
-          </ProtectedRoute>
+                  "admin",
 
-        }
+                  "faculty",
 
-      />
+                ]}
 
+              >
 
-      <Route
+                <NotificationsPage />
 
-        path="/student/recommendations"
+              </ProtectedRoute>
 
-        element={
+            }
 
-          <ProtectedRoute
-            allowedRoles={["student"]}
-          >
+          />
 
-            <RecommendationsPage />
 
-          </ProtectedRoute>
+          <Route
 
-        }
+            path="/profile/edit"
 
-      />
+            element={
 
+              <ProtectedRoute
 
-      <Route
+                allowedRoles={[
 
-        path="/student/ai-chat"
+                  "student",
 
-        element={
+                  "alumni",
 
-          <ProtectedRoute
-            allowedRoles={["student"]}
-          >
+                  "admin",
 
-            <AIChatPage />
+                  "faculty",
 
-          </ProtectedRoute>
+                ]}
 
-        }
+              >
 
-      />
+                <ProfileEdit />
 
+              </ProtectedRoute>
 
-      <Route
+            }
 
-        path="/student/jobs"
+          />
 
-        element={
 
-          <ProtectedRoute
-            allowedRoles={["student"]}
-          >
+          {/* ====================================== */}
+          {/* STUDENT */}
+          {/* ====================================== */}
 
-            <JobsPage />
+          <Route
 
-          </ProtectedRoute>
+            path="/student/dashboard"
 
-        }
+            element={
 
-      />
+              <ProtectedRoute
+                allowedRoles={["student"]}
+              >
 
+                <StudentDashboard />
 
-      <Route
+              </ProtectedRoute>
 
-        path="/student/mentorship"
+            }
 
-        element={
+          />
 
-          <ProtectedRoute
-            allowedRoles={["student"]}
-          >
 
-            <MentorshipPage />
+          <Route
 
-          </ProtectedRoute>
+            path="/student/alumni-directory"
 
-        }
+            element={
 
-      />
+              <ProtectedRoute
+                allowedRoles={["student"]}
+              >
 
+                <AlumniDirectory />
 
-      <Route
+              </ProtectedRoute>
 
-        path="/student/chat"
+            }
 
-        element={
+          />
 
-          <ProtectedRoute
-            allowedRoles={["student"]}
-          >
 
-            <ChatPage />
+          <Route
 
-          </ProtectedRoute>
+            path="/student/search"
 
-        }
+            element={
 
-      />
+              <ProtectedRoute
+                allowedRoles={["student"]}
+              >
 
+                <SearchUsersPage />
 
-      <Route
+              </ProtectedRoute>
 
-        path="/student/chat/:userId"
+            }
 
-        element={
+          />
 
-          <ProtectedRoute
-            allowedRoles={["student"]}
-          >
 
-            <ChatPage />
+          <Route
 
-          </ProtectedRoute>
+            path="/student/guidance"
 
-        }
+            element={
 
-      />
+              <Navigate
+                to="/student/search"
+                replace
+              />
 
+            }
 
-      <Route
+          />
 
-        path="/student/events"
+          <Route
 
-        element={
+            path="/student/guidance/:alumniId"
 
-          <ProtectedRoute
-            allowedRoles={["student"]}
-          >
+            element={
 
-            <EventsPage />
+              <ProtectedRoute
+                allowedRoles={["student"]}
+              >
 
-          </ProtectedRoute>
+                <GuidanceRequestPage />
 
-        }
+              </ProtectedRoute>
 
-      />
+            }
 
+          />
 
-      {/* ====================================== */}
-      {/* ALUMNI ROUTES */}
-      {/* ====================================== */}
 
-      <Route
+          <Route
 
-        path="/alumni/dashboard"
+            path="/student/recommendations"
 
-        element={
+            element={
 
-          <ProtectedRoute
-            allowedRoles={["alumni"]}
-          >
+              <ProtectedRoute
+                allowedRoles={["student"]}
+              >
 
-            <AlumniDashboard />
+                <RecommendationsPage />
 
-          </ProtectedRoute>
+              </ProtectedRoute>
 
-        }
+            }
 
-      />
+          />
 
 
-      <Route
+          <Route
 
-        path="/alumni/fundraising"
+            path="/student/my-guidance"
 
-        element={
+            element={
 
-          <ProtectedRoute
-            allowedRoles={["alumni"]}
-          >
+              <ProtectedRoute
+                allowedRoles={["student"]}
+              >
 
-            <FundraisingHub />
+                <MyGuidanceRequestsPage />
 
-          </ProtectedRoute>
+              </ProtectedRoute>
 
-        }
+            }
 
-      />
+          />
 
 
-      <Route
+          <Route
 
-        path="/alumni/students-directory"
+            path="/student/raise-doubt"
 
-        element={
+            element={
 
-          <ProtectedRoute
-            allowedRoles={["alumni"]}
-          >
+              <ProtectedRoute
+                allowedRoles={["student"]}
+              >
 
-            <StudentsDirectory />
+                <RaiseDoubtPage />
 
-          </ProtectedRoute>
+              </ProtectedRoute>
 
-        }
+            }
 
-      />
+          />
 
 
-      <Route
+          <Route
 
-        path="/alumni/post-job"
+            path="/student/ai-chat"
 
-        element={
+            element={
 
-          <ProtectedRoute
-            allowedRoles={["alumni"]}
-          >
+              <ProtectedRoute
+                allowedRoles={["student"]}
+              >
 
-            <PostJobPage />
+                <AIChatPage />
 
-          </ProtectedRoute>
+              </ProtectedRoute>
 
-        }
+            }
 
-      />
+          />
 
 
-      <Route
+          <Route
 
-        path="/alumni/create-event"
+            path="/student/jobs"
 
-        element={
+            element={
 
-          <ProtectedRoute
-            allowedRoles={["alumni"]}
-          >
+              <ProtectedRoute
+                allowedRoles={["student"]}
+              >
 
-            <CreateEventPage />
+                <JobsPage />
 
-          </ProtectedRoute>
+              </ProtectedRoute>
 
-        }
+            }
 
-      />
+          />
 
 
-      <Route
+          <Route
 
-        path="/alumni/mentorship"
+            path="/student/mentorship"
 
-        element={
+            element={
 
-          <ProtectedRoute
-            allowedRoles={["alumni"]}
-          >
+              <ProtectedRoute
+                allowedRoles={["student"]}
+              >
 
-            <AlumniMentorshipPage />
+                <MentorshipPage />
 
-          </ProtectedRoute>
+              </ProtectedRoute>
 
-        }
+            }
 
-      />
+          />
 
 
-      <Route
+          <Route
 
-        path="/alumni/guidance-requests"
+            path="/student/chat"
 
-        element={
+            element={
 
-          <ProtectedRoute
-            allowedRoles={["alumni"]}
-          >
+              <ProtectedRoute
+                allowedRoles={["student"]}
+              >
 
-            <GuidanceRequestsPage />
+                <ChatPage />
 
-          </ProtectedRoute>
+              </ProtectedRoute>
 
-        }
+            }
 
-      />
+          />
 
 
-      <Route
+          <Route
 
-        path="/alumni/applications"
+            path="/student/chat/:userId"
 
-        element={
+            element={
 
-          <ProtectedRoute
-            allowedRoles={["alumni"]}
-          >
+              <ProtectedRoute
+                allowedRoles={["student"]}
+              >
 
-            <ApplicationsPage />
+                <ChatPage />
 
-          </ProtectedRoute>
+              </ProtectedRoute>
 
-        }
+            }
 
-      />
+          />
 
 
-      <Route
+          <Route
 
-        path="/alumni/chat"
+            path="/student/events"
 
-        element={
+            element={
 
-          <ProtectedRoute
-            allowedRoles={["alumni"]}
-          >
+              <ProtectedRoute
+                allowedRoles={["student"]}
+              >
 
-            <AlumniChatPage />
+                <EventsPage />
 
-          </ProtectedRoute>
+              </ProtectedRoute>
 
-        }
+            }
 
-      />
+          />
 
 
-      <Route
+          {/* ====================================== */}
+          {/* ALUMNI */}
+          {/* ====================================== */}
 
-        path="/alumni/chat/:userId"
+          <Route
 
-        element={
+            path="/alumni/dashboard"
 
-          <ProtectedRoute
-            allowedRoles={["alumni"]}
-          >
+            element={
 
-            <AlumniChatPage />
+              <ProtectedRoute
+                allowedRoles={["alumni"]}
+              >
 
-          </ProtectedRoute>
+                <AlumniDashboard />
 
-        }
+              </ProtectedRoute>
 
-      />
+            }
 
+          />
 
-      {/* ====================================== */}
-      {/* ADMIN ROUTES */}
-      {/* ====================================== */}
 
-      <Route
+          <Route
 
-        path="/admin/dashboard"
+            path="/alumni/fundraising"
 
-        element={
+            element={
 
-          <ProtectedRoute
-            allowedRoles={["admin"]}
-          >
+              <ProtectedRoute
+                allowedRoles={["alumni"]}
+              >
 
-            <AdminDashboard />
+                <FundraisingHub />
 
-          </ProtectedRoute>
+              </ProtectedRoute>
 
-        }
+            }
 
-      />
+          />
 
 
-      <Route
+          <Route
 
-        path="/admin/users"
+            path="/alumni/students-directory"
 
-        element={
+            element={
 
-          <ProtectedRoute
-            allowedRoles={["admin"]}
-          >
+              <ProtectedRoute
+                allowedRoles={["alumni"]}
+              >
 
-            <AdminStudentsDirectory />
+                <StudentsDirectory />
 
-          </ProtectedRoute>
+              </ProtectedRoute>
 
-        }
+            }
 
-      />
+          />
 
 
-      <Route
+          <Route
 
-        path="/admin/approvals"
+            path="/alumni/post-job"
 
-        element={
+            element={
 
-          <ProtectedRoute
-            allowedRoles={["admin"]}
-          >
+              <ProtectedRoute
+                allowedRoles={["alumni"]}
+              >
 
-            <AdminApprovals />
+                <PostJobPage />
 
-          </ProtectedRoute>
+              </ProtectedRoute>
 
-        }
+            }
 
-      />
+          />
 
 
-      <Route
+          <Route
 
-        path="/admin/analytics"
+            path="/alumni/create-event"
 
-        element={
+            element={
 
-          <ProtectedRoute
-            allowedRoles={["admin"]}
-          >
+              <ProtectedRoute
+                allowedRoles={["alumni"]}
+              >
 
-            <AnalyticsPage />
+                <CreateEventPage />
 
-          </ProtectedRoute>
+              </ProtectedRoute>
 
-        }
+            }
 
-      />
+          />
 
 
-      <Route
+          <Route
 
-        path="/admin/notifications"
+            path="/alumni/mentorship"
 
-        element={
+            element={
 
-          <ProtectedRoute
-            allowedRoles={["admin"]}
-          >
+              <ProtectedRoute
+                allowedRoles={["alumni"]}
+              >
 
-            <NotificationsPage />
+                <AlumniMentorshipPage />
 
-          </ProtectedRoute>
+              </ProtectedRoute>
 
-        }
+            }
 
-      />
+          />
 
 
-      <Route
+          <Route
 
-        path="/admin/leaderboard"
+            path="/alumni/guidance-requests"
 
-        element={
+            element={
 
-          <ProtectedRoute
-            allowedRoles={["admin"]}
-          >
+              <ProtectedRoute
+                allowedRoles={["alumni"]}
+              >
 
-            <LeaderboardPage />
+                <GuidanceRequestsPage />
 
-          </ProtectedRoute>
+              </ProtectedRoute>
 
-        }
+            }
 
-      />
+          />
 
 
-      {/* ====================================== */}
-      {/* COMMON ROUTES */}
-      {/* ====================================== */}
+          <Route
 
-      <Route
+            path="/alumni/applications"
 
-        path="/notifications"
+            element={
 
-        element={
+              <ProtectedRoute
+                allowedRoles={["alumni"]}
+              >
 
-          <ProtectedRoute
+                <ApplicationsPage />
 
-            allowedRoles={[
+              </ProtectedRoute>
 
-              "student",
+            }
 
-              "alumni",
+          />
 
-              "admin",
 
-            ]}
+          <Route
 
-          >
+            path="/alumni/chat"
 
-            <NotificationsPage />
+            element={
 
-          </ProtectedRoute>
+              <ProtectedRoute
+                allowedRoles={["alumni"]}
+              >
 
-        }
+                <AlumniChatPage />
 
-      />
+              </ProtectedRoute>
 
+            }
 
-      <Route
+          />
 
-        path="/profile/edit"
 
-        element={
+          {/* ====================================== */}
+          {/* ADMIN */}
+          {/* ====================================== */}
 
-          <ProtectedRoute
+          <Route
 
-            allowedRoles={[
+            path="/admin/dashboard"
 
-              "student",
+            element={
 
-              "alumni",
+              <ProtectedRoute
+                allowedRoles={["admin"]}
+              >
 
-              "admin",
+                <AdminDashboard />
 
-            ]}
+              </ProtectedRoute>
 
-          >
+            }
 
-            <ProfileEdit />
+          />
 
-          </ProtectedRoute>
 
-        }
+          <Route
 
-      />
+            path="/admin/users"
 
+            element={
 
-      {/* ====================================== */}
-      {/* OTHER ROUTES */}
-      {/* ====================================== */}
+              <ProtectedRoute
+                allowedRoles={["admin"]}
+              >
 
-      <Route
-        path="/premium"
-        element={<PremiumUpgrade />}
-      />
+                <AdminStudentsDirectory />
 
-      <Route
-        path="/about"
-        element={<About />}
-      />
+              </ProtectedRoute>
 
+            }
 
-      {/* ====================================== */}
-      {/* 404 */}
-      {/* ====================================== */}
+          />
 
-      <Route
-        path="*"
-        element={<NotFound />}
-      />
 
-    </Routes>
+          <Route
 
-  );
+            path="/admin/approvals"
 
-};
+            element={
+
+              <ProtectedRoute
+                allowedRoles={["admin"]}
+              >
+
+                <AdminApprovals />
+
+              </ProtectedRoute>
+
+            }
+
+          />
+
+
+          <Route
+
+            path="/admin/analytics"
+
+            element={
+
+              <ProtectedRoute
+                allowedRoles={["admin"]}
+              >
+
+                <AnalyticsPage />
+
+              </ProtectedRoute>
+
+            }
+
+          />
+
+
+          <Route
+
+            path="/admin/leaderboard"
+
+            element={
+
+              <ProtectedRoute
+                allowedRoles={["admin"]}
+              >
+
+                <LeaderboardPage />
+
+              </ProtectedRoute>
+
+            }
+
+          />
+
+
+          <Route
+
+            path="/admin/upload-dataset"
+
+            element={
+
+              <ProtectedRoute
+                allowedRoles={["admin"]}
+              >
+
+                <UploadDatasetPage />
+
+              </ProtectedRoute>
+
+            }
+
+          />
+
+
+          {/* ====================================== */}
+          {/* OTHER */}
+          {/* ====================================== */}
+
+          <Route
+            path="/premium"
+            element={<PremiumUpgrade />}
+          />
+
+          <Route
+            path="/about"
+            element={<About />}
+          />
+
+
+          {/* ====================================== */}
+          {/* REDIRECT */}
+          {/* ====================================== */}
+
+          <Route
+
+            path="/dashboard"
+
+            element={
+
+              <Navigate
+                to="/login"
+                replace
+              />
+
+            }
+
+          />
+
+          <Route
+            path="/jobs"
+            element={
+              <Navigate
+                to="/student/jobs"
+                replace
+              />
+            }
+          />
+
+          <Route
+            path="/events"
+            element={
+              <Navigate
+                to="/student/events"
+                replace
+              />
+            }
+          />
+
+          <Route
+            path="/mentorship"
+            element={
+              <Navigate
+                to="/student/mentorship"
+                replace
+              />
+            }
+          />
+
+          <Route
+            path="/guidance"
+            element={
+              <Navigate
+                to="/student/search"
+                replace
+              />
+            }
+          />
+
+          <Route
+            path="/raise-doubt"
+            element={
+              <Navigate
+                to="/student/raise-doubt"
+                replace
+              />
+            }
+          />
+
+
+          {/* ====================================== */}
+          {/* 404 */}
+          {/* ====================================== */}
+
+          <Route
+            path="*"
+            element={<NotFound />}
+          />
+
+        </Routes>
+
+      </Suspense>
+
+    );
+
+  };
 
 
 // ==========================================
 // MAIN APP
 // ==========================================
-const App = () => (
+const App =
+  () => (
 
-  <QueryClientProvider client={queryClient}>
+    <QueryClientProvider
+      client={queryClient}
+    >
 
-    <AuthProvider>
+      <AuthProvider>
 
-      <TooltipProvider>
+        <TooltipProvider>
 
-        <Toaster />
+          <BrowserRouter>
 
-        <Sonner />
+            <SocketInitializer />
 
-        <BrowserRouter>
+            <Toaster />
 
-          <AppContent />
+            <Sonner />
 
-        </BrowserRouter>
+            <AppContent />
 
-      </TooltipProvider>
+          </BrowserRouter>
 
-    </AuthProvider>
+        </TooltipProvider>
 
-  </QueryClientProvider>
+      </AuthProvider>
 
-);
+    </QueryClientProvider>
+
+  );
 
 
 // ==========================================

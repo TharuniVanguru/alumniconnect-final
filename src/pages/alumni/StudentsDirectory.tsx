@@ -3,8 +3,7 @@ import {
   useState,
 } from "react";
 
-import axios from "axios";
-
+import api, { apiGet, apiPost, apiPut, apiPatch, apiDelete } from "@/utils/api";
 import {
   useNavigate,
 } from "react-router-dom";
@@ -44,6 +43,9 @@ import {
   GraduationCap,
   Loader2,
   MessageCircle,
+  Sparkles,
+  Trophy,
+  Users,
 
 } from "lucide-react";
 
@@ -85,6 +87,10 @@ interface Student {
 
   linkedinUrl?: string;
 
+  profileImage?: string;
+
+  bio?: string;
+
   projects: {
 
     name: string;
@@ -99,7 +105,7 @@ interface Student {
 // ==========================================
 // COMPONENT
 // ==========================================
-export const StudentsDirectory =
+const StudentsDirectory =
   () => {
 
     // ======================================
@@ -117,6 +123,14 @@ export const StudentsDirectory =
 
       students,
       setStudents,
+
+    ] = useState<Student[]>([]);
+
+
+    const [
+
+      filteredStudents,
+      setFilteredStudents,
 
     ] = useState<Student[]>([]);
 
@@ -170,10 +184,13 @@ export const StudentsDirectory =
 
           setLoading(true);
 
-          const response =
-            await axios.get(
+          setError("");
 
-              "http://localhost:5000/users/students",
+
+          const response =
+            await api.get(
+
+              "/users/students",
 
               {
 
@@ -188,7 +205,12 @@ export const StudentsDirectory =
 
             );
 
+
           setStudents(
+            response.data || []
+          );
+
+          setFilteredStudents(
             response.data || []
           );
 
@@ -239,34 +261,48 @@ export const StudentsDirectory =
     // ======================================
     // FILTER STUDENTS
     // ======================================
-    const filteredStudents =
-      students.filter(
+    useEffect(() => {
 
-        (student) =>
+      const filtered =
+        students.filter(
 
-          student.name
-            ?.toLowerCase()
-            .includes(
-              searchQuery.toLowerCase()
-            ) ||
+          (student) =>
 
-          student.department
-            ?.toLowerCase()
-            .includes(
-              searchQuery.toLowerCase()
-            ) ||
+            student.name
+              ?.toLowerCase()
+              .includes(
+                searchQuery.toLowerCase()
+              ) ||
 
-          student.skills?.some(
-            (skill) =>
+            student.department
+              ?.toLowerCase()
+              .includes(
+                searchQuery.toLowerCase()
+              ) ||
 
-              skill
-                .toLowerCase()
-                .includes(
-                  searchQuery.toLowerCase()
-                )
-          )
+            student.skills?.some(
+              (skill) =>
 
+                skill
+                  .toLowerCase()
+                  .includes(
+                    searchQuery.toLowerCase()
+                  )
+            )
+
+        );
+
+
+      setFilteredStudents(
+        filtered
       );
+
+    }, [
+
+      searchQuery,
+      students,
+
+    ]);
 
 
     // ======================================
@@ -278,45 +314,58 @@ export const StudentsDirectory =
 
         <Header />
 
-        <main className="container mx-auto px-4 py-6">
+        <main className="max-w-7xl mx-auto px-4 py-8">
 
-          {/* HEADER */}
-          <div className="mb-8">
 
-            <div className="flex items-center justify-between mb-6">
+          {/* HERO */}
+          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-primary via-purple-600 to-indigo-600 text-white shadow-2xl mb-10">
 
-              <div>
+            <div className="absolute inset-0 bg-black/10" />
 
-                <h1 className="text-3xl font-bold text-foreground mb-2">
+            <div className="relative p-8 md:p-10">
 
-                  Students Directory
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
 
-                </h1>
+                <div className="flex items-center gap-5">
 
-                <p className="text-muted-foreground">
+                  <div className="h-20 w-20 rounded-3xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
 
-                  Browse talented students and connect with future professionals
+                    <Users className="h-10 w-10 text-white" />
 
-                </p>
+                  </div>
+
+                  <div>
+
+                    <h1 className="text-4xl md:text-5xl font-bold">
+
+                      Students Directory
+
+                    </h1>
+
+                    <p className="text-white/90 mt-3 text-lg max-w-2xl">
+
+                      Discover talented students, future developers, innovators,
+                      and connect with the next generation of professionals.
+
+                    </p>
+
+                  </div>
+
+                </div>
 
               </div>
 
-
-              <Badge className="bg-gradient-primary text-white px-4 py-2">
-
-                {filteredStudents.length}
-                {" "}
-                Students
-
-              </Badge>
-
             </div>
 
+          </div>
 
-            {/* SEARCH */}
-            <div className="relative">
 
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+          {/* SEARCH */}
+          <div className="mb-8">
+
+            <div className="relative max-w-2xl">
+
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
 
               <Input
 
@@ -332,7 +381,7 @@ export const StudentsDirectory =
                   )
                 }
 
-                className="pl-10 h-12"
+                className="pl-12 h-14 rounded-2xl text-base shadow-sm"
 
               />
 
@@ -344,7 +393,7 @@ export const StudentsDirectory =
           {/* ERROR */}
           {error && (
 
-            <div className="bg-red-100 text-red-600 p-4 rounded-xl mb-5">
+            <div className="bg-red-100 border border-red-300 text-red-600 p-4 rounded-2xl mb-6">
 
               {error}
 
@@ -356,9 +405,21 @@ export const StudentsDirectory =
           {/* LOADING */}
           {loading ? (
 
-            <div className="flex items-center justify-center py-20">
+            <div className="text-center py-24">
 
-              <Loader2 className="h-10 w-10 animate-spin text-primary" />
+              <Loader2 className="h-12 w-12 animate-spin mx-auto text-primary mb-4" />
+
+              <h2 className="text-3xl font-bold mb-2">
+
+                Loading Students...
+
+              </h2>
+
+              <p className="text-muted-foreground">
+
+                Fetching student profiles and achievements
+
+              </p>
 
             </div>
 
@@ -366,61 +427,204 @@ export const StudentsDirectory =
 
             <>
 
-              {/* STUDENTS GRID */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* STATS */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
 
-                {filteredStudents.map(
-                  (student) => (
+                <Card className="rounded-3xl shadow-xl border-0">
 
-                    <Card
-                      key={student._id}
-                      className="shadow-soft hover:shadow-medium transition-all duration-300"
-                    >
+                  <CardContent className="p-6 flex items-center gap-4">
 
-                      <CardHeader className="pb-4">
+                    <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center">
 
-                        <div className="flex items-start justify-between">
+                      <Users className="h-7 w-7 text-primary" />
 
-                          <div className="flex items-center space-x-4">
+                    </div>
 
-                            {/* AVATAR */}
-                            <div className="h-16 w-16 rounded-full bg-gradient-accent flex items-center justify-center flex-shrink-0">
+                    <div>
 
-                              <User className="h-8 w-8 text-white" />
+                      <p className="text-muted-foreground text-sm">
 
-                            </div>
+                        Total Students
+
+                      </p>
+
+                      <h2 className="text-3xl font-bold">
+
+                        {filteredStudents.length}
+
+                      </h2>
+
+                    </div>
+
+                  </CardContent>
+
+                </Card>
 
 
-                            {/* INFO */}
-                            <div>
+                <Card className="rounded-3xl shadow-xl border-0">
 
-                              <CardTitle className="text-xl mb-1">
+                  <CardContent className="p-6 flex items-center gap-4">
 
-                                {student.name}
+                    <div className="h-14 w-14 rounded-2xl bg-yellow-100 flex items-center justify-center">
 
-                              </CardTitle>
+                      <Trophy className="h-7 w-7 text-yellow-600" />
+
+                    </div>
+
+                    <div>
+
+                      <p className="text-muted-foreground text-sm">
+
+                        Highest GPA
+
+                      </p>
+
+                      <h2 className="text-3xl font-bold">
+
+                        {
+
+                          Math.max(
+                            ...filteredStudents.map(
+                              (s) =>
+                                s.gpa || 0
+                            ),
+                            0
+                          )
+
+                        }
+
+                      </h2>
+
+                    </div>
+
+                  </CardContent>
+
+                </Card>
 
 
-                              <div className="flex flex-col space-y-1">
+                <Card className="rounded-3xl shadow-xl border-0">
 
-                                <div className="flex items-center text-sm text-muted-foreground">
+                  <CardContent className="p-6 flex items-center gap-4">
 
-                                  <GraduationCap className="h-4 w-4 mr-1" />
+                    <div className="h-14 w-14 rounded-2xl bg-purple-100 flex items-center justify-center">
+
+                      <Sparkles className="h-7 w-7 text-purple-600" />
+
+                    </div>
+
+                    <div>
+
+                      <p className="text-muted-foreground text-sm">
+
+                        Active Contributors
+
+                      </p>
+
+                      <h2 className="text-3xl font-bold">
+
+                        {
+
+                          filteredStudents.filter(
+                            (s) =>
+                              s.contributionPoints > 50
+                          ).length
+
+                        }
+
+                      </h2>
+
+                    </div>
+
+                  </CardContent>
+
+                </Card>
+
+              </div>
+
+
+              {/* STUDENT CARDS */}
+              {filteredStudents.length === 0 ? (
+
+                <div className="text-center py-24">
+
+                  <Sparkles className="h-14 w-14 mx-auto text-primary mb-5" />
+
+                  <h2 className="text-3xl font-bold mb-2">
+
+                    No Students Found
+
+                  </h2>
+
+                  <p className="text-muted-foreground">
+
+                    Try searching with different keywords
+
+                  </p>
+
+                </div>
+
+              ) : (
+
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+
+                  {filteredStudents.map(
+                    (student) => (
+
+                      <Card
+                        key={student._id}
+                        className="shadow-2xl rounded-3xl border-0 overflow-hidden hover:scale-[1.02] transition-all duration-300"
+                      >
+
+
+                        {/* TOP */}
+                        <div className="bg-gradient-to-r from-primary to-purple-600 text-white p-6">
+
+                          <div className="flex items-center justify-between">
+
+                            <div className="flex items-center gap-4">
+
+                              <div className="h-16 w-16 rounded-full bg-white/20 overflow-hidden flex items-center justify-center">
+
+                                {student.profileImage ? (
+
+                                  <img
+
+                                    src={
+                                      student.profileImage
+                                    }
+
+                                    alt={
+                                      student.name
+                                    }
+
+                                    className="h-full w-full object-cover"
+
+                                  />
+
+                                ) : (
+
+                                  <User className="h-8 w-8" />
+
+                                )}
+
+                              </div>
+
+
+                              <div>
+
+                                <h2 className="text-2xl font-bold">
+
+                                  {student.name}
+
+                                </h2>
+
+                                <p className="text-white/90">
 
                                   {student.year}
                                   {" • "}
                                   {student.department}
 
-                                </div>
-
-
-                                <div className="flex items-center text-sm text-muted-foreground">
-
-                                  <MapPin className="h-4 w-4 mr-1" />
-
-                                  {student.location || "N/A"}
-
-                                </div>
+                                </p>
 
                               </div>
 
@@ -428,334 +632,356 @@ export const StudentsDirectory =
 
                           </div>
 
-
-                          {/* GPA */}
-                          <div className="text-right">
-
-                            <Badge
-                              variant="secondary"
-                              className="mb-1"
-                            >
-
-                              GPA {student.gpa || "N/A"}
-
-                            </Badge>
+                        </div>
 
 
-                            <div className="flex items-center text-sm text-muted-foreground">
+                        {/* CONTENT */}
+                        <CardContent className="p-6 space-y-5">
 
-                              <Star className="h-3 w-3 mr-1 text-yellow-500" />
 
-                              {student.contributionPoints || 0}
-                              {" "}
-                              pts
+                          {/* BIO */}
+                          <p className="text-muted-foreground leading-7 line-clamp-3">
+
+                            {student.bio ||
+
+                              "Passionate student building skills and exploring opportunities in technology and innovation."
+
+                            }
+
+                          </p>
+
+
+                          {/* DETAILS */}
+                          <div className="space-y-4">
+
+
+                            <div className="flex items-center gap-3 text-sm">
+
+                              <MapPin className="h-4 w-4 text-primary" />
+
+                              <span>
+
+                                {student.location || "Location not added"}
+
+                              </span>
+
+                            </div>
+
+
+                            <div className="flex items-center gap-3 text-sm">
+
+                              <GraduationCap className="h-4 w-4 text-primary" />
+
+                              <span>
+
+                                GPA:
+                                {" "}
+
+                                <span className="font-semibold">
+
+                                  {student.gpa || "N/A"}
+
+                                </span>
+
+                              </span>
+
+                            </div>
+
+
+                            <div className="flex items-center gap-3 text-sm">
+
+                              <Briefcase className="h-4 w-4 text-primary" />
+
+                              <span>
+
+                                Looking For:
+                                {" "}
+
+                                <span className="font-semibold">
+
+                                  {student.lookingFor || "Opportunities"}
+
+                                </span>
+
+                              </span>
+
+                            </div>
+
+
+                            <div className="flex items-center gap-3 text-sm">
+
+                              <Star className="h-4 w-4 text-yellow-500" />
+
+                              <span>
+
+                                Contribution Points:
+                                {" "}
+
+                                <span className="font-semibold">
+
+                                  {student.contributionPoints || 0}
+
+                                </span>
+
+                              </span>
+
+                            </div>
+
+
+                            <div className="flex items-center gap-3 text-sm">
+
+                              <Calendar className="h-4 w-4 text-primary" />
+
+                              <span>
+
+                                Events Attended:
+                                {" "}
+
+                                {student.eventsAttended || 0}
+
+                              </span>
 
                             </div>
 
                           </div>
 
-                        </div>
 
-                      </CardHeader>
+                          {/* SKILLS */}
+                          <div>
 
+                            <div className="flex items-center gap-2 mb-3">
 
-                      <CardContent className="space-y-4">
+                              <Code className="h-4 w-4 text-primary" />
 
-                        {/* LOOKING FOR */}
-                        <div className="flex items-center space-x-2">
+                              <span className="font-semibold text-sm">
 
-                          <Briefcase className="h-4 w-4 text-green-600" />
+                                Skills
 
-                          <span className="text-sm font-medium">
+                              </span>
 
-                            Looking for:
-
-                          </span>
-
-                          <Badge
-                            variant="outline"
-                            className="bg-green-100 text-green-700"
-                          >
-
-                            {student.lookingFor || "Opportunities"}
-
-                          </Badge>
-
-                        </div>
+                            </div>
 
 
-                        {/* SKILLS */}
-                        <div>
+                            <div className="flex flex-wrap gap-2">
 
-                          <div className="flex items-center space-x-2 mb-2">
+                              {student.skills?.slice(0, 6).map(
+                                (skill) => (
 
-                            <Code className="h-4 w-4 text-primary" />
+                                  <Badge
+                                    key={skill}
+                                    variant="secondary"
+                                    className="rounded-xl"
+                                  >
 
-                            <span className="text-sm font-medium">
+                                    {skill}
 
-                              Skills
+                                  </Badge>
 
-                            </span>
+                                )
+                              )}
+
+                            </div>
 
                           </div>
 
 
-                          <div className="flex flex-wrap gap-2">
+                          {/* PROJECTS */}
+                          {student.projects &&
+                            student.projects.length > 0 && (
 
-                            {student.skills?.map(
-                              (skill) => (
+                              <div>
 
-                                <Badge
-                                  key={skill}
-                                  variant="outline"
-                                  className="text-xs"
+                                <div className="flex items-center gap-2 mb-3">
+
+                                  <Code className="h-4 w-4 text-purple-600" />
+
+                                  <span className="font-semibold text-sm">
+
+                                    Projects
+
+                                  </span>
+
+                                </div>
+
+
+                                <div className="space-y-3">
+
+                                  {student.projects
+                                    .slice(0, 2)
+                                    .map(
+                                      (
+                                        project,
+                                        index
+                                      ) => (
+
+                                        <div
+                                          key={index}
+                                          className="rounded-2xl bg-muted/40 p-3"
+                                        >
+
+                                          <h3 className="font-medium">
+
+                                            {project.name}
+
+                                          </h3>
+
+                                          <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+
+                                            {project.description}
+
+                                          </p>
+
+                                        </div>
+
+                                      )
+                                    )}
+
+                                </div>
+
+                              </div>
+
+                            )}
+
+
+                          {/* SOCIAL LINKS */}
+                          <div className="flex flex-wrap gap-3">
+
+
+                            {student.githubUrl && (
+
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                asChild
+                                className="rounded-xl"
+                              >
+
+                                <a
+
+                                  href={
+                                    student.githubUrl.startsWith(
+                                      "http"
+                                    )
+
+                                      ? student.githubUrl
+
+                                      : `https://${student.githubUrl}`
+
+                                  }
+
+                                  target="_blank"
+
+                                  rel="noopener noreferrer"
+
                                 >
 
-                                  {skill}
+                                  <Github className="h-4 w-4 mr-2" />
 
-                                </Badge>
+                                  GitHub
 
-                              )
+                                </a>
+
+                              </Button>
+
+                            )}
+
+
+                            {student.linkedinUrl && (
+
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                asChild
+                                className="rounded-xl"
+                              >
+
+                                <a
+
+                                  href={
+                                    student.linkedinUrl.startsWith(
+                                      "http"
+                                    )
+
+                                      ? student.linkedinUrl
+
+                                      : `https://${student.linkedinUrl}`
+
+                                  }
+
+                                  target="_blank"
+
+                                  rel="noopener noreferrer"
+
+                                >
+
+                                  <Linkedin className="h-4 w-4 mr-2" />
+
+                                  LinkedIn
+
+                                </a>
+
+                              </Button>
+
                             )}
 
                           </div>
 
-                        </div>
 
+                          {/* ACTIONS */}
+                          <div className="flex gap-3 pt-2">
 
-                        {/* PROJECTS */}
-                        {student.projects &&
-                          student.projects.length > 0 && (
-
-                            <div>
-
-                              <div className="flex items-center space-x-2 mb-2">
-
-                                <Code className="h-4 w-4 text-accent" />
-
-                                <span className="text-sm font-medium">
-
-                                  Projects (
-                                  {student.projects.length}
-                                  )
-
-                                </span>
-
-                              </div>
-
-
-                              <div className="space-y-2">
-
-                                {student.projects
-                                  .slice(0, 2)
-                                  .map(
-                                    (
-                                      project,
-                                      index
-                                    ) => (
-
-                                      <div
-                                        key={index}
-                                        className="text-sm p-2 rounded bg-muted/30"
-                                      >
-
-                                        <div className="font-medium">
-
-                                          {project.name}
-
-                                        </div>
-
-                                        <div className="text-xs text-muted-foreground">
-
-                                          {project.description}
-
-                                        </div>
-
-                                      </div>
-
-                                    )
-                                  )}
-
-                              </div>
-
-                            </div>
-
-                          )}
-
-
-                        {/* EVENTS */}
-                        <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-
-                          <Calendar className="h-4 w-4" />
-
-                          <span>
-
-                            Attended
-                            {" "}
-                            {student.eventsAttended || 0}
-                            {" "}
-                            events
-
-                          </span>
-
-                        </div>
-
-
-                        {/* SOCIAL LINKS */}
-                        <div className="flex flex-wrap gap-2">
-
-                          {student.githubUrl && (
 
                             <Button
+
                               variant="outline"
-                              size="sm"
-                              asChild
+
+                              className="flex-1 rounded-xl"
+
+                              onClick={() =>
+
+                                navigate(
+                                  `/student/profile/${student._id}`
+                                )
+
+                              }
+
                             >
 
-                              <a
+                              <ExternalLink className="h-4 w-4 mr-2" />
 
-                                href={
-                                  student.githubUrl.startsWith(
-                                    "http"
-                                  )
-
-                                    ? student.githubUrl
-
-                                    : `https://${student.githubUrl}`
-
-                                }
-
-                                target="_blank"
-
-                                rel="noopener noreferrer"
-
-                              >
-
-                                <Github className="h-4 w-4 mr-1" />
-
-                                GitHub
-
-                              </a>
+                              Profile
 
                             </Button>
 
-                          )}
-
-
-                          {student.linkedinUrl && (
 
                             <Button
-                              variant="outline"
-                              size="sm"
-                              asChild
+
+                              className="flex-1 rounded-xl"
+
+                              onClick={() =>
+
+                                navigate(
+                                  `/alumni/chat/${student._id}`
+                                )
+
+                              }
+
                             >
 
-                              <a
+                              <MessageCircle className="h-4 w-4 mr-2" />
 
-                                href={
-                                  student.linkedinUrl.startsWith(
-                                    "http"
-                                  )
-
-                                    ? student.linkedinUrl
-
-                                    : `https://${student.linkedinUrl}`
-
-                                }
-
-                                target="_blank"
-
-                                rel="noopener noreferrer"
-
-                              >
-
-                                <Linkedin className="h-4 w-4 mr-1" />
-
-                                LinkedIn
-
-                              </a>
+                              Chat
 
                             </Button>
 
-                          )}
+                          </div>
 
-                        </div>
+                        </CardContent>
 
+                      </Card>
 
-                        {/* ACTIONS */}
-                        <div className="flex space-x-2 pt-2">
-
-                          <Button
-
-                            variant="outline"
-
-                            className="flex-1"
-
-                            size="sm"
-
-                            onClick={() =>
-
-                              navigate(
-                                `/student/profile/${student._id}`
-                              )
-
-                            }
-
-                          >
-
-                            <ExternalLink className="h-4 w-4 mr-1" />
-
-                            View Profile
-
-                          </Button>
-
-
-                          <Button
-
-                            variant="default"
-
-                            className="flex-1"
-
-                            size="sm"
-
-                            onClick={() =>
-
-                              navigate(
-                                `/alumni/chat/${student._id}`
-                              )
-
-                            }
-
-                          >
-
-                            <MessageCircle className="h-4 w-4 mr-1" />
-
-                            Chat
-
-                          </Button>
-
-                        </div>
-
-                      </CardContent>
-
-                    </Card>
-
-                  )
-                )}
-
-              </div>
-
-
-              {/* EMPTY */}
-              {filteredStudents.length === 0 && (
-
-                <div className="text-center py-12">
-
-                  <p className="text-muted-foreground">
-
-                    No students found matching your search.
-
-                  </p>
+                    )
+                  )}
 
                 </div>
 
@@ -774,4 +1000,7 @@ export const StudentsDirectory =
   };
 
 
+// ==========================================
+// EXPORT
+// ==========================================
 export default StudentsDirectory;

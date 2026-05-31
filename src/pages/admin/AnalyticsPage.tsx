@@ -14,6 +14,9 @@ import {
 import { Badge }
   from "@/components/ui/badge";
 
+import { Button }
+  from "@/components/ui/button";
+
 import {
 
   Users,
@@ -22,6 +25,12 @@ import {
   Activity,
   DollarSign,
   Award,
+  RefreshCw,
+  Sparkles,
+  BarChart3,
+  PieChart as PieChartIcon,
+  LineChart as LineChartIcon,
+  Calendar,
 
 } from "lucide-react";
 
@@ -214,17 +223,17 @@ export const AnalyticsPage = () => {
 
 
   // ========================================
-  // CHART COLORS
+  // COLORS
   // ========================================
   const COLORS = [
 
-    "hsl(var(--primary))",
+    "#8B5CF6",
 
-    "hsl(var(--accent))",
+    "#06B6D4",
 
-    "hsl(var(--success))",
+    "#22C55E",
 
-    "hsl(var(--warning))",
+    "#F59E0B",
 
   ];
 
@@ -238,61 +247,102 @@ export const AnalyticsPage = () => {
 
       <Header />
 
-      <main className="container mx-auto px-4 py-6">
+      <main className="max-w-7xl mx-auto p-6">
 
-        {/* ================================= */}
-        {/* PAGE HEADER */}
-        {/* ================================= */}
 
-        <div className="mb-8">
+        {/* HERO */}
+        <div className="mb-10">
 
-          <h1 className="text-3xl font-bold text-foreground mb-2">
+          <div className="rounded-3xl overflow-hidden bg-gradient-to-r from-primary via-purple-600 to-indigo-700 text-white shadow-2xl">
 
-            Platform Analytics
+            <div className="p-8 md:p-10">
 
-          </h1>
+              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8">
 
-          <p className="text-muted-foreground">
+                <div>
 
-            Comprehensive insights into platform performance and user engagement
+                  <div className="flex items-center gap-3 mb-4">
 
-          </p>
+                    <Sparkles className="h-8 w-8 text-yellow-300" />
+
+                    <Badge className="bg-white/20 border-0 text-white">
+
+                      Admin Analytics
+
+                    </Badge>
+
+                  </div>
+
+
+                  <h1 className="text-4xl md:text-5xl font-bold">
+
+                    Platform Analytics
+
+                  </h1>
+
+
+                  <p className="text-white/90 mt-4 text-lg max-w-2xl">
+
+                    Monitor growth, engagement, fundraising, mentorships, and overall platform performance.
+
+                  </p>
+
+                </div>
+
+
+                <div className="flex gap-4">
+
+                  <Button
+                    className="bg-white text-primary hover:bg-white/90 rounded-2xl"
+                  >
+
+                    <RefreshCw className="h-4 w-4 mr-2" />
+
+                    Refresh Data
+
+                  </Button>
+
+                </div>
+
+              </div>
+
+            </div>
+
+          </div>
 
         </div>
 
 
-        {/* ================================= */}
-        {/* KEY METRICS */}
-        {/* ================================= */}
+        {/* STATS */}
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-10">
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
 
           {/* USERS */}
-          <Card className="shadow-soft">
+          <Card className="rounded-3xl shadow-xl border-0">
 
-            <CardContent className="pt-6">
+            <CardContent className="p-6">
 
               <div className="flex items-center justify-between">
 
                 <div>
 
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-muted-foreground">
 
                     Total Users
 
                   </p>
 
-                  <p className="text-3xl font-bold">
+                  <h2 className="text-4xl font-bold mt-2">
 
                     4,668
 
-                  </p>
+                  </h2>
 
-                  <div className="flex items-center gap-1 mt-1">
+                  <div className="flex items-center gap-1 mt-2 text-green-600">
 
-                    <TrendingUp className="h-4 w-4 text-success" />
+                    <TrendingUp className="h-4 w-4" />
 
-                    <span className="text-sm text-success">
+                    <span className="text-sm font-medium">
 
                       +12.5%
 
@@ -302,9 +352,10 @@ export const AnalyticsPage = () => {
 
                 </div>
 
-                <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
 
-                  <Users className="h-6 w-6 text-primary" />
+                <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center">
+
+                  <Users className="h-7 w-7 text-primary" />
 
                 </div>
 
@@ -316,31 +367,31 @@ export const AnalyticsPage = () => {
 
 
           {/* JOBS */}
-          <Card className="shadow-soft">
+          <Card className="rounded-3xl shadow-xl border-0">
 
-            <CardContent className="pt-6">
+            <CardContent className="p-6">
 
               <div className="flex items-center justify-between">
 
                 <div>
 
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-muted-foreground">
 
                     Active Jobs
 
                   </p>
 
-                  <p className="text-3xl font-bold">
+                  <h2 className="text-4xl font-bold mt-2">
 
                     156
 
-                  </p>
+                  </h2>
 
-                  <div className="flex items-center gap-1 mt-1">
+                  <div className="flex items-center gap-1 mt-2 text-green-600">
 
-                    <TrendingUp className="h-4 w-4 text-success" />
+                    <TrendingUp className="h-4 w-4" />
 
-                    <span className="text-sm text-success">
+                    <span className="text-sm font-medium">
 
                       +22%
 
@@ -350,9 +401,10 @@ export const AnalyticsPage = () => {
 
                 </div>
 
-                <div className="h-12 w-12 rounded-full bg-accent/10 flex items-center justify-center">
 
-                  <Briefcase className="h-6 w-6 text-accent" />
+                <div className="h-14 w-14 rounded-2xl bg-green-100 flex items-center justify-center">
+
+                  <Briefcase className="h-7 w-7 text-green-600" />
 
                 </div>
 
@@ -364,31 +416,31 @@ export const AnalyticsPage = () => {
 
 
           {/* CONTRIBUTIONS */}
-          <Card className="shadow-soft">
+          <Card className="rounded-3xl shadow-xl border-0">
 
-            <CardContent className="pt-6">
+            <CardContent className="p-6">
 
               <div className="flex items-center justify-between">
 
                 <div>
 
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-muted-foreground">
 
-                    Total Contributions
+                    Contributions
 
                   </p>
 
-                  <p className="text-3xl font-bold">
+                  <h2 className="text-4xl font-bold mt-2">
 
                     8,650
 
-                  </p>
+                  </h2>
 
-                  <div className="flex items-center gap-1 mt-1">
+                  <div className="flex items-center gap-1 mt-2 text-green-600">
 
-                    <TrendingUp className="h-4 w-4 text-success" />
+                    <TrendingUp className="h-4 w-4" />
 
-                    <span className="text-sm text-success">
+                    <span className="text-sm font-medium">
 
                       +18%
 
@@ -398,9 +450,10 @@ export const AnalyticsPage = () => {
 
                 </div>
 
-                <div className="h-12 w-12 rounded-full bg-success/10 flex items-center justify-center">
 
-                  <Award className="h-6 w-6 text-success" />
+                <div className="h-14 w-14 rounded-2xl bg-yellow-100 flex items-center justify-center">
+
+                  <Award className="h-7 w-7 text-yellow-600" />
 
                 </div>
 
@@ -412,31 +465,31 @@ export const AnalyticsPage = () => {
 
 
           {/* FUNDRAISING */}
-          <Card className="shadow-soft">
+          <Card className="rounded-3xl shadow-xl border-0">
 
-            <CardContent className="pt-6">
+            <CardContent className="p-6">
 
               <div className="flex items-center justify-between">
 
                 <div>
 
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-muted-foreground">
 
-                    Fundraising Total
+                    Fundraising
 
                   </p>
 
-                  <p className="text-3xl font-bold">
+                  <h2 className="text-4xl font-bold mt-2">
 
                     ₹12.5L
 
-                  </p>
+                  </h2>
 
-                  <div className="flex items-center gap-1 mt-1">
+                  <div className="flex items-center gap-1 mt-2 text-green-600">
 
-                    <TrendingUp className="h-4 w-4 text-success" />
+                    <TrendingUp className="h-4 w-4" />
 
-                    <span className="text-sm text-success">
+                    <span className="text-sm font-medium">
 
                       +45%
 
@@ -446,9 +499,10 @@ export const AnalyticsPage = () => {
 
                 </div>
 
-                <div className="h-12 w-12 rounded-full bg-warning/10 flex items-center justify-center">
 
-                  <DollarSign className="h-6 w-6 text-warning" />
+                <div className="h-14 w-14 rounded-2xl bg-purple-100 flex items-center justify-center">
+
+                  <DollarSign className="h-7 w-7 text-purple-600" />
 
                 </div>
 
@@ -461,20 +515,18 @@ export const AnalyticsPage = () => {
         </div>
 
 
-        {/* ================================= */}
         {/* CHARTS */}
-        {/* ================================= */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
 
           {/* USER GROWTH */}
-          <Card className="shadow-soft">
+          <Card className="rounded-3xl shadow-xl border-0">
 
             <CardHeader>
 
-              <CardTitle className="flex items-center gap-2">
+              <CardTitle className="flex items-center gap-2 text-2xl">
 
-                <TrendingUp className="h-5 w-5" />
+                <LineChartIcon className="h-6 w-6 text-primary" />
 
                 User Growth Trend
 
@@ -492,7 +544,7 @@ export const AnalyticsPage = () => {
 
               <ResponsiveContainer
                 width="100%"
-                height={300}
+                height={320}
               >
 
                 <LineChart data={userGrowthData}>
@@ -510,16 +562,16 @@ export const AnalyticsPage = () => {
                   <Line
                     type="monotone"
                     dataKey="alumni"
-                    stroke="hsl(var(--primary))"
-                    strokeWidth={2}
+                    stroke="#8B5CF6"
+                    strokeWidth={3}
                     name="Alumni"
                   />
 
                   <Line
                     type="monotone"
                     dataKey="students"
-                    stroke="hsl(var(--accent))"
-                    strokeWidth={2}
+                    stroke="#06B6D4"
+                    strokeWidth={3}
                     name="Students"
                   />
 
@@ -532,14 +584,14 @@ export const AnalyticsPage = () => {
           </Card>
 
 
-          {/* ENGAGEMENT */}
-          <Card className="shadow-soft">
+          {/* PIE CHART */}
+          <Card className="rounded-3xl shadow-xl border-0">
 
             <CardHeader>
 
-              <CardTitle className="flex items-center gap-2">
+              <CardTitle className="flex items-center gap-2 text-2xl">
 
-                <Activity className="h-5 w-5" />
+                <PieChartIcon className="h-6 w-6 text-primary" />
 
                 Engagement Distribution
 
@@ -557,7 +609,7 @@ export const AnalyticsPage = () => {
 
               <ResponsiveContainer
                 width="100%"
-                height={300}
+                height={320}
               >
 
                 <PieChart>
@@ -566,94 +618,31 @@ export const AnalyticsPage = () => {
                     data={engagementData}
                     cx="50%"
                     cy="50%"
-                    labelLine={false}
-                    label={({ name, percent }) =>
-                      `${name}: ${(
-                        percent * 100
-                      ).toFixed(0)}%`
-                    }
-                    outerRadius={80}
+                    outerRadius={90}
                     dataKey="value"
+                    label
                   >
 
                     {engagementData.map(
-
                       (_, index) => (
 
                         <Cell
                           key={index}
                           fill={
-                            COLORS[
-                              index %
-                              COLORS.length
-                            ]
+                            COLORS[index]
                           }
                         />
 
                       )
-
                     )}
 
                   </Pie>
 
                   <Tooltip />
 
-                </PieChart>
-
-              </ResponsiveContainer>
-
-            </CardContent>
-
-          </Card>
-
-
-          {/* CONTRIBUTION CHART */}
-          <Card className="shadow-soft lg:col-span-2">
-
-            <CardHeader>
-
-              <CardTitle className="flex items-center gap-2">
-
-                <Award className="h-5 w-5" />
-
-                Contribution Points Growth
-
-              </CardTitle>
-
-              <CardDescription>
-
-                Total contribution points accumulated over time
-
-              </CardDescription>
-
-            </CardHeader>
-
-            <CardContent>
-
-              <ResponsiveContainer
-                width="100%"
-                height={300}
-              >
-
-                <BarChart data={contributionData}>
-
-                  <CartesianGrid strokeDasharray="3 3" />
-
-                  <XAxis dataKey="month" />
-
-                  <YAxis />
-
-                  <Tooltip />
-
                   <Legend />
 
-                  <Bar
-                    dataKey="contributions"
-                    fill="hsl(var(--success))"
-                    name="Total Points"
-                  />
-
-                </BarChart>
+                </PieChart>
 
               </ResponsiveContainer>
 
@@ -664,26 +653,79 @@ export const AnalyticsPage = () => {
         </div>
 
 
-        {/* ================================= */}
-        {/* EXTRA STATS */}
-        {/* ================================= */}
+        {/* CONTRIBUTION CHART */}
+        <Card className="rounded-3xl shadow-xl border-0 mb-10">
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <CardHeader>
+
+            <CardTitle className="flex items-center gap-2 text-2xl">
+
+              <BarChart3 className="h-6 w-6 text-primary" />
+
+              Contribution Growth
+
+            </CardTitle>
+
+            <CardDescription>
+
+              Contribution points growth over time
+
+            </CardDescription>
+
+          </CardHeader>
+
+          <CardContent>
+
+            <ResponsiveContainer
+              width="100%"
+              height={350}
+            >
+
+              <BarChart data={contributionData}>
+
+                <CartesianGrid strokeDasharray="3 3" />
+
+                <XAxis dataKey="month" />
+
+                <YAxis />
+
+                <Tooltip />
+
+                <Legend />
+
+                <Bar
+                  dataKey="contributions"
+                  fill="#22C55E"
+                  radius={[8, 8, 0, 0]}
+                />
+
+              </BarChart>
+
+            </ResponsiveContainer>
+
+          </CardContent>
+
+        </Card>
+
+
+        {/* EXTRA STATS */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
 
           {/* DEPARTMENTS */}
-          <Card className="shadow-soft">
+          <Card className="rounded-3xl shadow-xl border-0">
 
             <CardHeader>
 
-              <CardTitle className="text-lg">
+              <CardTitle>
 
-                Top Performing Departments
+                Top Departments
 
               </CardTitle>
 
             </CardHeader>
 
-            <CardContent className="space-y-3">
+            <CardContent className="space-y-4">
 
               {[
 
@@ -730,12 +772,12 @@ export const AnalyticsPage = () => {
 
                 <div
                   key={item.dept}
-                  className="flex items-center justify-between p-3 rounded-lg bg-muted/30"
+                  className="flex items-center justify-between p-4 rounded-2xl bg-muted/40"
                 >
 
                   <div>
 
-                    <p className="font-medium">
+                    <p className="font-semibold">
 
                       {item.dept}
 
@@ -749,7 +791,7 @@ export const AnalyticsPage = () => {
 
                   </div>
 
-                  <Badge className="bg-success/10 text-success">
+                  <Badge className="bg-green-100 text-green-700">
 
                     +{item.growth}%
 
@@ -765,11 +807,11 @@ export const AnalyticsPage = () => {
 
 
           {/* SKILLS */}
-          <Card className="shadow-soft">
+          <Card className="rounded-3xl shadow-xl border-0">
 
             <CardHeader>
 
-              <CardTitle className="text-lg">
+              <CardTitle>
 
                 Most Sought Skills
 
@@ -777,7 +819,7 @@ export const AnalyticsPage = () => {
 
             </CardHeader>
 
-            <CardContent className="space-y-3">
+            <CardContent className="space-y-4">
 
               {[
 
@@ -815,10 +857,10 @@ export const AnalyticsPage = () => {
 
                 <div
                   key={item.skill}
-                  className="flex items-center justify-between p-3 rounded-lg bg-muted/30"
+                  className="flex items-center justify-between p-4 rounded-2xl bg-muted/40"
                 >
 
-                  <p className="font-medium">
+                  <p className="font-semibold">
 
                     {item.skill}
 
@@ -840,11 +882,11 @@ export const AnalyticsPage = () => {
 
 
           {/* MILESTONES */}
-          <Card className="shadow-soft">
+          <Card className="rounded-3xl shadow-xl border-0">
 
             <CardHeader>
 
-              <CardTitle className="text-lg">
+              <CardTitle>
 
                 Recent Milestones
 
@@ -852,7 +894,7 @@ export const AnalyticsPage = () => {
 
             </CardHeader>
 
-            <CardContent className="space-y-3">
+            <CardContent className="space-y-4">
 
               {[
 
@@ -890,24 +932,26 @@ export const AnalyticsPage = () => {
 
                 <div
                   key={idx}
-                  className="flex items-center gap-3 p-3 rounded-lg bg-gradient-card"
+                  className="flex items-center gap-4 p-4 rounded-2xl bg-gradient-to-r from-primary/10 to-purple-500/10"
                 >
 
-                  <div className="h-8 w-8 rounded-full bg-gradient-primary flex items-center justify-center">
+                  <div className="h-10 w-10 rounded-2xl bg-primary flex items-center justify-center">
 
-                    <Award className="h-4 w-4 text-white" />
+                    <Award className="h-5 w-5 text-white" />
 
                   </div>
 
                   <div>
 
-                    <p className="font-medium">
+                    <p className="font-semibold">
 
                       {item.milestone}
 
                     </p>
 
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-sm text-muted-foreground flex items-center gap-1">
+
+                      <Calendar className="h-3 w-3" />
 
                       {item.date}
 

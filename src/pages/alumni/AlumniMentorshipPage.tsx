@@ -3,8 +3,7 @@ import {
   useState,
 } from "react";
 
-import axios from "axios";
-
+import api, { apiGet, apiPost, apiPut, apiPatch, apiDelete } from "@/utils/api";
 import {
   Card,
   CardContent,
@@ -19,6 +18,16 @@ import { Button }
 import { Badge }
   from "@/components/ui/badge";
 
+import { Header }
+  from "@/components/layout/Header";
+
+import { useToast }
+  from "@/hooks/use-toast";
+
+import {
+  useNavigate,
+} from "react-router-dom";
+
 import {
 
   CheckCircle,
@@ -27,14 +36,18 @@ import {
   GraduationCap,
   Loader2,
   MessageSquare,
+  Sparkles,
+  Brain,
+  Calendar,
+  User,
+  BookOpen,
+  ArrowRight,
+  Search,
 
 } from "lucide-react";
 
-import { Header }
-  from "@/components/layout/Header";
-
-import { useToast }
-  from "@/hooks/use-toast";
+import { Input }
+  from "@/components/ui/input";
 
 
 // ==========================================
@@ -76,20 +89,62 @@ React.FC = () => {
 
   ] = useState<Mentorship[]>([]);
 
-  const [loading, setLoading] =
-    useState(false);
 
-  const [updatingId, setUpdatingId] =
-    useState<string | null>(
-      null
-    );
+  const [
+
+    filteredRequests,
+
+    setFilteredRequests,
+
+  ] = useState<Mentorship[]>([]);
+
+
+  const [
+
+    search,
+
+    setSearch,
+
+  ] = useState("");
+
+
+  const [
+
+    loading,
+
+    setLoading,
+
+  ] = useState(false);
+
+
+  const [
+
+    updatingId,
+
+    setUpdatingId,
+
+  ] = useState<string | null>(
+    null
+  );
+
+
+  const [
+
+    error,
+
+    setError,
+
+  ] = useState("");
 
 
   // ========================================
-  // TOAST
+  // HOOKS
   // ========================================
   const { toast } =
     useToast();
+
+  const navigate =
+    useNavigate();
 
 
   // ========================================
@@ -115,10 +170,13 @@ React.FC = () => {
 
         setLoading(true);
 
-        const response =
-          await axios.get(
+        setError("");
 
-            "http://localhost:5000/mentorship",
+
+        const response =
+          await api.get(
+
+            "/mentorship",
 
             {
 
@@ -133,7 +191,12 @@ React.FC = () => {
 
           );
 
+
         setRequests(
+          response.data || []
+        );
+
+        setFilteredRequests(
           response.data || []
         );
 
@@ -142,6 +205,10 @@ React.FC = () => {
       catch (error) {
 
         console.log(error);
+
+        setError(
+          "Failed to load mentorship requests"
+        );
 
         toast({
 
@@ -180,9 +247,9 @@ React.FC = () => {
 
         setUpdatingId(id);
 
-        await axios.put(
+        await api.put(
 
-          `http://localhost:5000/mentorship/${id}/status`,
+          `/mentorship/${id}/status`,
 
           {
 
@@ -215,7 +282,46 @@ React.FC = () => {
         });
 
 
-        fetchRequests();
+        setRequests((prev) =>
+
+          prev.map((req) =>
+
+            req._id === id
+
+              ? {
+
+                  ...req,
+
+                  status,
+
+                }
+
+              : req
+
+          )
+
+        );
+
+
+        setFilteredRequests((prev) =>
+
+          prev.map((req) =>
+
+            req._id === id
+
+              ? {
+
+                  ...req,
+
+                  status,
+
+                }
+
+              : req
+
+          )
+
+        );
 
       }
 
@@ -252,6 +358,48 @@ React.FC = () => {
 
 
   // ========================================
+  // FILTER SEARCH
+  // ========================================
+  useEffect(() => {
+
+    const filtered =
+      requests.filter(
+
+        (request) =>
+
+          request.studentName
+            ?.toLowerCase()
+            .includes(
+              search.toLowerCase()
+            ) ||
+
+          request.domain
+            ?.toLowerCase()
+            .includes(
+              search.toLowerCase()
+            ) ||
+
+          request.message
+            ?.toLowerCase()
+            .includes(
+              search.toLowerCase()
+            )
+
+      );
+
+    setFilteredRequests(
+      filtered
+    );
+
+  }, [
+
+    search,
+    requests,
+
+  ]);
+
+
+  // ========================================
   // STATUS BADGE
   // ========================================
   const getStatusBadge =
@@ -263,7 +411,7 @@ React.FC = () => {
 
           return (
 
-            <Badge className="bg-green-500 text-white">
+            <Badge className="bg-green-500 text-white rounded-xl">
 
               <CheckCircle className="h-3 w-3 mr-1" />
 
@@ -277,7 +425,10 @@ React.FC = () => {
 
           return (
 
-            <Badge variant="destructive">
+            <Badge
+              variant="destructive"
+              className="rounded-xl"
+            >
 
               <XCircle className="h-3 w-3 mr-1" />
 
@@ -291,7 +442,10 @@ React.FC = () => {
 
           return (
 
-            <Badge variant="secondary">
+            <Badge
+              variant="secondary"
+              className="rounded-xl"
+            >
 
               <Clock className="h-3 w-3 mr-1" />
 
@@ -317,6 +471,33 @@ React.FC = () => {
 
 
   // ========================================
+  // STATS
+  // ========================================
+  const acceptedCount =
+    requests.filter(
+      (req) =>
+        req.status ===
+        "Accepted"
+    ).length;
+
+
+  const pendingCount =
+    requests.filter(
+      (req) =>
+        req.status ===
+        "Pending"
+    ).length;
+
+
+  const rejectedCount =
+    requests.filter(
+      (req) =>
+        req.status ===
+        "Rejected"
+    ).length;
+
+
+  // ========================================
   // UI
   // ========================================
   return (
@@ -325,62 +506,216 @@ React.FC = () => {
 
       <Header />
 
-      <main className="container mx-auto px-4 py-6">
+      <main className="max-w-7xl mx-auto px-4 py-8">
 
-        {/* ================================= */}
-        {/* PAGE HEADER */}
-        {/* ================================= */}
 
-        <div className="mb-8">
+        {/* HERO */}
+        <div className="mb-10">
 
-          <h1 className="text-3xl font-bold text-foreground mb-2">
+          <div className="rounded-3xl overflow-hidden bg-gradient-to-r from-primary via-purple-600 to-indigo-700 text-white shadow-2xl">
 
-            Mentorship Requests
+            <div className="p-8 md:p-10">
 
-          </h1>
+              <div className="flex items-center gap-5">
 
-          <p className="text-muted-foreground">
+                <div className="h-20 w-20 rounded-3xl bg-white/20 flex items-center justify-center">
 
-            Review and manage mentorship requests from students
+                  <Brain className="h-10 w-10" />
 
-          </p>
+                </div>
+
+
+                <div>
+
+                  <h1 className="text-4xl md:text-5xl font-bold">
+
+                    Mentorship Requests
+
+                  </h1>
+
+                  <p className="text-white/90 mt-3 text-lg">
+
+                    Manage mentorship requests from students and guide future professionals.
+
+                  </p>
+
+                </div>
+
+              </div>
+
+            </div>
+
+          </div>
 
         </div>
 
 
-        {/* ================================= */}
-        {/* LOADING */}
-        {/* ================================= */}
+        {/* SEARCH */}
+        <div className="mb-8">
 
-        {loading ? (
+          <div className="relative max-w-xl">
 
-          <div className="flex justify-center items-center py-20">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
 
-            <Loader2 className="h-10 w-10 animate-spin text-primary" />
+            <Input
+
+              placeholder="Search by student, domain, or message..."
+
+              value={search}
+
+              onChange={(e) =>
+                setSearch(
+                  e.target.value
+                )
+              }
+
+              className="pl-12 h-14 rounded-2xl"
+
+            />
 
           </div>
 
-        ) : requests.length === 0 ? (
+        </div>
 
-          /* =============================== */
-          /* EMPTY STATE */
-          /* =============================== */
 
-          <Card className="shadow-soft">
+        {/* STATS */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
 
-            <CardContent className="py-16 text-center">
+          <Card className="rounded-3xl shadow-xl border-0">
 
-              <GraduationCap className="h-14 w-14 mx-auto text-muted-foreground mb-4" />
+            <CardContent className="p-6 flex items-center gap-4">
 
-              <h2 className="text-xl font-semibold mb-2">
+              <div className="h-14 w-14 rounded-2xl bg-yellow-100 flex items-center justify-center">
 
-                No mentorship requests
+                <Clock className="h-7 w-7 text-yellow-600" />
+
+              </div>
+
+              <div>
+
+                <p className="text-muted-foreground text-sm">
+
+                  Pending Requests
+
+                </p>
+
+                <h2 className="text-3xl font-bold">
+
+                  {pendingCount}
+
+                </h2>
+
+              </div>
+
+            </CardContent>
+
+          </Card>
+
+
+          <Card className="rounded-3xl shadow-xl border-0">
+
+            <CardContent className="p-6 flex items-center gap-4">
+
+              <div className="h-14 w-14 rounded-2xl bg-green-100 flex items-center justify-center">
+
+                <CheckCircle className="h-7 w-7 text-green-600" />
+
+              </div>
+
+              <div>
+
+                <p className="text-muted-foreground text-sm">
+
+                  Accepted Requests
+
+                </p>
+
+                <h2 className="text-3xl font-bold">
+
+                  {acceptedCount}
+
+                </h2>
+
+              </div>
+
+            </CardContent>
+
+          </Card>
+
+
+          <Card className="rounded-3xl shadow-xl border-0">
+
+            <CardContent className="p-6 flex items-center gap-4">
+
+              <div className="h-14 w-14 rounded-2xl bg-red-100 flex items-center justify-center">
+
+                <XCircle className="h-7 w-7 text-red-600" />
+
+              </div>
+
+              <div>
+
+                <p className="text-muted-foreground text-sm">
+
+                  Rejected Requests
+
+                </p>
+
+                <h2 className="text-3xl font-bold">
+
+                  {rejectedCount}
+
+                </h2>
+
+              </div>
+
+            </CardContent>
+
+          </Card>
+
+        </div>
+
+
+        {/* ERROR */}
+        {error && (
+
+          <div className="bg-red-100 text-red-600 p-4 rounded-2xl mb-6">
+
+            {error}
+
+          </div>
+
+        )}
+
+
+        {/* LOADING */}
+        {loading ? (
+
+          <div className="flex justify-center items-center py-24">
+
+            <Loader2 className="h-12 w-12 animate-spin text-primary" />
+
+          </div>
+
+        ) : filteredRequests.length === 0 ? (
+
+          /* EMPTY */
+
+          <Card className="shadow-2xl rounded-3xl border-0">
+
+            <CardContent className="py-20 text-center">
+
+              <GraduationCap className="h-16 w-16 mx-auto text-muted-foreground mb-5" />
+
+              <h2 className="text-3xl font-bold mb-3">
+
+                No Mentorship Requests
 
               </h2>
 
               <p className="text-muted-foreground">
 
-                Students mentorship requests will appear here
+                Student mentorship requests will appear here
 
               </p>
 
@@ -390,40 +725,40 @@ React.FC = () => {
 
         ) : (
 
-          /* =============================== */
           /* REQUESTS */
-          /* =============================== */
 
-          <div className="grid gap-6">
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
 
-            {requests.map((request) => (
+            {filteredRequests.map((request) => (
 
               <Card
                 key={request._id}
-                className="shadow-soft hover:shadow-medium transition-all"
+                className="shadow-2xl rounded-3xl border-0 overflow-hidden hover:scale-[1.01] transition-all duration-300"
               >
 
-                <CardHeader>
 
-                  <div className="flex items-center justify-between flex-wrap gap-3">
+                {/* TOP */}
+                <div className="bg-gradient-to-r from-primary to-purple-600 text-white p-6">
+
+                  <div className="flex items-center justify-between gap-4">
 
                     <div>
 
-                      <CardTitle className="flex items-center gap-2">
+                      <h2 className="text-2xl font-bold flex items-center gap-2">
 
-                        <GraduationCap className="h-5 w-5 text-primary" />
+                        <User className="h-5 w-5" />
 
                         {request.studentName}
 
-                      </CardTitle>
+                      </h2>
 
-                      <CardDescription className="mt-1">
+                      <p className="text-white/90 mt-2">
 
                         Domain:
                         {" "}
                         {request.domain}
 
-                      </CardDescription>
+                      </p>
 
                     </div>
 
@@ -434,28 +769,29 @@ React.FC = () => {
 
                   </div>
 
-                </CardHeader>
+                </div>
 
 
-                <CardContent>
+                {/* BODY */}
+                <CardContent className="p-6 space-y-5">
+
 
                   {/* MESSAGE */}
+                  <div className="rounded-2xl bg-muted/40 p-5 border">
 
-                  <div className="bg-muted/30 rounded-lg p-4 mb-5">
+                    <div className="flex items-center gap-2 mb-3">
 
-                    <div className="flex items-center gap-2 mb-2">
+                      <MessageSquare className="h-5 w-5 text-primary" />
 
-                      <MessageSquare className="h-4 w-4 text-primary" />
-
-                      <span className="font-medium">
+                      <h3 className="font-semibold">
 
                         Student Message
 
-                      </span>
+                      </h3>
 
                     </div>
 
-                    <p className="text-sm leading-relaxed">
+                    <p className="leading-7 text-muted-foreground">
 
                       {request.message}
 
@@ -465,29 +801,46 @@ React.FC = () => {
 
 
                   {/* DATE */}
-
                   {request.createdAt && (
 
-                    <p className="text-xs text-muted-foreground mb-4">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
 
-                      Requested on:
+                      <Calendar className="h-4 w-4" />
+
+                      Requested on
                       {" "}
 
                       {new Date(
                         request.createdAt
                       ).toLocaleDateString()}
 
-                    </p>
+                    </div>
 
                   )}
 
 
-                  {/* ACTION BUTTONS */}
+                  {/* DOMAIN */}
+                  <div className="flex items-center gap-2">
 
+                    <BookOpen className="h-4 w-4 text-primary" />
+
+                    <Badge
+                      variant="outline"
+                      className="rounded-xl"
+                    >
+
+                      {request.domain}
+
+                    </Badge>
+
+                  </div>
+
+
+                  {/* ACTIONS */}
                   {request.status ===
                     "Pending" && (
 
-                    <div className="flex flex-wrap gap-3">
+                    <div className="flex flex-wrap gap-3 pt-2">
 
                       <Button
 
@@ -508,7 +861,7 @@ React.FC = () => {
                           request._id
                         }
 
-                        className="bg-green-600 hover:bg-green-700"
+                        className="bg-green-600 hover:bg-green-700 rounded-2xl"
 
                       >
 
@@ -523,7 +876,7 @@ React.FC = () => {
 
                         )}
 
-                        Accept
+                        Accept Request
 
                       </Button>
 
@@ -549,6 +902,8 @@ React.FC = () => {
                           request._id
                         }
 
+                        className="rounded-2xl"
+
                       >
 
                         <XCircle className="h-4 w-4 mr-2" />
@@ -557,7 +912,63 @@ React.FC = () => {
 
                       </Button>
 
+
+                      {request.studentId && (
+
+                        <Button
+
+                          variant="outline"
+
+                          className="rounded-2xl"
+
+                          onClick={() =>
+
+                            navigate(
+                              `/alumni/chat/${request.studentId}`
+                            )
+
+                          }
+
+                        >
+
+                          <MessageSquare className="h-4 w-4 mr-2" />
+
+                          Chat
+
+                        </Button>
+
+                      )}
+
                     </div>
+
+                  )}
+
+
+                  {/* ACCEPTED CHAT */}
+                  {request.status ===
+                    "Accepted" &&
+
+                    request.studentId && (
+
+                    <Button
+
+                      className="w-full rounded-2xl"
+
+                      onClick={() =>
+
+                        navigate(
+                          `/alumni/chat/${request.studentId}`
+                        )
+
+                      }
+
+                    >
+
+                      Open Chat
+
+                      <ArrowRight className="h-4 w-4 ml-2" />
+
+                    </Button>
 
                   )}
 

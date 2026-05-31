@@ -22,6 +22,12 @@ import {
 
 } from "@/contexts/AuthContext";
 
+import type {
+
+  UserRole,
+
+} from "@/types/user";
+
 
 // ==========================================
 // TYPES
@@ -30,7 +36,7 @@ interface ProtectedRouteProps {
 
   children: React.ReactNode;
 
-  allowedRoles?: string[];
+  allowedRoles?: UserRole[];
 
 }
 
@@ -52,13 +58,13 @@ const LoadingScreen = () => {
 
           <h2 className="text-lg font-semibold">
 
-            Authenticating
+            Authenticating...
 
           </h2>
 
           <p className="text-sm text-muted-foreground">
 
-            Please wait...
+            Please wait
 
           </p>
 
@@ -80,21 +86,29 @@ const AccessDenied = () => {
 
   return (
 
-    <div className="min-h-screen flex items-center justify-center p-4">
+    <div className="min-h-screen flex items-center justify-center bg-background p-4">
 
-      <div className="max-w-md text-center">
+      <div className="max-w-md w-full bg-card border rounded-3xl shadow-xl p-10 text-center">
 
-        <ShieldAlert className="h-16 w-16 text-red-500 mx-auto mb-4" />
+        <div className="flex justify-center mb-6">
 
-        <h1 className="text-2xl font-bold mb-2">
+          <div className="h-20 w-20 rounded-full bg-red-100 flex items-center justify-center">
+
+            <ShieldAlert className="h-10 w-10 text-red-500" />
+
+          </div>
+
+        </div>
+
+        <h1 className="text-3xl font-bold mb-3">
 
           Access Denied
 
         </h1>
 
-        <p className="text-muted-foreground">
+        <p className="text-muted-foreground leading-7">
 
-          You do not have permission to access this page.
+          You don't have permission to access this page.
 
         </p>
 
@@ -103,6 +117,40 @@ const AccessDenied = () => {
     </div>
 
   );
+
+};
+
+
+// ==========================================
+// ROLE DASHBOARD REDIRECT
+// ==========================================
+const getRoleDashboard = (
+  role?: UserRole
+) => {
+
+  switch (role) {
+
+    case "student":
+
+      return "/student/dashboard";
+
+    case "alumni":
+
+      return "/alumni/dashboard";
+
+    case "admin":
+
+      return "/admin/dashboard";
+
+    case "faculty":
+
+      return "/faculty/dashboard";
+
+    default:
+
+      return "/login";
+
+  }
 
 };
 
@@ -119,7 +167,7 @@ export const ProtectedRoute = ({
 }: ProtectedRouteProps) => {
 
   // ========================================
-  // AUTH CONTEXT
+  // AUTH
   // ========================================
   const {
 
@@ -131,18 +179,20 @@ export const ProtectedRoute = ({
 
     isAuthenticated,
 
+    logout,
+
   } = useAuth();
 
 
   // ========================================
-  // CURRENT LOCATION
+  // LOCATION
   // ========================================
   const location =
     useLocation();
 
 
   // ========================================
-  // AUTH LOADING
+  // LOADING
   // ========================================
   if (isLoading) {
 
@@ -152,7 +202,16 @@ export const ProtectedRoute = ({
 
 
   // ========================================
-  // NO USER / TOKEN
+  // TOKEN VALIDATION
+  // ========================================
+  const storedToken =
+    localStorage.getItem(
+      "token"
+    );
+
+
+  // ========================================
+  // NOT AUTHENTICATED
   // ========================================
   if (
 
@@ -160,7 +219,9 @@ export const ProtectedRoute = ({
 
     !user ||
 
-    !token
+    !token ||
+
+    !storedToken
 
   ) {
 
@@ -174,7 +235,7 @@ export const ProtectedRoute = ({
 
         state={{
 
-          from: location,
+          from: location.pathname,
 
         }}
 
@@ -186,7 +247,7 @@ export const ProtectedRoute = ({
 
 
   // ========================================
-  // USER INACTIVE
+  // INACTIVE USER
   // ========================================
   if (
 
@@ -194,19 +255,40 @@ export const ProtectedRoute = ({
 
   ) {
 
-    localStorage.removeItem(
-      "userInfo"
-    );
-
-    localStorage.removeItem(
-      "token"
-    );
+    logout();
 
     return (
 
       <Navigate
 
         to="/login"
+
+        replace
+
+      />
+
+    );
+
+  }
+
+
+  // ========================================
+  // FIRST LOGIN
+  // ========================================
+  if (
+
+    user.isFirstLogin &&
+
+    location.pathname !==
+      "/change-password"
+
+  ) {
+
+    return (
+
+      <Navigate
+
+        to="/change-password"
 
         replace
 
@@ -230,79 +312,17 @@ export const ProtectedRoute = ({
 
   ) {
 
-    // ======================================
-    // REDIRECT USER TO OWN DASHBOARD
-    // ======================================
-    switch (user.role) {
-
-      case "student":
-
-        return (
-
-          <Navigate
-
-            to="/student/dashboard"
-
-            replace
-
-          />
-
-        );
-
-      case "alumni":
-
-        return (
-
-          <Navigate
-
-            to="/alumni/dashboard"
-
-            replace
-
-          />
-
-        );
-
-      case "admin":
-
-        return (
-
-          <Navigate
-
-            to="/admin/dashboard"
-
-            replace
-
-          />
-
-        );
-
-      default:
-
-        return <AccessDenied />;
-
-    }
-
-  }
-
-
-  // ========================================
-  // FIRST LOGIN CHECK
-  // ========================================
-  if (
-
-    user.isFirstLogin &&
-
-    location.pathname !==
-    "/change-password"
-
-  ) {
-
     return (
 
       <Navigate
 
-        to="/change-password"
+        to={
+
+          getRoleDashboard(
+            user.role
+          )
+
+        }
 
         replace
 
@@ -314,7 +334,7 @@ export const ProtectedRoute = ({
 
 
   // ========================================
-  // ALLOW ACCESS
+  // ACCESS GRANTED
   // ========================================
   return <>{children}</>;
 

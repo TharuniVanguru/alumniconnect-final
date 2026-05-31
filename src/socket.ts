@@ -8,6 +8,9 @@ import {
 // SOCKET URL
 // ==========================================
 const SOCKET_URL =
+
+  import.meta.env.VITE_SOCKET_URL ||
+
   "http://localhost:5000";
 
 
@@ -22,17 +25,39 @@ let socket: Socket | null =
 // CONNECT SOCKET
 // ==========================================
 export const connectSocket = (
-  userId: string
+  userId?: string
 ): Socket => {
+
+  // ========================================
+  // TOKEN
+  // ========================================
+  const token =
+    localStorage.getItem(
+      "token"
+    );
+
+
+  // ========================================
+  // TOKEN CHECK
+  // ========================================
+  if (!token) {
+
+    throw new Error(
+      "Socket token missing"
+    );
+
+  }
+
 
   // ========================================
   // RETURN EXISTING SOCKET
   // ========================================
   if (socket) {
 
-    // ======================================
-    // RECONNECT IF DISCONNECTED
-    // ======================================
+    socket.auth = {
+      token,
+    };
+
     if (!socket.connected) {
 
       socket.connect();
@@ -45,7 +70,7 @@ export const connectSocket = (
 
 
   // ========================================
-  // CREATE NEW SOCKET
+  // CREATE SOCKET
   // ========================================
   socket = io(
 
@@ -61,11 +86,21 @@ export const connectSocket = (
 
       reconnection: true,
 
-      reconnectionAttempts: 5,
+      reconnectionAttempts: Infinity,
 
       reconnectionDelay: 1000,
 
+      reconnectionDelayMax: 5000,
+
+      timeout: 20000,
+
+      forceNew: false,
+
       withCredentials: true,
+
+      auth: {
+        token,
+      },
 
     }
 
@@ -73,7 +108,7 @@ export const connectSocket = (
 
 
   // ========================================
-  // CONNECT EVENT
+  // CONNECT
   // ========================================
   socket.on(
 
@@ -82,16 +117,28 @@ export const connectSocket = (
     () => {
 
       console.log(
-        "🟢 Socket Connected:",
+        "🟢 SOCKET CONNECTED:",
         socket?.id
       );
 
+      // ====================================
+      // JOIN USER ROOM
+      // ====================================
+      if (userId) {
+
+        socket?.emit(
+          "joinRoom",
+          userId
+        );
+
+      }
+
 
       // ====================================
-      // JOIN ROOM
+      // USER ONLINE
       // ====================================
       socket?.emit(
-        "joinRoom",
+        "userOnline",
         userId
       );
 
@@ -101,7 +148,7 @@ export const connectSocket = (
 
 
   // ========================================
-  // DISCONNECT EVENT
+  // DISCONNECT
   // ========================================
   socket.on(
 
@@ -110,7 +157,7 @@ export const connectSocket = (
     (reason) => {
 
       console.log(
-        "🔴 Socket Disconnected:",
+        "🔴 SOCKET DISCONNECTED:",
         reason
       );
 
@@ -120,7 +167,7 @@ export const connectSocket = (
 
 
   // ========================================
-  // CONNECT ERROR
+  // CONNECTION ERROR
   // ========================================
   socket.on(
 
@@ -129,8 +176,90 @@ export const connectSocket = (
     (error) => {
 
       console.log(
-        "❌ SOCKET ERROR:",
+        "❌ SOCKET CONNECTION ERROR:",
         error.message
+      );
+
+    }
+
+  );
+
+
+  // ========================================
+  // RECONNECT
+  // ========================================
+  socket.on(
+
+    "reconnect",
+
+    (attempt) => {
+
+      console.log(
+        `♻️ RECONNECTED AFTER ${attempt} ATTEMPTS`
+      );
+
+      if (userId) {
+
+        socket?.emit(
+          "joinRoom",
+          userId
+        );
+
+      }
+
+    }
+
+  );
+
+
+  // ========================================
+  // RECONNECT ATTEMPT
+  // ========================================
+  socket.on(
+
+    "reconnect_attempt",
+
+    (attempt) => {
+
+      console.log(
+        `🔄 RECONNECT ATTEMPT ${attempt}`
+      );
+
+    }
+
+  );
+
+
+  // ========================================
+  // RECONNECT FAILED
+  // ========================================
+  socket.on(
+
+    "reconnect_failed",
+
+    () => {
+
+      console.log(
+        "❌ SOCKET RECONNECT FAILED"
+      );
+
+    }
+
+  );
+
+
+  // ========================================
+  // GLOBAL ERROR
+  // ========================================
+  socket.on(
+
+    "error",
+
+    (error) => {
+
+      console.log(
+        "❌ SOCKET ERROR:",
+        error
       );
 
     }
@@ -155,6 +284,82 @@ export const getSocket =
 
 
 // ==========================================
+// SOCKET CONNECTED
+// ==========================================
+export const isSocketConnected =
+  (): boolean => {
+
+    return !!socket?.connected;
+
+  };
+
+
+// ==========================================
+// EMIT EVENT
+// ==========================================
+export const emitEvent = (
+
+  event: string,
+
+  data?: any
+
+): void => {
+
+  if (
+    socket &&
+    socket.connected
+  ) {
+
+    socket.emit(
+      event,
+      data
+    );
+
+  }
+
+};
+
+
+// ==========================================
+// LISTEN EVENT
+// ==========================================
+export const listenEvent = (
+
+  event: string,
+
+  callback: (...args: any[]) => void
+
+): void => {
+
+  if (socket) {
+
+    socket.on(
+      event,
+      callback
+    );
+
+  }
+
+};
+
+
+// ==========================================
+// REMOVE LISTENER
+// ==========================================
+export const removeEvent = (
+  event: string
+): void => {
+
+  if (socket) {
+
+    socket.off(event);
+
+  }
+
+};
+
+
+// ==========================================
 // DISCONNECT SOCKET
 // ==========================================
 export const disconnectSocket =
@@ -169,7 +374,7 @@ export const disconnectSocket =
       socket = null;
 
       console.log(
-        "🛑 Socket Fully Disconnected"
+        "🛑 SOCKET DISCONNECTED"
       );
 
     }
@@ -178,10 +383,8 @@ export const disconnectSocket =
 
 
 // ==========================================
-// EXPORT SOCKET
+// EXPORT
 // ==========================================
 export {
-
   socket,
-
 };

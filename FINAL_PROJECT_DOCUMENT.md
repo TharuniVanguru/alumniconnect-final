@@ -329,7 +329,7 @@ Since LinkedIn scraping is not allowed:
 ## 8) API Endpoints (Complete)
 
 ### Auth
-- POST `/auth/login`
+- POST `/api/auth/login`
 - POST `/auth/change-password`
 - POST `/auth/forgot-password`
 - POST `/auth/verify-otp`

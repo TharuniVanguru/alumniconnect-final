@@ -94,7 +94,7 @@ router.get(
 
             {
 
-              companyName: {
+              company: {
 
                 $regex: q,
 
@@ -241,8 +241,169 @@ router.get(
     catch (error) {
 
       console.log(
+
         "FILTER USER ERROR:",
+
         error
+
+      );
+
+      res.status(500).json({
+
+        success: false,
+
+        message:
+          "Server Error",
+
+      });
+
+    }
+
+  }
+
+);
+
+
+// ==========================================
+// GET STUDENTS
+// ==========================================
+router.get(
+
+  "/students",
+
+  protect,
+
+  async (req, res) => {
+
+    try {
+
+      const students =
+        await User.find({
+
+          role: "student",
+
+          isActive: true,
+
+        }).select(
+
+          `
+          name
+          identifier
+          email
+          branch
+          batch
+          domain
+          skills
+          interests
+          profileImage
+          linkedinUrl
+          company
+          jobRole
+          isOnline
+          trustScore
+          `
+        );
+
+      res.status(200).json({
+
+        success: true,
+
+        total:
+          students.length,
+
+        students,
+
+      });
+
+    }
+
+    catch (error) {
+
+      console.log(
+
+        "GET STUDENTS ERROR:",
+
+        error
+
+      );
+
+      res.status(500).json({
+
+        success: false,
+
+        message:
+          "Server Error",
+
+      });
+
+    }
+
+  }
+
+);
+
+
+// ==========================================
+// GET ALUMNI
+// ==========================================
+router.get(
+
+  "/alumni",
+
+  protect,
+
+  async (req, res) => {
+
+    try {
+
+      const alumni =
+        await User.find({
+
+          role: "alumni",
+
+          isActive: true,
+
+        }).select(
+
+          `
+          name
+          identifier
+          email
+          branch
+          batch
+          domain
+          company
+          jobRole
+          skills
+          interests
+          profileImage
+          linkedinUrl
+          isOnline
+          trustScore
+          `
+        );
+
+      res.status(200).json({
+
+        success: true,
+
+        total:
+          alumni.length,
+
+        alumni,
+
+      });
+
+    }
+
+    catch (error) {
+
+      console.log(
+
+        "GET ALUMNI ERROR:",
+
+        error
+
       );
 
       res.status(500).json({
@@ -354,7 +515,7 @@ router.get(
           role
           email
           domain
-          companyName
+          company
           isOnline
           trustScore
           profileImage

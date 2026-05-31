@@ -11,7 +11,11 @@ const {
 
   updateMentorshipStatus,
 
+  submitMentorshipFeedback,
+
   deleteMentorshipRequest,
+
+  getMentorshipStats,
 
 } = require(
   "../controllers/mentorshipController"
@@ -25,20 +29,30 @@ const {
   "../middleware/authMiddleware"
 );
 
+
+// ==========================================
+// ROUTER
+// ==========================================
 const router =
   express.Router();
 
 
 // ==========================================
+// ALL ROUTES PROTECTED
+// ==========================================
+router.use(
+  protect
+);
+
+
+// ==========================================
 // SEND MENTORSHIP REQUEST
-// POST /mentorship/request
+// POST /api/mentorship/request
 // ACCESS: STUDENT
 // ==========================================
 router.post(
 
   "/request",
-
-  protect,
 
   sendMentorshipRequest
 
@@ -47,14 +61,12 @@ router.post(
 
 // ==========================================
 // GET ALL MENTORSHIP REQUESTS
-// GET /mentorship
+// GET /api/mentorship
 // ACCESS: PRIVATE
 // ==========================================
 router.get(
 
   "/",
-
-  protect,
 
   getMentorshipRequests
 
@@ -62,15 +74,27 @@ router.get(
 
 
 // ==========================================
+// MENTORSHIP ANALYTICS
+// GET /api/mentorship/stats
+// ACCESS: ALUMNI / ADMIN
+// ==========================================
+router.get(
+
+  "/stats",
+
+  getMentorshipStats
+
+);
+
+
+// ==========================================
 // GET SINGLE MENTORSHIP
-// GET /mentorship/:id
+// GET /api/mentorship/:id
 // ACCESS: PRIVATE
 // ==========================================
 router.get(
 
   "/:id",
-
-  protect,
 
   getSingleMentorship
 
@@ -78,15 +102,13 @@ router.get(
 
 
 // ==========================================
-// UPDATE STATUS
-// PUT /mentorship/:id/status
+// UPDATE MENTORSHIP STATUS
+// PUT /api/mentorship/:id/status
 // ACCESS: ALUMNI / ADMIN
 // ==========================================
 router.put(
 
   "/:id/status",
-
-  protect,
 
   updateMentorshipStatus
 
@@ -94,15 +116,27 @@ router.put(
 
 
 // ==========================================
-// DELETE/CANCEL REQUEST
-// DELETE /mentorship/:id
+// SUBMIT FEEDBACK
+// PUT /api/mentorship/:id/feedback
+// ACCESS: STUDENT
+// ==========================================
+router.put(
+
+  "/:id/feedback",
+
+  submitMentorshipFeedback
+
+);
+
+
+// ==========================================
+// DELETE MENTORSHIP
+// DELETE /api/mentorship/:id
 // ACCESS: OWNER / ADMIN
 // ==========================================
 router.delete(
 
   "/:id",
-
-  protect,
 
   deleteMentorshipRequest
 

@@ -3,6 +3,43 @@ const mongoose =
 
 
 // ==========================================
+// RESOURCE SCHEMA
+// ==========================================
+const resourceSchema =
+  new mongoose.Schema(
+
+    {
+
+      title: {
+
+        type: String,
+
+        trim: true,
+
+        maxlength: 200,
+
+      },
+
+      link: {
+
+        type: String,
+
+        trim: true,
+
+      },
+
+    },
+
+    {
+
+      _id: false,
+
+    }
+
+  );
+
+
+// ==========================================
 // MENTORSHIP SCHEMA
 // ==========================================
 const mentorshipSchema =
@@ -32,11 +69,13 @@ const mentorshipSchema =
 
         trim: true,
 
+        maxlength: 100,
+
       },
 
 
       // ====================================
-      // ALUMNI
+      // ALUMNI / MENTOR
       // ====================================
       alumni: {
 
@@ -56,6 +95,8 @@ const mentorshipSchema =
         type: String,
 
         trim: true,
+
+        maxlength: 100,
 
       },
 
@@ -87,6 +128,8 @@ const mentorshipSchema =
 
         index: true,
 
+        default: "",
+
       },
 
 
@@ -115,6 +158,8 @@ const mentorshipSchema =
 
         default:
           "General Mentorship",
+
+        index: true,
 
       },
 
@@ -156,6 +201,8 @@ const mentorshipSchema =
 
         type: Date,
 
+        default: null,
+
       },
 
       meetingLink: {
@@ -164,6 +211,8 @@ const mentorshipSchema =
 
         trim: true,
 
+        default: "",
+
       },
 
       duration: {
@@ -171,6 +220,8 @@ const mentorshipSchema =
         type: Number,
 
         default: 30,
+
+        min: 15,
 
       },
 
@@ -184,6 +235,26 @@ const mentorshipSchema =
 
 
       // ====================================
+      // SESSION TRACKING
+      // ====================================
+      sessionStartedAt: {
+
+        type: Date,
+
+        default: null,
+
+      },
+
+      sessionEndedAt: {
+
+        type: Date,
+
+        default: null,
+
+      },
+
+
+      // ====================================
       // NOTES
       // ====================================
       mentorNotes: {
@@ -191,6 +262,8 @@ const mentorshipSchema =
         type: String,
 
         default: "",
+
+        maxlength: 3000,
 
       },
 
@@ -200,6 +273,8 @@ const mentorshipSchema =
 
         default: "",
 
+        maxlength: 3000,
+
       },
 
 
@@ -208,13 +283,7 @@ const mentorshipSchema =
       // ====================================
       resources: [
 
-        {
-
-          title: String,
-
-          link: String,
-
-        },
+        resourceSchema,
 
       ],
 
@@ -230,6 +299,8 @@ const mentorshipSchema =
 
         maxlength: 1000,
 
+        default: "",
+
       },
 
       rating: {
@@ -239,6 +310,24 @@ const mentorshipSchema =
         min: 1,
 
         max: 5,
+
+        default: null,
+
+      },
+
+
+      // ====================================
+      // AI MATCH SCORE
+      // ====================================
+      aiMatchScore: {
+
+        type: Number,
+
+        default: 0,
+
+        min: 0,
+
+        max: 100,
 
       },
 
@@ -252,17 +341,51 @@ const mentorshipSchema =
 
         default: "",
 
+        maxlength: 1000,
+
       },
 
 
       // ====================================
-      // REMINDER
+      // REMINDERS
       // ====================================
       reminderSent: {
 
         type: Boolean,
 
         default: false,
+
+      },
+
+      followUpSent: {
+
+        type: Boolean,
+
+        default: false,
+
+      },
+
+
+      // ====================================
+      // CERTIFICATE
+      // ====================================
+      certificateIssued: {
+
+        type: Boolean,
+
+        default: false,
+
+      },
+
+
+      // ====================================
+      // ACTIVE STATUS
+      // ====================================
+      isActive: {
+
+        type: Boolean,
+
+        default: true,
 
       },
 
@@ -287,6 +410,93 @@ mentorshipSchema.index({
   alumni: 1,
 
   status: 1,
+
+});
+
+mentorshipSchema.index({
+
+  domain: 1,
+
+  mentorshipType: 1,
+
+});
+
+mentorshipSchema.index({
+
+  scheduledDate: 1,
+
+});
+
+mentorshipSchema.index({
+
+  createdAt: -1,
+
+});
+
+
+// ==========================================
+// PRE SAVE MIDDLEWARE
+// ==========================================
+mentorshipSchema.pre(
+
+  "save",
+
+  function (next) {
+
+    // ====================================
+    // AUTO COMPLETE
+    // ====================================
+    if (
+
+      this.status === "Completed"
+
+    ) {
+
+      this.meetingCompleted =
+        true;
+
+    }
+
+    next();
+
+  }
+
+);
+
+
+// ==========================================
+// VIRTUAL SESSION DURATION
+// ==========================================
+mentorshipSchema.virtual(
+
+  "sessionDuration"
+
+).get(function () {
+
+  if (
+
+    this.sessionStartedAt &&
+
+    this.sessionEndedAt
+
+  ) {
+
+    return Math.floor(
+
+      (
+        this.sessionEndedAt -
+
+        this.sessionStartedAt
+
+      ) /
+
+      (1000 * 60)
+
+    );
+
+  }
+
+  return 0;
 
 });
 

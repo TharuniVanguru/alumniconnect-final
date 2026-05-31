@@ -11,12 +11,24 @@ const cosineSimilarity =
     arr2 = []
   ) => {
 
+    const skills1 =
+      arr1.map(
+        (item) =>
+          item.toLowerCase()
+      );
+
+    const skills2 =
+      arr2.map(
+        (item) =>
+          item.toLowerCase()
+      );
+
     const allSkills =
 
       [...new Set([
 
-        ...arr1,
-        ...arr2,
+        ...skills1,
+        ...skills2,
 
       ])];
 
@@ -26,7 +38,7 @@ const cosineSimilarity =
 
         (skill) =>
 
-          arr1.includes(skill)
+          skills1.includes(skill)
             ? 1
             : 0
 
@@ -38,7 +50,7 @@ const cosineSimilarity =
 
         (skill) =>
 
-          arr2.includes(skill)
+          skills2.includes(skill)
             ? 1
             : 0
 
@@ -139,7 +151,7 @@ const calculateProfileCompletion =
     if (user.githubUrl)
       completed++;
 
-    if (user.companyName)
+    if (user.company)
       completed++;
 
     if (user.experience)
@@ -214,6 +226,8 @@ const getRecommendedAlumni =
 
         isActive: true,
 
+        mentorshipAvailable: true,
+
         _id: {
 
           $ne:
@@ -243,7 +257,7 @@ const getRecommendedAlumni =
 
       if (req.query.company) {
 
-        filters.companyName = {
+        filters.company = {
 
           $regex:
             req.query.company,
@@ -260,7 +274,7 @@ const getRecommendedAlumni =
         filters.skills = {
 
           $in: [
-            req.query.skill,
+            req.query.skill.toLowerCase(),
           ],
 
         };
@@ -416,7 +430,7 @@ const getRecommendedAlumni =
 
             (
               mentor.trustScore || 0
-            ) * 0.25;
+            ) * 0.3;
 
 
           // ==================================
@@ -453,14 +467,14 @@ const getRecommendedAlumni =
           // EXPERIENCE BONUS
           // ==================================
           if (
-            mentor.companyName
+            mentor.company
           ) {
 
             score += 15;
 
             reasons.push(
 
-              `Works at ${mentor.companyName}`
+              `Works at ${mentor.company}`
 
             );
 
@@ -472,7 +486,33 @@ const getRecommendedAlumni =
           ) {
 
             score +=
-              mentor.experience;
+              mentor.experience * 2;
+
+            smartTags.push(
+              "Experienced"
+            );
+
+          }
+
+
+          // ==================================
+          // PROFILE STRENGTH BONUS
+          // ==================================
+          if (
+            mentor.profileStrength ===
+            "Excellent"
+          ) {
+
+            score += 20;
+
+          }
+
+          else if (
+            mentor.profileStrength ===
+            "Strong"
+          ) {
+
+            score += 10;
 
           }
 
@@ -540,7 +580,13 @@ const getRecommendedAlumni =
                   currentUser.skills || []
                 )
 
-                .includes(skill)
+                .map((s) =>
+                  s.toLowerCase()
+                )
+
+                .includes(
+                  skill.toLowerCase()
+                )
 
             );
 
@@ -562,8 +608,8 @@ const getRecommendedAlumni =
             domain:
               mentor.domain,
 
-            companyName:
-              mentor.companyName,
+            company:
+              mentor.company,
 
             bio:
               mentor.bio,
@@ -591,6 +637,9 @@ const getRecommendedAlumni =
 
             mentorshipAvailable:
               mentor.mentorshipAvailable,
+
+            profileStrength:
+              mentor.profileStrength,
 
             profileCompletion,
 

@@ -307,6 +307,14 @@ guidanceRequestSchema.index({
 
 });
 
+guidanceRequestSchema.index({
+
+  domain: 1,
+
+  urgency: 1,
+
+});
+
 
 // ==========================================
 // MODEL

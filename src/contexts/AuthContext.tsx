@@ -20,8 +20,7 @@ import {
 
 } from "@/types/user";
 
-import api
-  from "@/utils/api";
+import api from "@/utils/api";
 
 import {
 
@@ -33,7 +32,7 @@ import {
 
 
 // ==========================================
-// AUTH CONTEXT TYPES
+// CONTEXT TYPES
 // ==========================================
 interface AuthContextType {
 
@@ -63,13 +62,15 @@ interface AuthContextType {
 
   logout: () => Promise<void>;
 
-  refreshUser: () => void;
+  refreshUser: () => Promise<void>;
+
+  updateUser: (userData: User) => void;
 
 }
 
 
 // ==========================================
-// CREATE CONTEXT
+// CONTEXT
 // ==========================================
 const AuthContext =
   createContext<AuthContextType | undefined>(
@@ -78,7 +79,7 @@ const AuthContext =
 
 
 // ==========================================
-// CUSTOM HOOK
+// HOOK
 // ==========================================
 export const useAuth = () => {
 
@@ -111,7 +112,7 @@ interface AuthProviderProps {
 
 
 // ==========================================
-// AUTH PROVIDER
+// PROVIDER
 // ==========================================
 export const AuthProvider:
 React.FC<AuthProviderProps> = ({
@@ -123,103 +124,59 @@ React.FC<AuthProviderProps> = ({
   // ========================================
   // STATES
   // ========================================
-  const [user, setUser] =
-    useState<User | null>(null);
+  const [
 
-  const [token, setToken] =
-    useState<string | null>(null);
+    user,
 
-  const [isLoading, setIsLoading] =
-    useState(true);
+    setUser,
+
+  ] = useState<User | null>(
+    null
+  );
+
+
+  const [
+
+    token,
+
+    setToken,
+
+  ] = useState<string | null>(
+    null
+  );
+
+
+  const [
+
+    isLoading,
+
+    setIsLoading,
+
+  ] = useState(true);
 
 
   // ========================================
-  // RESTORE AUTH
+  // CLEAR AUTH
   // ========================================
-  useEffect(() => {
+  const clearAuth = () => {
 
-    restoreAuth();
+    disconnectSocket();
 
-  }, []);
+    setUser(null);
 
+    setToken(null);
 
-  // ========================================
-  // RESTORE AUTH FUNCTION
-  // ========================================
-  const restoreAuth = () => {
+    localStorage.removeItem(
+      "userInfo"
+    );
 
-    try {
+    localStorage.removeItem(
+      "token"
+    );
 
-      const storedUser =
-        localStorage.getItem(
-          "userInfo"
-        );
-
-      const storedToken =
-        localStorage.getItem(
-          "token"
-        );
-
-
-      // ====================================
-      // RESTORE USER
-      // ====================================
-      if (
-
-        storedUser &&
-
-        storedToken
-
-      ) {
-
-        const parsedUser: User =
-          JSON.parse(
-            storedUser
-          );
-
-        setUser(
-          parsedUser
-        );
-
-        setToken(
-          storedToken
-        );
-
-
-        // ==================================
-        // SOCKET CONNECT
-        // ==================================
-        if (parsedUser._id) {
-
-          connectSocket(
-            parsedUser._id
-          );
-
-        }
-
-      }
-
-    }
-
-    catch (error) {
-
-      console.log(
-
-        "AUTH RESTORE ERROR:",
-
-        error
-
-      );
-
-      clearAuth();
-
-    }
-
-    finally {
-
-      setIsLoading(false);
-
-    }
+    delete api.defaults.headers.common[
+      "Authorization"
+    ];
 
   };
 
@@ -236,7 +193,7 @@ React.FC<AuthProviderProps> = ({
   ) => {
 
     // ======================================
-    // UPDATE STATE
+    // STATE
     // ======================================
     setUser(userData);
 
@@ -244,7 +201,7 @@ React.FC<AuthProviderProps> = ({
 
 
     // ======================================
-    // SAVE STORAGE
+    // STORAGE
     // ======================================
     localStorage.setItem(
 
@@ -264,9 +221,17 @@ React.FC<AuthProviderProps> = ({
 
 
     // ======================================
-    // CONNECT SOCKET
+    // AXIOS HEADER
     // ======================================
-    if (userData._id) {
+    api.defaults.headers.common[
+      "Authorization"
+    ] = `Bearer ${authToken}`;
+
+
+    // ======================================
+    // SOCKET CONNECT
+    // ======================================
+    if (userData?._id) {
 
       connectSocket(
         userData._id
@@ -278,36 +243,243 @@ React.FC<AuthProviderProps> = ({
 
 
   // ========================================
-  // CLEAR AUTH
+  // UPDATE USER
   // ========================================
-  const clearAuth = () => {
+  const updateUser = (
+    userData: User
+  ) => {
 
-    // ======================================
-    // DISCONNECT SOCKET
-    // ======================================
-    disconnectSocket();
+    setUser(userData);
 
+    localStorage.setItem(
 
-    // ======================================
-    // CLEAR STATE
-    // ======================================
-    setUser(null);
+      "userInfo",
 
-    setToken(null);
+      JSON.stringify(userData)
 
-
-    // ======================================
-    // CLEAR STORAGE
-    // ======================================
-    localStorage.removeItem(
-      "userInfo"
-    );
-
-    localStorage.removeItem(
-      "token"
     );
 
   };
+
+
+  // ========================================
+  // REFRESH USER
+  // ========================================
+  const refreshUser =
+    async () => {
+
+      try {
+
+        const storedToken =
+          localStorage.getItem(
+            "token"
+          );
+
+
+        // ====================================
+        // NO TOKEN
+        // ====================================
+        if (!storedToken) {
+
+          clearAuth();
+
+          return;
+
+        }
+
+
+        // ====================================
+        // SET TOKEN
+        // ====================================
+        api.defaults.headers.common[
+          "Authorization"
+        ] = `Bearer ${storedToken}`;
+
+
+        // ====================================
+        // API CALL
+        // ====================================
+        const response =
+          await api.get(
+            "/auth/me"
+          );
+
+
+        const data =
+          response.data;
+
+
+        // ====================================
+        // SUCCESS
+        // ====================================
+        if (
+
+          data?.success &&
+
+          data?.user
+
+        ) {
+
+          setUser(
+            data.user
+          );
+
+          setToken(
+            storedToken
+          );
+
+          localStorage.setItem(
+
+            "userInfo",
+
+            JSON.stringify(
+              data.user
+            )
+
+          );
+
+
+          // ==================================
+          // SOCKET
+          // ==================================
+          if (
+            data.user?._id
+          ) {
+
+            connectSocket(
+              data.user._id
+            );
+
+          }
+
+        }
+
+        else {
+
+          clearAuth();
+
+        }
+
+      }
+
+      catch (error) {
+
+        console.log(
+
+          "REFRESH USER ERROR:",
+
+          error
+
+        );
+
+        clearAuth();
+
+      }
+
+    };
+
+
+  // ========================================
+  // RESTORE AUTH
+  // ========================================
+  useEffect(() => {
+
+    const restoreAuth =
+      async () => {
+
+        try {
+
+          const storedUser =
+            localStorage.getItem(
+              "userInfo"
+            );
+
+          const storedToken =
+            localStorage.getItem(
+              "token"
+            );
+
+
+          // ==================================
+          // NO AUTH
+          // ==================================
+          if (
+
+            !storedUser ||
+
+            !storedToken
+
+          ) {
+
+            setIsLoading(false);
+
+            return;
+
+          }
+
+
+          // ==================================
+          // PARSE USER
+          // ==================================
+          const parsedUser =
+            JSON.parse(
+              storedUser
+            );
+
+
+          // ==================================
+          // SET STATE
+          // ==================================
+          setUser(
+            parsedUser
+          );
+
+          setToken(
+            storedToken
+          );
+
+
+          // ==================================
+          // AXIOS TOKEN
+          // ==================================
+          api.defaults.headers.common[
+            "Authorization"
+          ] = `Bearer ${storedToken}`;
+
+
+          // ==================================
+          // VERIFY TOKEN
+          // ==================================
+          await refreshUser();
+
+        }
+
+        catch (error) {
+
+          console.log(
+
+            "RESTORE AUTH ERROR:",
+
+            error
+
+          );
+
+          clearAuth();
+
+        }
+
+        finally {
+
+          setIsLoading(false);
+
+        }
+
+      };
+
+
+    restoreAuth();
+
+  }, []);
 
 
   // ========================================
@@ -329,7 +501,7 @@ React.FC<AuthProviderProps> = ({
 
 
       // ====================================
-      // LOGIN API
+      // API CALL
       // ====================================
       const response =
         await api.post(
@@ -338,9 +510,11 @@ React.FC<AuthProviderProps> = ({
 
           {
 
-            identifier,
+            identifier:
+              identifier.trim(),
 
-            password,
+            password:
+              password.trim(),
 
             role,
 
@@ -349,6 +523,9 @@ React.FC<AuthProviderProps> = ({
         );
 
 
+      // ====================================
+      // DATA
+      // ====================================
       const data =
         response.data;
 
@@ -439,48 +616,39 @@ React.FC<AuthProviderProps> = ({
   // ========================================
   // LOGOUT
   // ========================================
-  const logout = async () => {
+  const logout =
+    async () => {
 
-    try {
+      try {
 
-      // ====================================
-      // LOGOUT API
-      // ====================================
-      await api.post(
-        "/auth/logout"
-      );
+        await api.post(
+          "/auth/logout"
+        );
 
-    }
+      }
 
-    catch (error) {
+      catch (error) {
 
-      console.log(
+        console.log(
 
-        "LOGOUT ERROR:",
+          "LOGOUT ERROR:",
 
-        error
+          error
 
-      );
+        );
 
-    }
+      }
 
-    finally {
+      finally {
 
-      clearAuth();
+        clearAuth();
 
-    }
+        window.location.href =
+          "/login";
 
-  };
+      }
 
-
-  // ========================================
-  // REFRESH USER
-  // ========================================
-  const refreshUser = () => {
-
-    restoreAuth();
-
-  };
+    };
 
 
   // ========================================
@@ -503,7 +671,37 @@ React.FC<AuthProviderProps> = ({
 
     refreshUser,
 
+    updateUser,
+
   };
+
+
+  // ========================================
+  // LOADING SCREEN
+  // ========================================
+  if (isLoading) {
+
+    return (
+
+      <div className="min-h-screen flex items-center justify-center bg-background">
+
+        <div className="text-center">
+
+          <div className="h-12 w-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+
+          <p className="text-lg font-semibold">
+
+            Loading AlumniConnect...
+
+          </p>
+
+        </div>
+
+      </div>
+
+    );
+
+  }
 
 
   // ========================================

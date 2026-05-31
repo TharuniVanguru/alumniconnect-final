@@ -3,8 +3,7 @@ import {
   useState,
 } from "react";
 
-import axios from "axios";
-
+import api, { apiGet, apiPost, apiPut, apiPatch, apiDelete } from "@/utils/api";
 import { Header }
   from "@/components/layout/Header";
 
@@ -43,6 +42,11 @@ import {
   Users,
   Target,
   Loader2,
+  Sparkles,
+  Trophy,
+  Gift,
+  ShieldCheck,
+  CheckCircle2,
 
 } from "lucide-react";
 
@@ -189,9 +193,9 @@ export const FundraisingHub =
         try {
 
           const response =
-            await axios.get(
+            await api.get(
 
-              "http://localhost:5000/fundraising/campaigns"
+              "/fundraising/campaigns"
 
             );
 
@@ -260,9 +264,9 @@ export const FundraisingHub =
 
           setLoading(true);
 
-          await axios.post(
+          await api.post(
 
-            "http://localhost:5000/fundraising/donate",
+            "/fundraising/donate",
 
             {
 
@@ -289,7 +293,7 @@ export const FundraisingHub =
           toast({
 
             title:
-              "Donation Submitted!",
+              "Donation Submitted ❤️",
 
             description:
               "Thank you for supporting your institution.",
@@ -371,6 +375,21 @@ export const FundraisingHub =
 
 
     // ======================================
+    // TOTAL DONORS
+    // ======================================
+    const totalDonors =
+      campaigns.reduce(
+
+        (acc, curr) =>
+
+          acc + curr.donors,
+
+        0
+
+      );
+
+
+    // ======================================
     // UI
     // ======================================
     return (
@@ -379,30 +398,145 @@ export const FundraisingHub =
 
         <Header />
 
-        <main className="container mx-auto px-4 py-6">
+        <main className="max-w-7xl mx-auto px-4 py-8">
 
-          {/* HEADER */}
 
-          <div className="mb-8">
+          {/* HERO */}
 
-            <h1 className="text-3xl font-bold text-foreground mb-2 flex items-center">
+          <div className="mb-10">
 
-              <Heart className="h-8 w-8 mr-3 text-primary" />
+            <div className="rounded-3xl overflow-hidden bg-gradient-to-r from-pink-500 via-red-500 to-orange-500 text-white shadow-2xl">
 
-              Fundraising Hub
+              <div className="p-8 md:p-10">
 
-            </h1>
+                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8">
 
-            <p className="text-muted-foreground">
+                  <div>
 
-              Support your institution and empower future students
+                    <div className="flex items-center gap-4 mb-5">
 
-            </p>
+                      <div className="h-20 w-20 rounded-3xl bg-white/20 flex items-center justify-center">
+
+                        <Heart className="h-10 w-10" />
+
+                      </div>
+
+
+                      <div>
+
+                        <h1 className="text-4xl md:text-5xl font-bold">
+
+                          Fundraising Hub
+
+                        </h1>
+
+                        <p className="text-white/90 mt-2 text-lg">
+
+                          Empower future students through contributions and support
+
+                        </p>
+
+                      </div>
+
+                    </div>
+
+
+                    <div className="flex flex-wrap gap-3">
+
+                      <Badge className="bg-white/20 border-0 text-white">
+
+                        <Users className="h-3 w-3 mr-1" />
+
+                        Alumni Community
+
+                      </Badge>
+
+                      <Badge className="bg-white/20 border-0 text-white">
+
+                        <ShieldCheck className="h-3 w-3 mr-1" />
+
+                        Trusted Donations
+
+                      </Badge>
+
+                      <Badge className="bg-white/20 border-0 text-white">
+
+                        <Sparkles className="h-3 w-3 mr-1" />
+
+                        Student Impact
+
+                      </Badge>
+
+                    </div>
+
+                  </div>
+
+
+                  <div className="bg-white/10 backdrop-blur-md rounded-3xl p-6 w-full lg:w-[320px]">
+
+                    <h3 className="font-bold text-xl mb-4">
+
+                      Platform Impact
+
+                    </h3>
+
+
+                    <div className="space-y-4">
+
+                      <div className="flex items-center justify-between">
+
+                        <span>Total Raised</span>
+
+                        <span className="font-bold text-2xl">
+
+                          ₹
+                          {totalRaised.toLocaleString()}
+
+                        </span>
+
+                      </div>
+
+
+                      <div className="flex items-center justify-between">
+
+                        <span>Total Donors</span>
+
+                        <span className="font-bold text-2xl">
+
+                          {totalDonors}
+
+                        </span>
+
+                      </div>
+
+
+                      <div className="flex items-center justify-between">
+
+                        <span>Campaigns</span>
+
+                        <span className="font-bold text-2xl">
+
+                          {campaigns.length}
+
+                        </span>
+
+                      </div>
+
+                    </div>
+
+                  </div>
+
+                </div>
+
+              </div>
+
+            </div>
 
           </div>
 
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
 
             {/* ================================= */}
             {/* DONATION FORM */}
@@ -410,11 +544,11 @@ export const FundraisingHub =
 
             <div className="lg:col-span-2">
 
-              <Card className="shadow-soft">
+              <Card className="rounded-3xl shadow-2xl border-0">
 
                 <CardHeader>
 
-                  <CardTitle>
+                  <CardTitle className="text-3xl">
 
                     Make a Contribution
 
@@ -422,7 +556,7 @@ export const FundraisingHub =
 
                   <CardDescription>
 
-                    Donate money, books or equipment
+                    Donate money, books, or equipment to support students
 
                   </CardDescription>
 
@@ -431,20 +565,28 @@ export const FundraisingHub =
 
                 <CardContent>
 
+
                   {/* TYPE SELECT */}
 
-                  <div className="grid grid-cols-3 gap-4 mb-6">
+                  <div className="grid grid-cols-3 gap-4 mb-8">
 
                     <Button
 
                       variant={
                         donationType ===
                         "money"
-                          ? "hero"
+                          ? "default"
                           : "outline"
                       }
 
-                      className="h-20 flex-col"
+                      className={`h-24 flex-col rounded-2xl ${
+                        donationType ===
+                        "money"
+
+                          ? "bg-gradient-to-r from-green-500 to-emerald-600 text-white"
+
+                          : ""
+                      }`}
 
                       onClick={() =>
                         setDonationType(
@@ -454,9 +596,9 @@ export const FundraisingHub =
 
                     >
 
-                      <DollarSign className="h-6 w-6 mb-2" />
+                      <DollarSign className="h-7 w-7 mb-2" />
 
-                      <span className="text-sm">
+                      <span>
 
                         Money
 
@@ -470,11 +612,18 @@ export const FundraisingHub =
                       variant={
                         donationType ===
                         "books"
-                          ? "hero"
+                          ? "default"
                           : "outline"
                       }
 
-                      className="h-20 flex-col"
+                      className={`h-24 flex-col rounded-2xl ${
+                        donationType ===
+                        "books"
+
+                          ? "bg-gradient-to-r from-blue-500 to-indigo-600 text-white"
+
+                          : ""
+                      }`}
 
                       onClick={() =>
                         setDonationType(
@@ -484,9 +633,9 @@ export const FundraisingHub =
 
                     >
 
-                      <Book className="h-6 w-6 mb-2" />
+                      <Book className="h-7 w-7 mb-2" />
 
-                      <span className="text-sm">
+                      <span>
 
                         Books
 
@@ -500,11 +649,18 @@ export const FundraisingHub =
                       variant={
                         donationType ===
                         "equipment"
-                          ? "hero"
+                          ? "default"
                           : "outline"
                       }
 
-                      className="h-20 flex-col"
+                      className={`h-24 flex-col rounded-2xl ${
+                        donationType ===
+                        "equipment"
+
+                          ? "bg-gradient-to-r from-purple-500 to-pink-600 text-white"
+
+                          : ""
+                      }`}
 
                       onClick={() =>
                         setDonationType(
@@ -514,9 +670,9 @@ export const FundraisingHub =
 
                     >
 
-                      <Laptop className="h-6 w-6 mb-2" />
+                      <Laptop className="h-7 w-7 mb-2" />
 
-                      <span className="text-sm">
+                      <span>
 
                         Equipment
 
@@ -534,9 +690,10 @@ export const FundraisingHub =
                       handleDonation
                     }
 
-                    className="space-y-4"
+                    className="space-y-5"
 
                   >
+
 
                     {/* MONEY */}
 
@@ -547,7 +704,7 @@ export const FundraisingHub =
 
                         <div>
 
-                          <Label>
+                          <Label className="mb-2 block">
 
                             Donation Amount (₹)
 
@@ -578,6 +735,8 @@ export const FundraisingHub =
 
                             }
 
+                            className="h-14 rounded-2xl"
+
                             required
 
                           />
@@ -587,7 +746,7 @@ export const FundraisingHub =
 
                         <div>
 
-                          <Label>
+                          <Label className="mb-2 block">
 
                             Select Campaign
 
@@ -595,7 +754,7 @@ export const FundraisingHub =
 
                           <select
 
-                            className="w-full h-10 px-3 rounded-md border border-input bg-background"
+                            className="w-full h-14 px-4 rounded-2xl border border-input bg-background"
 
                             value={
                               formData.campaign
@@ -665,7 +824,7 @@ export const FundraisingHub =
 
                         <div>
 
-                          <Label>
+                          <Label className="mb-2 block">
 
                             Book Title
 
@@ -692,6 +851,8 @@ export const FundraisingHub =
 
                             }
 
+                            className="h-14 rounded-2xl"
+
                             required
 
                           />
@@ -701,7 +862,7 @@ export const FundraisingHub =
 
                         <div>
 
-                          <Label>
+                          <Label className="mb-2 block">
 
                             Author
 
@@ -728,6 +889,8 @@ export const FundraisingHub =
 
                             }
 
+                            className="h-14 rounded-2xl"
+
                             required
 
                           />
@@ -737,7 +900,7 @@ export const FundraisingHub =
 
                         <div>
 
-                          <Label>
+                          <Label className="mb-2 block">
 
                             Quantity
 
@@ -766,6 +929,8 @@ export const FundraisingHub =
 
                             }
 
+                            className="h-14 rounded-2xl"
+
                             required
 
                           />
@@ -786,7 +951,7 @@ export const FundraisingHub =
 
                         <div>
 
-                          <Label>
+                          <Label className="mb-2 block">
 
                             Equipment Type
 
@@ -813,6 +978,8 @@ export const FundraisingHub =
 
                             }
 
+                            className="h-14 rounded-2xl"
+
                             required
 
                           />
@@ -822,7 +989,7 @@ export const FundraisingHub =
 
                         <div>
 
-                          <Label>
+                          <Label className="mb-2 block">
 
                             Quantity
 
@@ -851,6 +1018,8 @@ export const FundraisingHub =
 
                             }
 
+                            className="h-14 rounded-2xl"
+
                           />
 
                         </div>
@@ -858,7 +1027,7 @@ export const FundraisingHub =
 
                         <div>
 
-                          <Label>
+                          <Label className="mb-2 block">
 
                             Condition
 
@@ -866,7 +1035,7 @@ export const FundraisingHub =
 
                           <select
 
-                            className="w-full h-10 px-3 rounded-md border border-input bg-background"
+                            className="w-full h-14 px-4 rounded-2xl border border-input bg-background"
 
                             value={
                               formData.condition
@@ -924,7 +1093,7 @@ export const FundraisingHub =
 
                     <div>
 
-                      <Label>
+                      <Label className="mb-2 block">
 
                         Message
 
@@ -932,9 +1101,9 @@ export const FundraisingHub =
 
                       <Textarea
 
-                        rows={3}
+                        rows={4}
 
-                        placeholder="Write your message..."
+                        placeholder="Write your contribution message..."
 
                         value={
                           formData.message
@@ -953,6 +1122,8 @@ export const FundraisingHub =
 
                         }
 
+                        className="rounded-2xl resize-none"
+
                       />
 
                     </div>
@@ -964,11 +1135,7 @@ export const FundraisingHub =
 
                       type="submit"
 
-                      className="w-full"
-
-                      variant="hero"
-
-                      size="lg"
+                      className="w-full h-14 rounded-2xl text-lg font-semibold"
 
                       disabled={loading}
 
@@ -978,7 +1145,7 @@ export const FundraisingHub =
 
                         <>
 
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          <Loader2 className="mr-2 h-5 w-5 animate-spin" />
 
                           Processing...
 
@@ -986,7 +1153,13 @@ export const FundraisingHub =
 
                       ) : (
 
-                        "Submit Contribution"
+                        <>
+
+                          <Gift className="mr-2 h-5 w-5" />
+
+                          Submit Contribution
+
+                        </>
 
                       )}
 
@@ -1007,26 +1180,25 @@ export const FundraisingHub =
 
             <div className="space-y-6">
 
-              <Card className="shadow-soft">
+
+              {/* CAMPAIGNS */}
+
+              <Card className="rounded-3xl shadow-2xl border-0">
 
                 <CardHeader>
 
-                  <CardTitle className="flex items-center space-x-2">
+                  <CardTitle className="flex items-center gap-2">
 
                     <Target className="h-5 w-5" />
 
-                    <span>
-
-                      Active Campaigns
-
-                    </span>
+                    Active Campaigns
 
                   </CardTitle>
 
                 </CardHeader>
 
 
-                <CardContent className="space-y-4">
+                <CardContent className="space-y-5">
 
                   {campaigns.length ===
                   0 ? (
@@ -1058,45 +1230,59 @@ export const FundraisingHub =
                               campaign._id
                             }
 
-                            className="p-4 rounded-lg border bg-gradient-card"
+                            className="p-5 rounded-2xl border bg-muted/20"
 
                           >
 
-                            <h4 className="font-semibold text-sm mb-2">
+                            <div className="flex items-center justify-between mb-3">
 
-                              {
-                                campaign.title
-                              }
+                              <h4 className="font-bold">
 
-                            </h4>
+                                {
+                                  campaign.title
+                                }
+
+                              </h4>
 
 
-                            <div className="space-y-2">
+                              <Badge>
 
-                              <div className="flex justify-between text-xs text-muted-foreground">
+                                {percentage.toFixed(
+                                  0
+                                )}
+                                %
+
+                              </Badge>
+
+                            </div>
+
+
+                            <div className="space-y-3">
+
+                              <div className="flex justify-between text-sm">
 
                                 <span>
 
                                   ₹
-                                  {campaign.raised.toLocaleString()} raised
+                                  {campaign.raised.toLocaleString()}
 
                                 </span>
 
                                 <span>
 
                                   ₹
-                                  {campaign.goal.toLocaleString()} goal
+                                  {campaign.goal.toLocaleString()}
 
                                 </span>
 
                               </div>
 
 
-                              <div className="w-full bg-muted rounded-full h-2">
+                              <div className="w-full bg-muted rounded-full h-3">
 
                                 <div
 
-                                  className="bg-gradient-primary h-2 rounded-full transition-all"
+                                  className="bg-gradient-to-r from-pink-500 to-orange-500 h-3 rounded-full"
 
                                   style={{
 
@@ -1112,7 +1298,7 @@ export const FundraisingHub =
 
                               <div className="flex items-center justify-between">
 
-                                <Badge variant="secondary">
+                                <Badge variant="outline">
 
                                   <Users className="h-3 w-3 mr-1" />
 
@@ -1123,12 +1309,11 @@ export const FundraisingHub =
                                 </Badge>
 
 
-                                <Badge className="bg-success text-white">
+                                <Badge className="bg-green-600 text-white">
 
-                                  {percentage.toFixed(
-                                    0
-                                  )}
-                                  %
+                                  {
+                                    campaign.status
+                                  }
 
                                 </Badge>
 
@@ -1152,30 +1337,28 @@ export const FundraisingHub =
 
               {/* IMPACT */}
 
-              <Card className="shadow-soft bg-gradient-hero text-white">
+              <Card className="rounded-3xl bg-gradient-to-r from-indigo-600 to-purple-700 text-white shadow-2xl border-0">
 
                 <CardHeader>
 
-                  <CardTitle className="text-white">
+                  <CardTitle className="text-white flex items-center gap-2">
 
-                    Platform Impact
+                    <Trophy className="h-5 w-5" />
+
+                    Your Impact
 
                   </CardTitle>
 
                 </CardHeader>
 
 
-                <CardContent className="space-y-3">
+                <CardContent className="space-y-4">
 
                   <div className="flex items-center justify-between">
 
-                    <span>
+                    <span>Total Raised</span>
 
-                      Total Raised
-
-                    </span>
-
-                    <span className="font-bold text-xl">
+                    <span className="font-bold text-2xl">
 
                       ₹
                       {totalRaised.toLocaleString()}
@@ -1187,17 +1370,11 @@ export const FundraisingHub =
 
                   <div className="flex items-center justify-between">
 
-                    <span>
+                    <span>Active Campaigns</span>
 
-                      Campaigns
+                    <span className="font-bold text-2xl">
 
-                    </span>
-
-                    <span className="font-bold text-xl">
-
-                      {
-                        campaigns.length
-                      }
+                      {campaigns.length}
 
                     </span>
 
@@ -1206,19 +1383,28 @@ export const FundraisingHub =
 
                   <div className="flex items-center justify-between">
 
-                    <span>
+                    <span>Contribution Score</span>
 
-                      Contribution Score
-
-                    </span>
-
-                    <Badge className="bg-white/20 text-white">
+                    <Badge className="bg-white/20 text-white border-0">
 
                       <TrendingUp className="h-3 w-3 mr-1" />
 
                       +150 pts
 
                     </Badge>
+
+                  </div>
+
+
+                  <div className="pt-2">
+
+                    <div className="flex items-center gap-2 text-sm text-white/90">
+
+                      <CheckCircle2 className="h-4 w-4" />
+
+                      Every contribution helps students grow
+
+                    </div>
 
                   </div>
 
@@ -1237,3 +1423,6 @@ export const FundraisingHub =
     );
 
   };
+
+
+export default FundraisingHub;

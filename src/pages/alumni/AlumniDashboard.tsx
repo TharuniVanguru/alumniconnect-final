@@ -3,7 +3,7 @@ import {
   useState,
 } from "react";
 
-import axios from "axios";
+import api from "@/utils/api";
 
 import { Header }
   from "@/components/layout/Header";
@@ -18,17 +18,30 @@ import { Button }
   from "@/components/ui/button";
 
 import {
-
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-
 } from "@/components/ui/card";
 
-import { Badge }
-  from "@/components/ui/badge";
+import {
+  Badge,
+} from "@/components/ui/badge";
+
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@/components/ui/avatar";
+
+import {
+  useToast,
+} from "@/hooks/use-toast";
+
+import {
+  getSocket,
+} from "@/socket";
 
 import {
 
@@ -42,6 +55,15 @@ import {
   GraduationCap,
   Bell,
   Loader2,
+  RefreshCcw,
+  Brain,
+  ShieldCheck,
+  TrendingUp,
+  Activity,
+  Sparkles,
+  ArrowRight,
+  Target,
+  Clock,
 
 } from "lucide-react";
 
@@ -49,9 +71,6 @@ import {
   Link,
   useNavigate,
 } from "react-router-dom";
-
-import { useToast }
-  from "@/hooks/use-toast";
 
 
 // ==========================================
@@ -86,716 +105,766 @@ interface Student {
 
   email?: string;
 
+  profileImage?: string;
+
 }
 
 
 // ==========================================
 // COMPONENT
 // ==========================================
-export const AlumniDashboard = () => {
+const AlumniDashboard =
+  () => {
 
-  // ========================================
-  // HOOKS
-  // ========================================
-  const navigate =
-    useNavigate();
+    // ========================================
+    // HOOKS
+    // ========================================
+    const navigate =
+      useNavigate();
 
-  const { toast } =
-    useToast();
+    const { toast } =
+      useToast();
+
+    const socket =
+      getSocket();
 
 
-  // ========================================
-  // USER
-  // ========================================
-  const userInfo =
-    localStorage.getItem(
-      "userInfo"
+    // ========================================
+    // USER
+    // ========================================
+    const userInfo =
+      localStorage.getItem(
+        "userInfo"
+      );
+
+    const user =
+      userInfo
+        ? JSON.parse(userInfo)
+        : null;
+
+
+    // ========================================
+    // STATES
+    // ========================================
+    const [loading, setLoading] =
+      useState(false);
+
+    const [refreshing, setRefreshing] =
+      useState(false);
+
+    const [
+
+      recentGuidanceRequests,
+
+      setRecentGuidanceRequests,
+
+    ] = useState<GuidanceRequest[]>(
+      []
     );
 
-  const user =
-    userInfo
-      ? JSON.parse(userInfo)
-      : null;
+    const [
+
+      students,
+
+      setStudents,
+
+    ] = useState<Student[]>(
+      []
+    );
+
+    const [
+
+      alumniStats,
+
+      setAlumniStats,
+
+    ] = useState({
+
+      studentsHelped: 0,
+
+      jobsPosted: 0,
+
+      eventsOrganized: 0,
+
+      mentorshipSessions: 0,
+
+      contributionScore: 0,
+
+    });
 
 
-  // ========================================
-  // STATES
-  // ========================================
-  const [loading, setLoading] =
-    useState(false);
+    // ========================================
+    // CONTRIBUTION LEVEL
+    // ========================================
+    const contributionLevel =
 
-  const [
+      alumniStats.contributionScore > 1000
+        ? "Platinum"
 
-    recentGuidanceRequests,
+        : alumniStats.contributionScore > 700
+        ? "Gold"
 
-    setRecentGuidanceRequests,
-
-  ] = useState<GuidanceRequest[]>(
-    []
-  );
-
-  const [
-
-    students,
-
-    setStudents,
-
-  ] = useState<Student[]>(
-    []
-  );
-
-  const [
-
-    alumniStats,
-
-    setAlumniStats,
-
-  ] = useState({
-
-    studentsHelped: 0,
-
-    jobsPosted: 0,
-
-    eventsOrganized: 0,
-
-    contributionScore: 0,
-
-  });
+        : "Silver";
 
 
-  // ========================================
-  // FETCH DASHBOARD DATA
-  // ========================================
-  const fetchDashboardData =
-    async () => {
+    // ========================================
+    // FETCH DASHBOARD DATA
+    // ========================================
+    const fetchDashboardData =
+      async () => {
 
-      try {
+        try {
 
-        setLoading(true);
+          setLoading(true);
 
-        const token =
-          user?.token;
+          const usersResponse =
+            await api.get(
+              "/users"
+            );
 
-        // ====================================
-        // FETCH USERS
-        // ====================================
-        const usersResponse =
-          await axios.get(
+          const allUsers =
+            usersResponse.data || [];
 
-            "http://localhost:5000/users",
 
-            {
+          const studentUsers =
+            allUsers.filter(
+              (u: Student) =>
 
-              headers: {
+                u.role ===
+                "student"
+            );
 
-                Authorization:
-                  `Bearer ${token}`,
 
-              },
-
-            }
-
+          setStudents(
+            studentUsers.slice(0, 6)
           );
 
 
-        const allUsers =
-          usersResponse.data || [];
+          let jobsCount = 0;
+
+          let eventsCount = 0;
+
+          let mentorshipCount = 0;
 
 
-        const studentUsers =
-          allUsers.filter(
-            (u: Student) =>
-              u.role ===
-              "student"
-          );
+          try {
+
+            const jobsResponse =
+              await api.get(
+                "/jobs"
+              );
+
+            jobsCount =
+              jobsResponse.data?.length || 0;
+
+          }
+
+          catch (error) {
+
+            console.log(error);
+
+          }
 
 
-        setStudents(
-          studentUsers.slice(0, 5)
+          try {
+
+            const eventsResponse =
+              await api.get(
+                "/events"
+              );
+
+            eventsCount =
+              eventsResponse.data?.length || 0;
+
+          }
+
+          catch (error) {
+
+            console.log(error);
+
+          }
+
+
+          try {
+
+            const mentorshipResponse =
+              await api.get(
+                "/mentorship"
+              );
+
+            mentorshipCount =
+              mentorshipResponse.data?.length || 0;
+
+          }
+
+          catch (error) {
+
+            console.log(error);
+
+          }
+
+
+          try {
+
+            const guidanceResponse =
+              await api.get(
+                "/guidance"
+              );
+
+            setRecentGuidanceRequests(
+
+              guidanceResponse.data
+                ?.slice(0, 5) || []
+
+            );
+
+          }
+
+          catch (error) {
+
+            console.log(error);
+
+          }
+
+
+          setAlumniStats({
+
+            studentsHelped:
+              studentUsers.length,
+
+            jobsPosted:
+              jobsCount,
+
+            eventsOrganized:
+              eventsCount,
+
+            mentorshipSessions:
+              mentorshipCount,
+
+            contributionScore:
+              user?.trustScore ||
+              850,
+
+          });
+
+        }
+
+        catch (error) {
+
+          console.log(error);
+
+          toast({
+
+            title:
+              "Dashboard Error",
+
+            description:
+              "Unable to load dashboard data",
+
+            variant:
+              "destructive",
+
+          });
+
+        }
+
+        finally {
+
+          setLoading(false);
+
+        }
+
+      };
+
+
+    // ========================================
+    // REFRESH
+    // ========================================
+    const refreshDashboard =
+      async () => {
+
+        setRefreshing(true);
+
+        await fetchDashboardData();
+
+        setRefreshing(false);
+
+      };
+
+
+    // ========================================
+    // INITIAL LOAD
+    // ========================================
+    useEffect(() => {
+
+      fetchDashboardData();
+
+    }, []);
+
+
+    // ========================================
+    // SOCKET
+    // ========================================
+    useEffect(() => {
+
+      if (!socket)
+        return;
+
+      socket.on(
+
+        "newGuidanceRequest",
+
+        () => {
+
+          fetchDashboardData();
+
+        }
+
+      );
+
+      return () => {
+
+        socket.off(
+          "newGuidanceRequest"
         );
 
+      };
 
-        // ====================================
-        // FETCH JOBS
-        // ====================================
-        let jobsCount = 0;
+    }, [socket]);
 
-        try {
 
-          const jobsResponse =
-            await axios.get(
+    // ========================================
+    // LOADING
+    // ========================================
+    if (loading) {
 
-              "http://localhost:5000/jobs",
+      return (
 
-              {
+        <div className="min-h-screen bg-background">
 
-                headers: {
+          <Header />
 
-                  Authorization:
-                    `Bearer ${token}`,
+          <div className="h-[80vh] flex items-center justify-center">
 
-                },
+            <div className="text-center">
 
-              }
+              <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
 
-            );
+              <h2 className="text-3xl font-bold">
 
-          jobsCount =
-            jobsResponse.data
-              ?.length || 0;
+                Loading Dashboard...
 
-        }
-
-        catch (error) {
-
-          console.log(
-            "Jobs fetch error:",
-            error
-          );
-
-        }
-
-
-        // ====================================
-        // FETCH EVENTS
-        // ====================================
-        let eventsCount = 0;
-
-        try {
-
-          const eventsResponse =
-            await axios.get(
-
-              "http://localhost:5000/events",
-
-              {
-
-                headers: {
-
-                  Authorization:
-                    `Bearer ${token}`,
-
-                },
-
-              }
-
-            );
-
-          eventsCount =
-            eventsResponse.data
-              ?.length || 0;
-
-        }
-
-        catch (error) {
-
-          console.log(
-            "Events fetch error:",
-            error
-          );
-
-        }
-
-
-        // ====================================
-        // FETCH GUIDANCE REQUESTS
-        // ====================================
-        try {
-
-          const guidanceResponse =
-            await axios.get(
-
-              "http://localhost:5000/guidance",
-
-              {
-
-                headers: {
-
-                  Authorization:
-                    `Bearer ${token}`,
-
-                },
-
-              }
-
-            );
-
-          setRecentGuidanceRequests(
-
-            guidanceResponse.data
-              ?.slice(0, 5) || []
-
-          );
-
-        }
-
-        catch (error) {
-
-          console.log(
-            "Guidance fetch error:",
-            error
-          );
-
-        }
-
-
-        // ====================================
-        // SET STATS
-        // ====================================
-        setAlumniStats({
-
-          studentsHelped:
-            studentUsers.length,
-
-          jobsPosted:
-            jobsCount,
-
-          eventsOrganized:
-            eventsCount,
-
-          contributionScore:
-            user?.trustScore ||
-            850,
-
-        });
-
-      }
-
-      catch (error) {
-
-        console.log(error);
-
-        toast({
-
-          title:
-            "Failed to load dashboard",
-
-          variant:
-            "destructive",
-
-        });
-
-      }
-
-      finally {
-
-        setLoading(false);
-
-      }
-
-    };
-
-
-  // ========================================
-  // INITIAL LOAD
-  // ========================================
-  useEffect(() => {
-
-    fetchDashboardData();
-
-  }, []);
-
-
-  // ========================================
-  // UI
-  // ========================================
-  return (
-
-    <div className="min-h-screen bg-background">
-
-      <Header />
-
-      <main className="container mx-auto px-4 py-6">
-
-        {/* ================================= */}
-        {/* WELCOME */}
-        {/* ================================= */}
-
-        <div className="mb-8">
-
-          <div className="flex items-center justify-between flex-wrap gap-4">
-
-            <div>
-
-              <h1 className="text-3xl font-bold text-foreground mb-2">
-
-                Welcome back,
-                {" "}
-                {user?.name || "Alumni"}!
-
-              </h1>
-
-              <p className="text-muted-foreground">
-
-                Your personalized alumni dashboard powered by AlumniConnect
-
-              </p>
+              </h2>
 
             </div>
 
+          </div>
 
-            <ContributionBadge
-              points={alumniStats.contributionScore}
-              size="lg"
+        </div>
+
+      );
+
+    }
+
+
+    // ========================================
+    // UI
+    // ========================================
+    return (
+
+      <div className="min-h-screen bg-background">
+
+        <Header />
+
+        <main className="max-w-7xl mx-auto px-4 py-8">
+
+
+          {/* HERO */}
+          <div className="mb-10">
+
+            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-primary via-purple-600 to-indigo-700 text-white shadow-2xl">
+
+              <div className="absolute inset-0 bg-black/10" />
+
+              <div className="relative p-8 md:p-10">
+
+                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8">
+
+                  <div>
+
+                    <div className="flex items-center gap-4 mb-5">
+
+                      <div className="h-20 w-20 rounded-3xl bg-white/20 flex items-center justify-center">
+
+                        <Sparkles className="h-10 w-10" />
+
+                      </div>
+
+                      <div>
+
+                        <h1 className="text-4xl md:text-5xl font-bold">
+
+                          Welcome,
+                          {" "}
+                          {user?.name}
+
+                        </h1>
+
+                        <p className="text-white/90 mt-2 text-lg">
+
+                          Empowering students through mentorship and opportunities
+
+                        </p>
+
+                      </div>
+
+                    </div>
+
+
+                    <div className="flex flex-wrap gap-3">
+
+                      <Badge className="bg-white/20 border-0 text-white px-4 py-2">
+
+                        {contributionLevel} Mentor
+
+                      </Badge>
+
+                      <Badge className="bg-white/20 border-0 text-white px-4 py-2">
+
+                        <ShieldCheck className="h-3 w-3 mr-1" />
+
+                        Trusted Alumni
+
+                      </Badge>
+
+                      <Badge className="bg-white/20 border-0 text-white px-4 py-2">
+
+                        <TrendingUp className="h-3 w-3 mr-1" />
+
+                        Active Contributor
+
+                      </Badge>
+
+                    </div>
+
+                  </div>
+
+
+                  <div className="flex flex-col items-center gap-4">
+
+                    <ContributionBadge
+                      points={
+                        alumniStats.contributionScore
+                      }
+                      size="lg"
+                    />
+
+                    <Button
+                      variant="secondary"
+                      onClick={
+                        refreshDashboard
+                      }
+                      className="rounded-2xl"
+                    >
+
+                      {refreshing ? (
+
+                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+
+                      ) : (
+
+                        <RefreshCcw className="h-4 w-4 mr-2" />
+
+                      )}
+
+                      Refresh Dashboard
+
+                    </Button>
+
+                  </div>
+
+                </div>
+
+              </div>
+
+            </div>
+
+          </div>
+
+
+          {/* STATS */}
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-6 mb-10">
+
+            <StatsCard
+              title="Students Helped"
+              value={alumniStats.studentsHelped}
+              description="Mentorship & guidance"
+              icon={Users}
+            />
+
+            <StatsCard
+              title="Jobs Posted"
+              value={alumniStats.jobsPosted}
+              description="Career opportunities"
+              icon={Briefcase}
+            />
+
+            <StatsCard
+              title="Events"
+              value={alumniStats.eventsOrganized}
+              description="Sessions organized"
+              icon={Calendar}
+            />
+
+            <StatsCard
+              title="Mentorship"
+              value={alumniStats.mentorshipSessions}
+              description="Sessions completed"
+              icon={MessageSquare}
+            />
+
+            <StatsCard
+              title="Contribution"
+              value={alumniStats.contributionScore}
+              description={`${contributionLevel} contributor`}
+              icon={Trophy}
+              gradient
             />
 
           </div>
 
-        </div>
+
+          {/* QUICK ACTIONS */}
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-6 mb-10">
 
 
-        {/* ================================= */}
-        {/* LOADING */}
-        {/* ================================= */}
+            <Link to="/alumni/students-directory">
 
-        {loading && (
+              <Card className="rounded-3xl border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-[1.02]">
 
-          <div className="flex items-center justify-center py-10">
+                <CardContent className="p-6 text-center">
 
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  <div className="h-16 w-16 rounded-3xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
+
+                    <GraduationCap className="h-8 w-8 text-primary" />
+
+                  </div>
+
+                  <h2 className="font-bold text-lg">
+
+                    Students
+
+                  </h2>
+
+                </CardContent>
+
+              </Card>
+
+            </Link>
+
+
+            <Link to="/alumni/guidance-requests">
+
+              <Card className="rounded-3xl border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-[1.02]">
+
+                <CardContent className="p-6 text-center">
+
+                  <div className="h-16 w-16 rounded-3xl bg-purple-100 flex items-center justify-center mx-auto mb-4">
+
+                    <Bell className="h-8 w-8 text-purple-600" />
+
+                  </div>
+
+                  <h2 className="font-bold text-lg">
+
+                    Guidance
+
+                  </h2>
+
+                </CardContent>
+
+              </Card>
+
+            </Link>
+
+
+            <Link to="/alumni/post-job">
+
+              <Card className="rounded-3xl border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-[1.02]">
+
+                <CardContent className="p-6 text-center">
+
+                  <div className="h-16 w-16 rounded-3xl bg-green-100 flex items-center justify-center mx-auto mb-4">
+
+                    <Briefcase className="h-8 w-8 text-green-600" />
+
+                  </div>
+
+                  <h2 className="font-bold text-lg">
+
+                    Post Job
+
+                  </h2>
+
+                </CardContent>
+
+              </Card>
+
+            </Link>
+
+
+            <Link to="/alumni/create-event">
+
+              <Card className="rounded-3xl border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-[1.02]">
+
+                <CardContent className="p-6 text-center">
+
+                  <div className="h-16 w-16 rounded-3xl bg-blue-100 flex items-center justify-center mx-auto mb-4">
+
+                    <Calendar className="h-8 w-8 text-blue-600" />
+
+                  </div>
+
+                  <h2 className="font-bold text-lg">
+
+                    Events
+
+                  </h2>
+
+                </CardContent>
+
+              </Card>
+
+            </Link>
+
+
+            <Link to="/alumni/chat">
+
+              <Card className="rounded-3xl border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-[1.02]">
+
+                <CardContent className="p-6 text-center">
+
+                  <div className="h-16 w-16 rounded-3xl bg-orange-100 flex items-center justify-center mx-auto mb-4">
+
+                    <MessageSquare className="h-8 w-8 text-orange-600" />
+
+                  </div>
+
+                  <h2 className="font-bold text-lg">
+
+                    Chats
+
+                  </h2>
+
+                </CardContent>
+
+              </Card>
+
+            </Link>
+
+
+            <Link to="/premium">
+
+              <Card className="rounded-3xl bg-gradient-to-r from-yellow-500 to-orange-500 text-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-[1.02]">
+
+                <CardContent className="p-6 text-center">
+
+                  <div className="h-16 w-16 rounded-3xl bg-white/20 flex items-center justify-center mx-auto mb-4">
+
+                    <Star className="h-8 w-8" />
+
+                  </div>
+
+                  <h2 className="font-bold text-lg">
+
+                    Premium
+
+                  </h2>
+
+                </CardContent>
+
+              </Card>
+
+            </Link>
 
           </div>
 
-        )}
 
+          {/* MAIN GRID */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-        {/* ================================= */}
-        {/* STATS */}
-        {/* ================================= */}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            {/* LEFT */}
+            <div className="lg:col-span-2 space-y-6">
 
-          <StatsCard
-            title="Students Helped"
-            value={alumniStats.studentsHelped}
-            description="Direct mentorship & guidance"
-            icon={Users}
-            trend={{
 
-              value: 15,
+              {/* GUIDANCE */}
+              <Card className="rounded-3xl shadow-xl border-0">
 
-              label: "this month",
+                <CardHeader>
 
-              isPositive: true,
+                  <div className="flex items-center justify-between">
 
-            }}
-          />
+                    <div>
 
+                      <CardTitle>
 
-          <StatsCard
-            title="Jobs Posted"
-            value={alumniStats.jobsPosted}
-            description="Opportunities created"
-            icon={Briefcase}
-            trend={{
+                        Recent Guidance Requests
 
-              value: 33,
+                      </CardTitle>
 
-              label: "this month",
+                      <CardDescription>
 
-              isPositive: true,
+                        Students seeking mentorship
 
-            }}
-          />
+                      </CardDescription>
 
+                    </div>
 
-          <StatsCard
-            title="Events Organized"
-            value={alumniStats.eventsOrganized}
-            description="Knowledge sharing sessions"
-            icon={Calendar}
-            trend={{
+                    <Button
+                      variant="outline"
+                      className="rounded-xl"
+                      asChild
+                    >
 
-              value: 100,
+                      <Link to="/alumni/guidance-requests">
 
-              label: "this month",
+                        View All
 
-              isPositive: true,
+                        <ArrowRight className="h-4 w-4 ml-2" />
 
-            }}
-          />
+                      </Link>
 
+                    </Button>
 
-          <StatsCard
-            title="Contribution Score"
-            value={alumniStats.contributionScore}
-            description="Gold level contributor"
-            icon={Trophy}
-            gradient
-          />
+                  </div>
 
-        </div>
+                </CardHeader>
 
+                <CardContent className="space-y-4">
 
-        {/* ================================= */}
-        {/* QUICK LINKS */}
-        {/* ================================= */}
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6 mb-8">
-
-          {/* STUDENTS DIRECTORY */}
-          <Link to="/alumni/students-directory">
-
-            <Card className="shadow-soft hover:shadow-medium transition-all cursor-pointer h-full bg-gradient-card">
-
-              <CardContent className="pt-6 text-center">
-
-                <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
-
-                  <GraduationCap className="h-6 w-6 text-primary" />
-
-                </div>
-
-                <h3 className="font-semibold mb-2">
-
-                  Students Directory
-
-                </h3>
-
-                <p className="text-sm text-muted-foreground">
-
-                  Browse talented students
-
-                </p>
-
-              </CardContent>
-
-            </Card>
-
-          </Link>
-
-
-          {/* GUIDANCE */}
-          <Link to="/alumni/guidance-requests">
-
-            <Card className="shadow-soft hover:shadow-medium transition-all cursor-pointer h-full bg-gradient-card border-primary/20">
-
-              <CardContent className="pt-6 text-center">
-
-                <div className="h-12 w-12 rounded-full bg-purple-100 flex items-center justify-center mx-auto mb-4">
-
-                  <Bell className="h-6 w-6 text-purple-600" />
-
-                </div>
-
-                <h3 className="font-semibold mb-2">
-
-                  Guidance Requests
-
-                </h3>
-
-                <p className="text-sm text-muted-foreground">
-
-                  Manage student requests
-
-                </p>
-
-              </CardContent>
-
-            </Card>
-
-          </Link>
-
-
-          {/* JOB */}
-          <Link to="/alumni/post-job">
-
-            <Card className="shadow-soft hover:shadow-medium transition-all cursor-pointer h-full bg-gradient-card">
-
-              <CardContent className="pt-6 text-center">
-
-                <div className="h-12 w-12 rounded-full bg-accent/10 flex items-center justify-center mx-auto mb-4">
-
-                  <Briefcase className="h-6 w-6 text-accent" />
-
-                </div>
-
-                <h3 className="font-semibold mb-2">
-
-                  Post Job
-
-                </h3>
-
-                <p className="text-sm text-muted-foreground">
-
-                  Create job openings
-
-                </p>
-
-              </CardContent>
-
-            </Card>
-
-          </Link>
-
-
-          {/* EVENT */}
-          <Link to="/alumni/create-event">
-
-            <Card className="shadow-soft hover:shadow-medium transition-all cursor-pointer h-full bg-gradient-card">
-
-              <CardContent className="pt-6 text-center">
-
-                <div className="h-12 w-12 rounded-full bg-success/10 flex items-center justify-center mx-auto mb-4">
-
-                  <Calendar className="h-6 w-6 text-success" />
-
-                </div>
-
-                <h3 className="font-semibold mb-2">
-
-                  Create Event
-
-                </h3>
-
-                <p className="text-sm text-muted-foreground">
-
-                  Organize workshops
-
-                </p>
-
-              </CardContent>
-
-            </Card>
-
-          </Link>
-
-
-          {/* CHAT */}
-          <Link to="/alumni/chat">
-
-            <Card className="shadow-soft hover:shadow-medium transition-all cursor-pointer h-full bg-gradient-card">
-
-              <CardContent className="pt-6 text-center">
-
-                <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center mx-auto mb-4">
-
-                  <MessageSquare className="h-6 w-6 text-blue-600" />
-
-                </div>
-
-                <h3 className="font-semibold mb-2">
-
-                  Student Chats
-
-                </h3>
-
-                <p className="text-sm text-muted-foreground">
-
-                  Chat with students directly
-
-                </p>
-
-              </CardContent>
-
-            </Card>
-
-          </Link>
-
-
-          {/* PREMIUM */}
-          <Link to="/premium">
-
-            <Card className="shadow-soft hover:shadow-medium transition-all cursor-pointer h-full bg-gradient-primary text-white">
-
-              <CardContent className="pt-6 text-center">
-
-                <div className="h-12 w-12 rounded-full bg-white/20 flex items-center justify-center mx-auto mb-4">
-
-                  <Star className="h-6 w-6 text-white" />
-
-                </div>
-
-                <h3 className="font-semibold mb-2">
-
-                  Go Premium
-
-                </h3>
-
-                <p className="text-sm opacity-90">
-
-                  Unlock features
-
-                </p>
-
-              </CardContent>
-
-            </Card>
-
-          </Link>
-
-        </div>
-
-
-        {/* ================================= */}
-        {/* MAIN SECTION */}
-        {/* ================================= */}
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-          {/* LEFT */}
-          <div className="lg:col-span-2 space-y-6">
-
-            {/* GUIDANCE REQUESTS */}
-            <Card className="shadow-soft border-primary/20">
-
-              <CardHeader>
-
-                <CardTitle className="flex items-center space-x-2">
-
-                  <Bell className="h-5 w-5 text-primary" />
-
-                  <span>
-
-                    Recent Guidance Requests
-
-                  </span>
-
-                </CardTitle>
-
-                <CardDescription>
-
-                  Students requesting mentorship and guidance
-
-                </CardDescription>
-
-              </CardHeader>
-
-
-              <CardContent className="space-y-4">
-
-                {recentGuidanceRequests.length === 0 ? (
-
-                  <p className="text-muted-foreground text-sm">
-
-                    No guidance requests found
-
-                  </p>
-
-                ) : (
-
-                  recentGuidanceRequests.map((request) => (
+                  {recentGuidanceRequests.map((request) => (
 
                     <div
                       key={request._id}
-                      className="flex items-center justify-between p-4 rounded-lg border bg-gradient-card"
+                      className="p-5 border rounded-3xl flex items-center justify-between hover:bg-muted/40 transition-all"
                     >
 
                       <div>
 
-                        <h3 className="font-semibold">
+                        <h3 className="font-bold text-lg">
 
                           {request.studentName}
 
                         </h3>
 
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-muted-foreground">
 
                           {request.topic}
 
                         </p>
 
-                        <div className="flex items-center gap-2 mt-2">
+                        <div className="flex gap-2 mt-3">
 
                           <Badge variant="outline">
 
@@ -813,15 +882,14 @@ export const AlumniDashboard = () => {
 
                       </div>
 
-
                       <Button
-                        size="sm"
+                        className="rounded-xl"
                         asChild
                       >
 
                         <Link to="/alumni/guidance-requests">
 
-                          View
+                          Open
 
                         </Link>
 
@@ -829,126 +897,147 @@ export const AlumniDashboard = () => {
 
                     </div>
 
-                  ))
+                  ))}
 
-                )}
+                </CardContent>
 
-              </CardContent>
-
-            </Card>
+              </Card>
 
 
-            {/* STUDENTS */}
-            <Card className="shadow-soft">
+              {/* STUDENTS */}
+              <Card className="rounded-3xl shadow-xl border-0">
 
-              <CardHeader>
+                <CardHeader>
 
-                <CardTitle className="flex items-center space-x-2">
+                  <div className="flex items-center justify-between">
 
-                  <GraduationCap className="h-5 w-5" />
+                    <div>
 
-                  <span>
+                      <CardTitle>
 
-                    Talented Students Looking for Opportunities
+                        Top Students
 
-                  </span>
+                      </CardTitle>
 
-                </CardTitle>
+                      <CardDescription>
 
-                <CardDescription>
+                        Connect with active students
 
-                  Browse students by skills and connect with potential candidates
+                      </CardDescription>
 
-                </CardDescription>
+                    </div>
 
-              </CardHeader>
+                    <Button
+                      variant="outline"
+                      className="rounded-xl"
+                      asChild
+                    >
 
+                      <Link to="/alumni/students-directory">
 
-              <CardContent className="space-y-4">
+                        Explore
 
-                {students.length === 0 ? (
+                        <ArrowRight className="h-4 w-4 ml-2" />
 
-                  <p className="text-muted-foreground text-sm">
+                      </Link>
 
-                    No students found
+                    </Button>
 
-                  </p>
+                  </div>
 
-                ) : (
+                </CardHeader>
 
-                  students.map((student) => (
+                <CardContent className="space-y-4">
+
+                  {students.map((student) => (
 
                     <div
                       key={student._id}
-                      className="flex items-center justify-between p-4 rounded-lg border bg-gradient-card"
+                      className="p-5 border rounded-3xl flex items-center justify-between hover:bg-muted/40 transition-all"
                     >
 
-                      <div>
+                      <div className="flex items-center gap-4">
 
-                        <h3 className="font-semibold">
+                        <Avatar className="h-14 w-14">
 
-                          {student.name}
+                          <AvatarImage
+                            src={
+                              student.profileImage
+                            }
+                          />
 
-                        </h3>
+                          <AvatarFallback>
 
-                        <p className="text-sm text-muted-foreground">
+                            {student.name
+                              ?.charAt(0)}
 
-                          {student.branch || "Student"}
+                          </AvatarFallback>
 
-                        </p>
+                        </Avatar>
 
-                        <div className="flex flex-wrap gap-1 mt-2">
+                        <div>
 
-                          {student.skills
-                            ?.slice(0, 4)
-                            .map((skill) => (
+                          <h3 className="font-bold text-lg">
 
-                              <Badge
-                                key={skill}
-                                variant="outline"
-                                className="text-xs"
-                              >
+                            {student.name}
 
-                                {skill}
+                          </h3>
 
-                              </Badge>
+                          <p className="text-muted-foreground">
 
-                            ))}
+                            {student.branch || "Student"}
+
+                          </p>
+
+                          <div className="flex flex-wrap gap-2 mt-3">
+
+                            {student.skills
+                              ?.slice(0, 4)
+                              .map((skill) => (
+
+                                <Badge
+                                  key={skill}
+                                  variant="outline"
+                                >
+
+                                  {skill}
+
+                                </Badge>
+
+                              ))}
+
+                          </div>
 
                         </div>
 
                       </div>
-
 
                       <div className="flex flex-col gap-2">
 
                         <Button
                           size="sm"
                           variant="outline"
+                          className="rounded-xl"
                           onClick={() =>
 
                             navigate(
-
                               `/profile/${student._id}`
-
                             )
 
                           }
                         >
 
-                          View Profile
+                          View
 
                         </Button>
 
-
                         <Button
                           size="sm"
+                          className="rounded-xl"
                           onClick={() =>
 
                             navigate(
-
                               `/alumni/chat/${student._id}`
-
                             )
 
                           }
@@ -962,114 +1051,305 @@ export const AlumniDashboard = () => {
 
                     </div>
 
-                  ))
+                  ))}
 
-                )}
+                </CardContent>
 
-              </CardContent>
+              </Card>
 
-            </Card>
+            </div>
+
+
+            {/* RIGHT */}
+            <div className="space-y-6">
+
+
+              {/* AI INSIGHTS */}
+              <Card className="rounded-3xl bg-gradient-to-br from-violet-600 to-indigo-700 text-white shadow-2xl border-0">
+
+                <CardContent className="p-6">
+
+                  <div className="h-16 w-16 rounded-3xl bg-white/20 flex items-center justify-center mb-5">
+
+                    <Brain className="h-8 w-8" />
+
+                  </div>
+
+                  <h2 className="text-2xl font-bold mb-3">
+
+                    AI Insights
+
+                  </h2>
+
+                  <p className="text-white/90 leading-7">
+
+                    AI/ML and Full Stack students are the most active this week.
+                    Mentorship engagement has increased by 32%.
+
+                  </p>
+
+                </CardContent>
+
+              </Card>
+
+
+              {/* COMMUNITY */}
+              <Card className="rounded-3xl shadow-xl border-0">
+
+                <CardHeader>
+
+                  <CardTitle>
+
+                    Community Activity
+
+                  </CardTitle>
+
+                </CardHeader>
+
+                <CardContent className="space-y-5">
+
+                  <div className="flex items-center gap-4">
+
+                    <div className="h-12 w-12 rounded-2xl bg-green-100 flex items-center justify-center">
+
+                      <Activity className="h-5 w-5 text-green-600" />
+
+                    </div>
+
+                    <div>
+
+                      <p className="font-semibold">
+
+                        12 New Students Joined
+
+                      </p>
+
+                      <p className="text-sm text-muted-foreground">
+
+                        Today
+
+                      </p>
+
+                    </div>
+
+                  </div>
+
+
+                  <div className="flex items-center gap-4">
+
+                    <div className="h-12 w-12 rounded-2xl bg-blue-100 flex items-center justify-center">
+
+                      <Briefcase className="h-5 w-5 text-blue-600" />
+
+                    </div>
+
+                    <div>
+
+                      <p className="font-semibold">
+
+                        5 New Jobs Posted
+
+                      </p>
+
+                      <p className="text-sm text-muted-foreground">
+
+                        This Week
+
+                      </p>
+
+                    </div>
+
+                  </div>
+
+
+                  <div className="flex items-center gap-4">
+
+                    <div className="h-12 w-12 rounded-2xl bg-purple-100 flex items-center justify-center">
+
+                      <Calendar className="h-5 w-5 text-purple-600" />
+
+                    </div>
+
+                    <div>
+
+                      <p className="font-semibold">
+
+                        3 Upcoming Events
+
+                      </p>
+
+                      <p className="text-sm text-muted-foreground">
+
+                        Alumni Community
+
+                      </p>
+
+                    </div>
+
+                  </div>
+
+                </CardContent>
+
+              </Card>
+
+
+              {/* QUICK ACTIONS */}
+              <Card className="rounded-3xl shadow-xl border-0">
+
+                <CardHeader>
+
+                  <CardTitle>
+
+                    Quick Actions
+
+                  </CardTitle>
+
+                </CardHeader>
+
+                <CardContent className="space-y-3">
+
+                  <Button
+                    className="w-full justify-start rounded-2xl"
+                    asChild
+                  >
+
+                    <Link to="/alumni/post-job">
+
+                      <Plus className="mr-2 h-4 w-4" />
+
+                      Post New Job
+
+                    </Link>
+
+                  </Button>
+
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start rounded-2xl"
+                    asChild
+                  >
+
+                    <Link to="/alumni/create-event">
+
+                      <Calendar className="mr-2 h-4 w-4" />
+
+                      Organize Event
+
+                    </Link>
+
+                  </Button>
+
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start rounded-2xl"
+                    asChild
+                  >
+
+                    <Link to="/alumni/chat">
+
+                      <MessageSquare className="mr-2 h-4 w-4" />
+
+                      Open Chats
+
+                    </Link>
+
+                  </Button>
+
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start rounded-2xl"
+                    asChild
+                  >
+
+                    <Link to="/alumni/guidance-requests">
+
+                      <Target className="mr-2 h-4 w-4" />
+
+                      Mentorship Requests
+
+                    </Link>
+
+                  </Button>
+
+                </CardContent>
+
+              </Card>
+
+
+              {/* ACTIVITY STATUS */}
+              <Card className="rounded-3xl shadow-xl border-0">
+
+                <CardHeader>
+
+                  <CardTitle>
+
+                    Activity Status
+
+                  </CardTitle>
+
+                </CardHeader>
+
+                <CardContent className="space-y-4">
+
+                  <div className="flex items-center justify-between">
+
+                    <div className="flex items-center gap-3">
+
+                      <Clock className="h-5 w-5 text-primary" />
+
+                      <span>
+
+                        Last Active
+
+                      </span>
+
+                    </div>
+
+                    <Badge>
+
+                      Today
+
+                    </Badge>
+
+                  </div>
+
+                  <div className="flex items-center justify-between">
+
+                    <div className="flex items-center gap-3">
+
+                      <Trophy className="h-5 w-5 text-yellow-500" />
+
+                      <span>
+
+                        Mentor Rank
+
+                      </span>
+
+                    </div>
+
+                    <Badge variant="secondary">
+
+                      {contributionLevel}
+
+                    </Badge>
+
+                  </div>
+
+                </CardContent>
+
+              </Card>
+
+            </div>
 
           </div>
 
+        </main>
 
-          {/* RIGHT */}
-          <div className="space-y-6">
+      </div>
 
-            {/* QUICK ACTIONS */}
-            <Card className="shadow-soft">
+    );
 
-              <CardHeader>
-
-                <CardTitle>
-
-                  Quick Actions
-
-                </CardTitle>
-
-              </CardHeader>
+  };
 
 
-              <CardContent className="space-y-3">
-
-                <Button
-                  className="w-full justify-start"
-                  asChild
-                >
-
-                  <Link to="/alumni/post-job">
-
-                    <Plus className="mr-2 h-4 w-4" />
-
-                    Post New Job
-
-                  </Link>
-
-                </Button>
-
-
-                <Button
-                  className="w-full justify-start"
-                  variant="outline"
-                  asChild
-                >
-
-                  <Link to="/alumni/create-event">
-
-                    <Calendar className="mr-2 h-4 w-4" />
-
-                    Organize Event
-
-                  </Link>
-
-                </Button>
-
-
-                <Button
-                  className="w-full justify-start"
-                  variant="outline"
-                  asChild
-                >
-
-                  <Link to="/alumni/guidance-requests">
-
-                    <Bell className="mr-2 h-4 w-4" />
-
-                    View Guidance Requests
-
-                  </Link>
-
-                </Button>
-
-
-                <Button
-                  className="w-full justify-start"
-                  variant="outline"
-                  asChild
-                >
-
-                  <Link to="/alumni/chat">
-
-                    <MessageSquare className="mr-2 h-4 w-4" />
-
-                    Open Chats
-
-                  </Link>
-
-                </Button>
-
-              </CardContent>
-
-            </Card>
-
-          </div>
-
-        </div>
-
-      </main>
-
-    </div>
-
-  );
-
-};
+export default AlumniDashboard;

@@ -1,21 +1,13 @@
 const express = require("express");
-
 const cors = require("cors");
-
 const dotenv = require("dotenv");
-
 const http = require("http");
-
 const helmet = require("helmet");
-
 const rateLimit = require("express-rate-limit");
-
 const morgan = require("morgan");
-
 const path = require("path");
-
-const { Server } =
-  require("socket.io");
+const jwt = require("jsonwebtoken");
+const { Server } = require("socket.io");
 
 const connectDB =
   require("./src/config/db");
@@ -28,7 +20,7 @@ dotenv.config();
 
 
 // ==========================================
-// ENV VALIDATION
+// CHECK JWT SECRET
 // ==========================================
 if (!process.env.JWT_SECRET) {
 
@@ -50,8 +42,16 @@ connectDB();
 // ==========================================
 // EXPRESS APP
 // ==========================================
-const app =
-  express();
+const app = express();
+
+
+// ==========================================
+// TRUST PROXY
+// ==========================================
+app.set(
+  "trust proxy",
+  1
+);
 
 
 // ==========================================
@@ -74,11 +74,13 @@ const allowedOrigins = [
 
   "http://localhost:8081",
 
-];
+  process.env.FRONTEND_URL,
+
+].filter(Boolean);
 
 
 // ==========================================
-// SOCKET.IO
+// SOCKET IO
 // ==========================================
 const io =
   new Server(server, {
@@ -88,19 +90,12 @@ const io =
       origin:
         allowedOrigins,
 
-      methods: [
-
-        "GET",
-
-        "POST",
-
-        "PUT",
-
-        "DELETE",
-
-      ],
-
       credentials: true,
+
+      methods: [
+        "GET",
+        "POST",
+      ],
 
     },
 
@@ -110,55 +105,72 @@ const io =
 
 
 // ==========================================
-// ROUTES
+// SOCKET AUTH
 // ==========================================
-const authRoutes =
-  require("./src/routes/authRoutes");
+io.use(
 
-const profileRoutes =
-  require("./src/routes/profileRoutes");
+  async (
+    socket,
+    next
+  ) => {
 
-const jobRoutes =
-  require("./src/routes/jobRoutes");
+    try {
 
-const eventRoutes =
-  require("./src/routes/eventRoutes");
+      const token =
+        socket.handshake.auth?.token;
 
-const mentorshipRoutes =
-  require("./src/routes/mentorshipRoutes");
+      if (!token) {
 
-const notificationRoutes =
-  require("./src/routes/notificationRoutes");
+        return next(
+          new Error(
+            "Unauthorized"
+          )
+        );
 
-const messageRoutes =
-  require("./src/routes/messageRoutes");
+      }
 
-const userRoutes =
-  require("./src/routes/userRoutes");
+      const decoded =
+        jwt.verify(
 
-const guidanceRoutes =
-  require("./src/routes/guidanceRoutes");
+          token,
 
-const recommendationRoutes =
-  require("./src/routes/recommendationRoutes");
+          process.env.JWT_SECRET
 
-const chatbotRoutes =
-  require("./src/routes/chatbotRoutes");
+        );
 
-const adminRoutes =
-  require("./src/routes/adminRoutes");
+      socket.userId =
+        decoded.id;
 
-const searchRoutes =
-  require("./src/routes/searchRoutes");
+      next();
 
-const resumeRoutes =
-  require("./src/routes/resumeRoutes");
+    }
+
+    catch (error) {
+
+      console.log(
+        "SOCKET AUTH ERROR:",
+        error.message
+      );
+
+      next(
+        new Error(
+          "Invalid Token"
+        )
+      );
+
+    }
+
+  }
+
+);
 
 
 // ==========================================
 // SECURITY MIDDLEWARE
 // ==========================================
-app.use(helmet());
+app.use(
+  helmet()
+);
 
 
 // ==========================================
@@ -170,7 +182,11 @@ const limiter =
     windowMs:
       15 * 60 * 1000,
 
-    max: 300,
+    max: 500,
+
+    standardHeaders: true,
+
+    legacyHeaders: false,
 
     message: {
 
@@ -183,7 +199,9 @@ const limiter =
 
   });
 
-app.use(limiter);
+app.use(
+  limiter
+);
 
 
 // ==========================================
@@ -193,8 +211,34 @@ app.use(
 
   cors({
 
-    origin:
-      allowedOrigins,
+    origin: function (
+      origin,
+      callback
+    ) {
+
+      if (
+        !origin ||
+        allowedOrigins.includes(origin)
+      ) {
+
+        callback(
+          null,
+          true
+        );
+
+      }
+
+      else {
+
+        callback(
+          new Error(
+            "Not allowed by CORS"
+          )
+        );
+
+      }
+
+    },
 
     credentials: true,
 
@@ -257,8 +301,58 @@ app.use(
 
 
 // ==========================================
-// ONLINE USERS MAP
-// userId => Set(socketIds)
+// TEST ROUTE
+// ==========================================
+app.get(
+
+  "/test",
+
+  (req, res) => {
+
+    res.status(200).json({
+
+      success: true,
+
+      message:
+        "Backend Working Properly",
+
+    });
+
+  }
+
+);
+
+
+// ==========================================
+// HEALTH CHECK
+// ==========================================
+app.get(
+
+  "/health",
+
+  (req, res) => {
+
+    res.status(200).json({
+
+      success: true,
+
+      status: "OK",
+
+      uptime:
+        process.uptime(),
+
+      timestamp:
+        new Date(),
+
+    });
+
+  }
+
+);
+
+
+// ==========================================
+// ONLINE USERS
 // ==========================================
 const onlineUsers =
   new Map();
@@ -267,27 +361,28 @@ const onlineUsers =
 // ==========================================
 // ADD USER SOCKET
 // ==========================================
-const addUserSocket = (
-  userId,
-  socketId
-) => {
+const addUserSocket =
+  (
+    userId,
+    socketId
+  ) => {
 
-  if (
-    !onlineUsers.has(userId)
-  ) {
+    if (
+      !onlineUsers.has(userId)
+    ) {
 
-    onlineUsers.set(
-      userId,
-      new Set()
-    );
+      onlineUsers.set(
+        userId,
+        new Set()
+      );
 
-  }
+    }
 
-  onlineUsers
-    .get(userId)
-    .add(socketId);
+    onlineUsers
+      .get(userId)
+      .add(socketId);
 
-};
+  };
 
 
 // ==========================================
@@ -299,11 +394,8 @@ const removeUserSocket =
     for (
 
       const [
-
         userId,
-
         socketSet,
-
       ]
 
       of onlineUsers.entries()
@@ -330,23 +422,6 @@ const removeUserSocket =
 
 
 // ==========================================
-// GET USER SOCKETS
-// ==========================================
-const getUserSockets =
-  (userId) => {
-
-    return Array.from(
-
-      onlineUsers.get(
-        userId.toString()
-      ) || []
-
-    );
-
-  };
-
-
-// ==========================================
 // SOCKET CONNECTION
 // ==========================================
 io.on(
@@ -357,57 +432,42 @@ io.on(
 
     console.log(
 
-      "🟢 User Connected:",
-
-      socket.id
+      `🟢 User Connected: ${socket.id}`
 
     );
+
+    const userId =
+      socket.userId;
 
 
     // ======================================
     // JOIN ROOM
     // ======================================
-    socket.on(
+    if (userId) {
 
-      "joinRoom",
+      socket.join(userId);
 
-      (userId) => {
+      addUserSocket(
 
-        if (!userId)
-          return;
+        userId,
 
-        const userIdString =
-          userId.toString();
+        socket.id
 
-        socket.join(
-          userIdString
-        );
+      );
 
-        addUserSocket(
+    }
 
-          userIdString,
 
-          socket.id
+    // ======================================
+    // ONLINE USERS
+    // ======================================
+    io.emit(
 
-        );
+      "onlineUsers",
 
-        io.emit(
-
-          "onlineUsers",
-
-          Array.from(
-            onlineUsers.keys()
-          )
-
-        );
-
-        console.log(
-
-          `✅ ${userIdString} joined room`
-
-        );
-
-      }
+      Array.from(
+        onlineUsers.keys()
+      )
 
     );
 
@@ -421,31 +481,40 @@ io.on(
 
       (data) => {
 
-        if (
-          !data?.receiverId
-        ) return;
+        try {
 
-        const receiverSockets =
+          if (
 
-          getUserSockets(
-            data.receiverId
-          );
+            !data ||
+            !data.receiverId ||
+            !data.message
 
-        receiverSockets.forEach(
+          ) {
 
-          (socketId) => {
-
-            io.to(socketId).emit(
-
-              "receiveMessage",
-
-              data
-
-            );
+            return;
 
           }
 
-        );
+          io.to(
+            data.receiverId
+          ).emit(
+
+            "receiveMessage",
+
+            data
+
+          );
+
+        }
+
+        catch (error) {
+
+          console.log(
+            "SEND MESSAGE ERROR:",
+            error.message
+          );
+
+        }
 
       }
 
@@ -461,32 +530,16 @@ io.on(
 
       (data) => {
 
-        if (
-          !data?.receiverId
-        ) return;
+        io.to(
+          data.receiverId
+        ).emit(
 
-        const receiverSockets =
+          "userTyping",
 
-          getUserSockets(
-            data.receiverId
-          );
+          {
 
-        receiverSockets.forEach(
-
-          (socketId) => {
-
-            io.to(socketId).emit(
-
-              "userTyping",
-
-              {
-
-                senderId:
-                  data.senderId,
-
-              }
-
-            );
+            senderId:
+              userId,
 
           }
 
@@ -506,32 +559,16 @@ io.on(
 
       (data) => {
 
-        if (
-          !data?.receiverId
-        ) return;
+        io.to(
+          data.receiverId
+        ).emit(
 
-        const receiverSockets =
+          "userStopTyping",
 
-          getUserSockets(
-            data.receiverId
-          );
+          {
 
-        receiverSockets.forEach(
-
-          (socketId) => {
-
-            io.to(socketId).emit(
-
-              "userStopTyping",
-
-              {
-
-                senderId:
-                  data.senderId,
-
-              }
-
-            );
+            senderId:
+              userId,
 
           }
 
@@ -551,35 +588,19 @@ io.on(
 
       (data) => {
 
-        if (
-          !data?.senderId
-        ) return;
+        io.to(
+          data.senderId
+        ).emit(
 
-        const senderSockets =
+          "messageDelivered",
 
-          getUserSockets(
-            data.senderId
-          );
+          {
 
-        senderSockets.forEach(
+            messageId:
+              data.messageId,
 
-          (socketId) => {
-
-            io.to(socketId).emit(
-
-              "messageDelivered",
-
-              {
-
-                messageId:
-                  data.messageId,
-
-                status:
-                  "delivered",
-
-              }
-
-            );
+            status:
+              "delivered",
 
           }
 
@@ -599,35 +620,19 @@ io.on(
 
       (data) => {
 
-        if (
-          !data?.senderId
-        ) return;
+        io.to(
+          data.senderId
+        ).emit(
 
-        const senderSockets =
+          "messageSeen",
 
-          getUserSockets(
-            data.senderId
-          );
+          {
 
-        senderSockets.forEach(
+            messageId:
+              data.messageId,
 
-          (socketId) => {
-
-            io.to(socketId).emit(
-
-              "messageSeen",
-
-              {
-
-                messageId:
-                  data.messageId,
-
-                status:
-                  "seen",
-
-              }
-
-            );
+            seenBy:
+              userId,
 
           }
 
@@ -663,9 +668,7 @@ io.on(
 
         console.log(
 
-          "🔴 User Disconnected:",
-
-          socket.id
+          `🔴 User Disconnected: ${socket.id}`
 
         );
 
@@ -679,7 +682,126 @@ io.on(
 
 
 // ==========================================
+// ROUTES IMPORT
+// ==========================================
+const authRoutes =
+  require("./src/routes/authRoutes");
+
+const profileRoutes =
+  require("./src/routes/profileRoutes");
+
+const jobRoutes =
+  require("./src/routes/jobRoutes");
+
+const eventRoutes =
+  require("./src/routes/eventRoutes");
+
+const mentorshipRoutes =
+  require("./src/routes/mentorshipRoutes");
+
+const notificationRoutes =
+  require("./src/routes/notificationRoutes");
+
+const messageRoutes =
+  require("./src/routes/messageRoutes");
+
+const userRoutes =
+  require("./src/routes/userRoutes");
+
+const guidanceRoutes =
+  require("./src/routes/guidanceRoutes");
+
+const recommendationRoutes =
+  require("./src/routes/recommendationRoutes");
+
+const chatbotRoutes =
+  require("./src/routes/chatbotRoutes");
+
+const adminRoutes =
+  require("./src/routes/adminRoutes");
+
+const searchRoutes =
+  require("./src/routes/searchRoutes");
+
+const resumeRoutes =
+  require("./src/routes/resumeRoutes");
+
+
+// ==========================================
 // API ROUTES
+// ==========================================
+app.use(
+  "/api/auth",
+  authRoutes
+);
+
+app.use(
+  "/api/profile",
+  profileRoutes
+);
+
+app.use(
+  "/api/jobs",
+  jobRoutes
+);
+
+app.use(
+  "/api/events",
+  eventRoutes
+);
+
+app.use(
+  "/api/mentorship",
+  mentorshipRoutes
+);
+
+app.use(
+  "/api/notifications",
+  notificationRoutes
+);
+
+app.use(
+  "/api/messages",
+  messageRoutes
+);
+
+app.use(
+  "/api/users",
+  userRoutes
+);
+
+app.use(
+  "/api/guidance",
+  guidanceRoutes
+);
+
+app.use(
+  "/api/recommendations",
+  recommendationRoutes
+);
+
+app.use(
+  "/api/admin",
+  adminRoutes
+);
+
+app.use(
+  "/api/ai",
+  chatbotRoutes
+);
+
+app.use(
+  "/api/search",
+  searchRoutes
+);
+
+app.use(
+  "/api/resume",
+  resumeRoutes
+);
+
+// ==========================================
+// ROOT-LEVEL DUPLICATE ROUTES FOR FRONTEND
 // ==========================================
 app.use(
   "/auth",
@@ -753,7 +875,7 @@ app.use(
 
 
 // ==========================================
-// HEALTH CHECK
+// ROOT ROUTE
 // ==========================================
 app.get(
 
@@ -780,7 +902,6 @@ app.get(
 
 // ==========================================
 // 404 HANDLER
-// FIXED
 // ==========================================
 app.use(
 
@@ -814,15 +935,25 @@ app.use(
 
     console.log(
       "GLOBAL ERROR:",
-      err
+      err.message
     );
 
-    res.status(500).json({
+    res.status(
+
+      err.statusCode || 500
+
+    ).json({
 
       success: false,
 
       message:
-        "Internal Server Error",
+
+        process.env.NODE_ENV ===
+        "production"
+
+          ? "Internal Server Error"
+
+          : err.message,
 
     });
 
@@ -832,7 +963,7 @@ app.use(
 
 
 // ==========================================
-// SERVER START
+// START SERVER
 // ==========================================
 const PORT =
   process.env.PORT || 5000;
@@ -849,6 +980,72 @@ server.listen(
 
     );
 
+    console.log(
+
+      `✅ Test URL: http://localhost:${PORT}/test`
+
+    );
+
   }
 
 );
+
+
+// ==========================================
+// HANDLE UNHANDLED REJECTION
+// ==========================================
+process.on(
+
+  "unhandledRejection",
+
+  (err) => {
+
+    console.log(
+
+      "UNHANDLED REJECTION:",
+
+      err.message
+
+    );
+
+    server.close(
+      () => process.exit(1)
+    );
+
+  }
+
+);
+
+
+// ==========================================
+// GRACEFUL SHUTDOWN
+// ==========================================
+process.on(
+
+  "SIGINT",
+
+  () => {
+
+    console.log(
+      "🛑 Server shutting down..."
+    );
+
+    server.close(() => {
+
+      process.exit(0);
+
+    });
+
+  }
+
+);
+
+
+// ==========================================
+// EXPORT IO
+// ==========================================
+module.exports = {
+
+  io,
+
+};
